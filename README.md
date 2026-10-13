@@ -7,13 +7,15 @@ Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Q
 - **Was soll das heißen?**: Online-Bluffspiel für 3–10 Personen, fünf Runden, Einladungslink und gemeinsame Punktwertung. Alle erfinden eine plausible Bedeutung; anschließend wird die echte Erklärung zwischen den Bluffs gesucht.
 - **Entdecken**: 20 Startkarten aus sieben Sprachen, Suche, Sprachfilter, Bedeutungen, Beispielsätze, kulturelle Hinweise und Quellenlinks.
 - **Mitmachen**: Registrierung und Anmeldung mit E-Mail und Passwort über Managed Better Auth auf Neon. Angemeldete Mitglieder können eigene Einträge und zusätzliche Erklärungen veröffentlichen. Spielen und Lesen sind in der App ohne Konto möglich.
-- **Erweiterbares Fundament**: Die Eintragstypen `idiom`, `dialect` und `situation` teilen eine Datenstruktur. Region, Sprachcode, Gesprächskontext, wörtliche Übersetzung und kulturelle Hinweise werden bereits gespeichert. Dialekte und Alltagseinträge können schon zur Sammlung beigetragen werden; eigene Spielmodi dafür folgen später.
+- **Deutsch und Englisch**: Umschalter DE/EN mit gespeicherter Präferenz. Die Startsammlung enthält Erklärungen in beiden Sprachen. Der Gastgeber wählt die Sprache der Spielkarten; Beiträge aus der Community bleiben in ihrer Originalsprache.
+- **Weitere Modi**: Wortdetektiv (ein Wort, vier Antwortsprachen), Zungenbrecher (Nachsprechen und Bewertung durch Mitspieler), Dialekte und Alltagssituationen sind als „Bald verfügbar“ sichtbar. Wörter und Zungenbrecher können schon beigetragen werden. `lib/modes.ts` bereitet eindeutige Quizantworten und Bewertungskriterien vor. Noch kein Mikrofonzugriff und keine automatische Aussprachebewertung.
+- **Erweiterbares Fundament**: Die Eintragstypen `idiom`, `dialect`, `situation`, `word` und `tongue_twister` teilen eine Datenstruktur. Region, Sprachcode, Gesprächskontext, wörtliche Übersetzung und kulturelle Hinweise werden bereits gespeichert. Dialekte und Alltagseinträge können schon zur Sammlung beigetragen werden; eigene Spielmodi dafür folgen später.
 
 Community-Beiträge sind sichtbar gekennzeichnet. Das Spiel nutzt die separat gepflegte Startsammlung, damit beliebige Community-Erklärungen nicht automatisch zur vermeintlich korrekten Spielantwort werden. Die Erläuterungen wurden für dieses Projekt formuliert; Quellen dienen der Nachprüfung. Sprachkenntnisse sind zum Bluffen nicht erforderlich.
 
 ## Lokal starten
 
-Node.js 22.13 oder neuer (CI: Node 24), npm und ein eigenes Neon-Projekt mit aktivierter E-Mail-/Passwort-Anmeldung.
+Node.js 24 oder neuer (CI: Node 24), npm und ein eigenes Neon-Projekt mit aktivierter E-Mail-/Passwort-Anmeldung.
 
 ```sh
 npm ci
@@ -24,18 +26,20 @@ npm run db:seed
 npm run dev
 ```
 
-Der lokale Server zeigt seine Adresse im Terminal. Die aktuelle Konfiguration startet auf Port 5173. Diese Adresse muss im Neon-Auth-Projekt als vertrauenswürdige Domain freigegeben sein. Auth wird unter `/api/auth/*` über den offiziellen Neon-Server-SDK vermittelt; ein eigener Browser-Login wird nicht implementiert.
+Der lokale Server zeigt seine Adresse im Terminal. Die aktuelle Konfiguration startet auf Port 5176. Diese Adresse muss im Neon-Auth-Projekt als vertrauenswürdige Domain freigegeben sein. Auth wird unter `/api/auth/*` über den offiziellen Neon-Server-SDK vermittelt; ein eigener Browser-Login wird nicht implementiert.
 
 Die `.env.local` enthält den gepoolten `DATABASE_URL`, den direkten `DATABASE_URL_UNPOOLED` für Migrationen, `NEON_AUTH_BASE_URL` und `NEON_AUTH_COOKIE_SECRET`. Letzteren mit `openssl rand -base64 48` erzeugen. Zugangsdaten werden nicht veröffentlicht. Passwörter und Sitzungen liegen beim Auth-Anbieter, nicht im Anwendungscode.
 
 ## Architektur
 
-React / Next.js App Router über Vinext und Vite; serverseitige HTTP-Abfragen mit `@neondatabase/serverless`; PostgreSQL auf Neon. Das Sites-Starter-Fundament ermöglicht eine private Vorschau auf Cloudflare Workers. Der Code kann unabhängig davon mit eigener Infrastruktur betrieben werden.
+TypeScript (`.ts`, `.tsx`, `.mts`) für Anwendung, Konfiguration und eigene Laufzeitskripte; React / Next.js App Router über Vinext und Vite; serverseitige HTTP-Abfragen mit `@neondatabase/serverless`; PostgreSQL auf Neon. Das Sites-Starter-Fundament ermöglicht eine private Vorschau auf Cloudflare Workers. Der Code kann unabhängig davon mit eigener Infrastruktur betrieben werden.
 
 - `lib/game.ts`: Spielregeln, Phasen, Wertung und explizite öffentliche Projektion.
+- `lib/i18n.tsx` / `lib/translations.ts`: zweisprachige Oberfläche; `lib/entry-localization.ts`: englische Startsammlung.
+- `lib/modes.ts`: typisierte Modi, Quizvorbereitung und Aussprachebewertungen.
 - `lib/content.ts`: gemeinsame Inhaltstypen und Eingabeprüfung mit Zod.
 - `db/repository.ts`: parametrisierte Queries und atomare Änderungen an Räumen mit Versionsprüfung.
-- `db/migrations/001_initial.sql`: Schema als versionierte Migration.
+- `db/migrations/`: Schema als versionierte Migrationen mit angewandtem Migrationsstand.
 - `app/api/`: öffentliche Leseendpunkte, geschützte Beiträge und Spielraum-API.
 - `components/`: responsive Oberfläche mit nativen modalen Dialogen.
 - `lib/site.ts`: zentraler Appname und Repository-Link.
@@ -54,7 +58,7 @@ npm run build
 node --env-file=.env.local --import tsx scripts/smoke.mts
 ```
 
-Die sieben Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung und vollständige Spiele. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte Beiträge und fünf Runden mit konkurrierenden Anfragen durch. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
+Die 13 Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung, vollständige Spiele, vier Quizantworten, Aussprachebewertungen und englische Spielkarten. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte Beiträge und fünf Runden mit konkurrierenden Anfragen durch. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
 
 ## Betrieb und nächste Schritte
 

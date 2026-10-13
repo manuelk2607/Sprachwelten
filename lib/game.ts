@@ -1,10 +1,12 @@
 import type { Entry, RoomAction } from './content';
+import type { Locale } from './translations';
+import { localizeEntry } from './entry-localization';
 
 export type Phase = 'lobby' | 'writing' | 'voting' | 'reveal' | 'finished';
 export type Player = { id: string; name: string; tokenHash: string; score: number };
 export type Option = { id: string; text: string; authorId: string | null };
 export type Round = { entry: Entry; answers: Record<string, string>; votes: Record<string, string>; options: Option[] };
-export type Game = { code: string; hostId: string; phase: Phase; players: Player[]; prompts: Entry[]; roundIndex: number; round: Round | null; totalRounds: number };
+export type Game = { code: string; locale: Locale; hostId: string; phase: Phase; players: Player[]; prompts: Entry[]; roundIndex: number; round: Round | null; totalRounds: number };
 export class GameError extends Error { constructor(message: string, public status = 409) { super(message); } }
 export const shuffled = <T,>(items: T[]): T[] => {
   const list = [...items];
@@ -15,7 +17,7 @@ export const shuffled = <T,>(items: T[]): T[] => {
   }
   return list;
 };
-export function createGame(code: string, player: Player): Game { return { code, hostId: player.id, phase: 'lobby', players: [player], prompts: [], roundIndex: 0, round: null, totalRounds: 5 }; }
+export function createGame(code: string, player: Player, locale: Locale = 'de'): Game { return { code, locale, hostId: player.id, phase: 'lobby', players: [player], prompts: [], roundIndex: 0, round: null, totalRounds: 5 }; }
 export function joinGame(game: Game, player: Player) {
   if (game.phase !== 'lobby') throw new GameError('Diese Runde hat bereits begonnen.');
   if (game.players.length >= 10) throw new GameError('Der Raum ist voll (maximal 10 Personen).');
@@ -33,7 +35,7 @@ export function act(game: Game, playerId: string, action: RoomAction, prompts: E
     if (game.phase !== 'lobby') throw new GameError('Das Spiel läuft bereits.');
     if (game.players.length < 3) throw new GameError('Zum Start braucht ihr mindestens 3 Personen.');
     if (prompts.length < game.totalRounds) throw new GameError('Es sind noch nicht genügend Spielkarten vorhanden.');
-    game.prompts = shuffled(prompts).slice(0, game.totalRounds); newRound(game); return;
+    game.prompts = shuffled(prompts).slice(0, game.totalRounds).map(entry => localizeEntry(entry, game.locale ?? 'de')); newRound(game); return;
   }
   const round = game.round;
   if (!round) throw new GameError('Das Spiel hat noch nicht begonnen.');
@@ -69,7 +71,7 @@ export function act(game: Game, playerId: string, action: RoomAction, prompts: E
 // An explicit allowlist keeps secrets, authors and future prompts off the wire.
 export function viewGame(game: Omit<Game, 'prompts'>, playerId: string) {
   const round = game.round; const revealed = game.phase === 'reveal' || game.phase === 'finished';
-  return { code: game.code, hostId: game.hostId, phase: game.phase, playerId, roundNumber: Math.min(game.roundIndex + 1, game.totalRounds), totalRounds: game.totalRounds,
+  return { code: game.code, locale: game.locale ?? 'de', hostId: game.hostId, phase: game.phase, playerId, roundNumber: Math.min(game.roundIndex + 1, game.totalRounds), totalRounds: game.totalRounds,
     players: game.players.map(p => ({ id: p.id, name: p.name, score: p.score, answered: !!round?.answers[p.id], voted: !!round?.votes[p.id] })),
     prompt: round ? { phrase: round.entry.phrase, language: round.entry.language, literal: round.entry.literal } : null,
     options: round && game.phase !== 'writing' ? round.options.map(o => ({ id: o.id, text: o.text, isOwn: o.authorId === playerId,

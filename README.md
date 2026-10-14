@@ -90,7 +90,7 @@ Die Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte,
 
 ## Betrieb und nächste Schritte
 
-Die Website ist öffentlich unter https://sprachwelten.divinelynx3.chatgpt.site erreichbar und läuft auf Cloudflare Workers über Sites. Lesen und Spielen benötigen kein Konto. Eigene Beiträge und ergänzende Erklärungen benötigen die E-Mail-Anmeldung in der App. Der HTML-Titel lautet Sprachwelten.
+Die Website ist direkt im Cloudflare-Konto des Besitzers unter https://sprachwelten.jsbk9gv78n.workers.dev erreichbar. Die frühere Sites-Veröffentlichung unter https://sprachwelten.divinelynx3.chatgpt.site besteht separat weiter. Lesen und Spielen benötigen kein Konto. Eigene Beiträge und ergänzende Erklärungen benötigen die E-Mail-Anmeldung in der App. Der HTML-Titel lautet Sprachwelten.
 
 Neons kostenloser Tarif genügt als Ausgangspunkt für kleine Freundesrunden. Bei dauerhaft aktivem Betrieb müssen Rechenzeit und Traffic gemessen werden. Die Spielfläche aktualisiert ihren Zustand höchstens etwa alle 3,5 Sekunden, pausiert bei verborgenem Tab und beendet Polling nach dem Ergebnis. Die Sammlung fragt nur bei Suche, Filtern oder Navigation nach. Aktuelle Ressourcenlimits: https://neon.com/pricing
 

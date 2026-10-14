@@ -2,7 +2,7 @@
 import { useI18n } from '@/lib/i18n';
 import { useEffect, useState } from 'react';
 import { ArrowDown, ArrowRight, BookOpen, Check, Compass, Earth, ExternalLink, Lightbulb, MessageCircle, Plus, Search, Sparkles, Users } from 'lucide-react';
-import { authClient } from '@/lib/auth/client';
+import { useAuthSession } from '@/lib/auth/provider';
 import { site } from '@/lib/site';
 import { kindLabels, languages, type Entry, type Explanation } from '@/lib/content';
 import { localizeEntry } from '@/lib/entry-localization';
@@ -14,7 +14,7 @@ import { ContributeDialog } from './contribute-dialog';
 
 export function Home() {
   const { t, locale } = useI18n();
-  const {data:session}=authClient.useSession();
+  const session=useAuthSession();
   const [auth,setAuth]=useState(false);const [contribute,setContribute]=useState(false);const [play,setPlay]=useState(false);const [how,setHow]=useState(false);
   const [entries,setEntries]=useState<Entry[]>([]);const [kind,setKind]=useState('');const [language,setLanguage]=useState('');const [query,setQuery]=useState('');const [search,setSearch]=useState('');const [offset,setOffset]=useState(0);const [more,setMore]=useState(false);
   const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [toast,setToast]=useState('');const [refresh,setRefresh]=useState(0);const [selected,setSelected]=useState<Entry|null>(null);

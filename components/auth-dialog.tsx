@@ -1,7 +1,7 @@
 'use client';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
-import { authClient } from '@/lib/auth/client';
+import { getAuthClient } from '@/lib/auth/client';
 import { Dialog } from './dialog';
 export function AuthDialog({close, initial = 'signin', email = '', resetToken = ''}: {close:()=>void; initial?:'signin'|'verify'|'reset';email?:string;resetToken?:string}) {
   const { t, locale } = useI18n();
@@ -13,6 +13,7 @@ export function AuthDialog({close, initial = 'signin', email = '', resetToken = 
     event.preventDefault();setBusy(true);setError('');setMessage('');const data=new FormData(event.currentTarget);
     const mail=String(data.get('email')??email).trim(), password=String(data.get('password')??'');
     try {
+      const authClient = await getAuthClient();
       if(mode==='forgot') {
         const {error}=await authClient.requestPasswordReset({email:mail,redirectTo:window.location.origin+'/?reset=1'}); if(error)throw new Error(error.message);
         setMessage(t("Falls ein Konto mit dieser E-Mail existiert, erhältst du einen Link zum Zurücksetzen."));

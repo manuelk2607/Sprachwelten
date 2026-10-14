@@ -3,32 +3,37 @@ import type { Entry, EntryInput, Explanation } from '@/lib/content';
 import type { Game } from '@/lib/game';
 import { GameError } from '@/lib/game';
 import type { PlayableGameMode } from '@/lib/modes';
+import { otherLocale, storedTranslation } from '@/lib/content-translations';
 
 export const database = () => {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL fehlt.');
   return neon(process.env.DATABASE_URL);
 };
-const fields = `id, kind, phrase, language, literal, meaning, example, region, cultural_note as "culturalNote", context, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
+const fields = `id, kind, phrase, language, literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
 export async function listEntries(kind = '', language = '', search = '', offset = 0) {
   const sql = database();
-  return await sql.query(`SELECT ${fields} FROM content_entries WHERE ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 60 OFFSET $4`, [kind, language, search, offset]) as Entry[];
+  return await sql.query(`SELECT ${fields} FROM content_entries WHERE ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 60 OFFSET $4`, [kind, language, search, offset]) as Entry[];
 }
 export async function getEntry(id: string) {
   const sql = database(); const rows = await sql.query(`SELECT ${fields} FROM content_entries WHERE id=$1`, [id]); return rows[0] as Entry | undefined;
 }
 export async function addEntry(input: EntryInput, authorId: string, authorName: string) {
   const sql = database();
-  const rows = await sql.query(`INSERT INTO content_entries (kind,phrase,language,literal,meaning,example,region,cultural_note,context,source_url,author_id,author_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING ${fields}`,
-    [input.kind,input.phrase,input.language,input.literal,input.meaning,input.example,input.region,input.culturalNote,input.context,input.sourceUrl,authorId,authorName]); return rows[0] as Entry;
+  const sourceLocale=input.sourceLocale??'de';const translation=storedTranslation(input,input.translation);
+  const translations=translation?{[otherLocale(sourceLocale)]:translation}:{};
+  const rows = await sql.query(`INSERT INTO content_entries (kind,phrase,language,literal,meaning,example,region,cultural_note,context,source_url,author_id,author_name,source_locale,translations,region_id,context_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15,$16) RETURNING ${fields}`,
+    [input.kind,input.phrase,input.language,input.literal,input.meaning,input.example,input.region,input.culturalNote,input.context,input.sourceUrl,authorId,authorName,sourceLocale,JSON.stringify(translations),input.regionId??null,input.contextId??null]); return rows[0] as Entry;
 }
 export async function listExplanations(id: string) {
-  return await database()`SELECT id, body, author_name as "authorName", created_at as "createdAt" FROM explanations WHERE entry_id=${id} ORDER BY created_at LIMIT 100` as Explanation[];
+  return await database()`SELECT id, body, source_locale as "sourceLocale", translations, author_name as "authorName", created_at as "createdAt" FROM explanations WHERE entry_id=${id} ORDER BY created_at LIMIT 100` as Explanation[];
 }
-export async function addExplanation(id: string, body: string, authorId: string, authorName: string) {
-  return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name) VALUES (${id},${body},${authorId},${authorName}) RETURNING id`;
+export async function addExplanation(id: string, input:{body:string;sourceLocale?:'de'|'en';translation?:{body:string}}, authorId: string, authorName: string) {
+  const sourceLocale=input.sourceLocale??'de';const translation=storedTranslation(input,input.translation);
+  const translations=translation?{[otherLocale(sourceLocale)]:translation}:{};
+  return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
-  const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region'}, 'everyday-language': {kind:'situation',field:'context'} } as const;
+  const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region_id'}, 'everyday-language': {kind:'situation',field:'context_id'} } as const;
   if (mode in quiz) {
     // Column names are a fixed server allowlist; values remain parameterized.
     const {kind,field}=quiz[mode as keyof typeof quiz];

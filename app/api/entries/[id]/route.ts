@@ -12,5 +12,5 @@ export const GET = (_request: Request, ctx: Context) => safe(async () => {
 export const POST = (request: Request, ctx: Context) => safe(async () => {
   const user=await account(); const id=z.string().uuid().parse((await ctx.params).id); const input=await body(request,explanationInput);
   if(!await getEntry(id)) throw new GameError('Dieser Beitrag wurde nicht gefunden.',404);
-  await rateLimit(`explanation:${user.id}`,40); await addExplanation(id,input.body,user.id,user.name); return respond({ok:true},201);
+  await rateLimit(`explanation:${user.id}`,40); await addExplanation(id,input,user.id,user.name); return respond({ok:true},201);
 });

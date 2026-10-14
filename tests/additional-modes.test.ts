@@ -97,5 +97,5 @@ test('all mode instructions and new seed explanations have English translations'
     if(mode[key])assert.notEqual(translate(mode[key],'en'),mode[key],`${mode.id}: ${key}`);
   }
   for(const entry of extraSeeds){assert.ok(entryInput.safeParse(entry).success);assert.notEqual(localizeEntry(entry,'en').meaning,entry.meaning);}
-  const community={...extraSeeds[0],status:'community' as const};assert.equal(localizeEntry(community,'en'),community);
+  const community={...extraSeeds[0],status:'community' as const};assert.equal(localizeEntry(community,'en').meaning,community.meaning);assert.equal(localizeEntry(community,'en').region,'Northern Germany');
 });

@@ -2,6 +2,8 @@ import type { Entry } from './content';
 import type { Locale } from './translations';
 import { englishWordMeanings } from './word-seeds';
 import { extraEnglish } from './extra-seeds';
+import { localizedTexts } from './content-translations';
+import { categoryId, categoryLabel } from './quiz-categories';
 const meanings = [
   'The real cause or the crucial point of a problem.',
   'To understand absolutely nothing about what is being discussed.',
@@ -47,11 +49,18 @@ const culturalNotes = [
   'Expresses mistrust of a suspicious situation.',
   'A similar image is also used in German.',
 ];
-export function localizeEntry(entry: Entry, locale: Locale): Entry {
+function localizeCuratedEntry(entry: Entry, locale: Locale): Entry {
   if (locale === 'en' && entry.status === 'curated' && extraEnglish[entry.id]) return {...entry,...extraEnglish[entry.id]};
   if (locale === 'en' && entry.status === 'curated' && englishWordMeanings[entry.id]) return {...entry,meaning:englishWordMeanings[entry.id]};
   if (locale !== 'en' || entry.status !== 'curated' || !entry.id.startsWith('10000000-0000-4000-8000-')) return entry;
   const index=Number(entry.id.slice(-12))-1;
   if(!meanings[index])return entry;
   return {...entry, meaning:meanings[index],literal:literals[index],culturalNote:culturalNotes[index]};
+}
+export function localizeEntry(entry:Entry,locale:Locale):Entry {
+  const result=entry.status==='curated'?localizeCuratedEntry(entry,locale):localizedTexts(entry,locale);
+  const regionId=entry.regionId??categoryId('region',entry.region);
+  const contextId=entry.contextId??categoryId('context',entry.context);
+  if(!regionId&&!contextId)return result;
+  return {...result,...(regionId?{regionId,region:categoryLabel('region',regionId,locale)}:{}),...(contextId?{contextId,context:categoryLabel('context',contextId,locale)}:{})};
 }

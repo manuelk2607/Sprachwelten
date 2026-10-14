@@ -1,24 +1,32 @@
 import assert from 'node:assert/strict';
 import { neon } from '@neondatabase/serverless';
 import { gamePrompts } from '../db/repository';
+import { textsOf } from '../lib/content-translations';
+import { translationCacheKey } from '../lib/translation-service';
 const base=process.env.TEST_BASE_URL??'http://localhost:5176';
-type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};};
+type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;explanations?:any[];};
 const cookieJar=new Map<string,string>();
 async function request(path:string,data?:unknown,token?:string,cookies=false){
   const res=await fetch(base+path,{method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json',Origin:base}:{}),...(token?{Authorization:`Bearer ${token}`}:{}) ,...(cookies?{Cookie:[...cookieJar].map(([k,v])=>`${k}=${v}`).join('; ')}:{})},...(data?{body:JSON.stringify(data)}:{})});
   if(cookies)for(const raw of res.headers.getSetCookie()){const [part]=raw.split(';');const split=part.indexOf('=');cookieJar.set(part.slice(0,split),part.slice(split+1));}
   const payload=await res.json() as Payload;return {status:res.status,data:payload};
 }
-const createdIds:string[]=[];const roomCodes:string[]=[];let accountId:string|undefined;let code:string|undefined;
+const createdIds:string[]=[];const roomCodes:string[]=[];const cacheKeys:string[]=[];let accountId:string|undefined;let code:string|undefined;
 const stamp=Date.now();const email=`qa-${stamp}@sprachwelten.invalid`;const password=crypto.randomUUID()+'!Aa1';
 try{
   const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length>=20);
   assert.equal((await request('/api/entries',{phrase:'Unauthorized test',language:'de',meaning:'No anonymous contributions.'})).status,401);
   const signup=await request('/api/auth/sign-up/email',{email,password,name:'QA Sprachwelten'},undefined,true);assert.equal(signup.status,200,JSON.stringify(signup.data));accountId=signup.data.user?.id;
   const session=await request('/api/auth/get-session',undefined,undefined,true);assert.equal(session.status,200);assert.ok(session.data.user?.id);accountId=session.data.user!.id;
-  const entry=await request('/api/entries',{kind:'dialect',phrase:`QA-${stamp}`,language:'de',meaning:'Nur ein kurzlebiger Integrationstest.',region:'Testregion'},undefined,true);assert.equal(entry.status,201,JSON.stringify(entry.data));createdIds.push(entry.data.entry.id);assert.equal(entry.data.entry.status,'community');
+  const entry=await request('/api/entries',{kind:'dialect',phrase:`QA-${stamp}`,language:'de',meaning:'Nur ein kurzlebiger Integrationstest.',regionId:'at',sourceLocale:'de',translation:{meaning:'Only a temporary integration test.'},translationReviewed:true},undefined,true);assert.equal(entry.status,201,JSON.stringify(entry.data));createdIds.push(entry.data.entry.id);assert.equal(entry.data.entry.status,'community');assert.equal(entry.data.entry.regionId,'at');assert.equal(entry.data.entry.translations.en.meaning,'Only a temporary integration test.');assert.equal(entry.data.entry.meaning,'Nur ein kurzlebiger Integrationstest.');
   for(const kind of ['word','tongue_twister']){const added=await request('/api/entries',{kind,phrase:kind==='word'?`QA-word-${stamp}`:'She sells seashells by the seashore.',language:'en'},undefined,true);assert.equal(added.status,201);createdIds.push(added.data.entry.id);assert.equal(added.data.entry.meaning,'');if(kind==='word')assert.ok((await gamePrompts('language-quiz')).some(prompt=>prompt.id===added.data.entry.id));}
-  const explanation=await request(`/api/entries/${entry.data.entry.id}`,{body:'Eine zusätzliche Erklärung für den Integrationstest.'},undefined,true);assert.equal(explanation.status,201);
+  const explanation=await request(`/api/entries/${entry.data.entry.id}`,{body:'Eine zusätzliche Erklärung für den Integrationstest.',sourceLocale:'de',translation:{body:'An additional explanation for the integration test.'},translationReviewed:true},undefined,true);assert.equal(explanation.status,201);
+  const detail=await request(`/api/entries/${entry.data.entry.id}`);assert.equal(detail.data.explanations![0].translations.en.body,'An additional explanation for the integration test.');
+  assert.equal((await request('/api/translations',{sourceLocale:'de',texts:{meaning:'Ein Text für die Übersetzung.'}})).status,401);
+  const source=textsOf({meaning:`Ein Cachetest ${stamp}.`});const cacheKey=await translationCacheKey(source,'de');cacheKeys.push(cacheKey);
+  const testSql=neon(process.env.DATABASE_URL_UNPOOLED!);await testSql`INSERT INTO translation_suggestions(cache_key,result) VALUES (${cacheKey},${JSON.stringify(textsOf({meaning:'A cached translation.'}))}::jsonb)`;
+  for(let attempt=0;attempt<2;attempt++){const suggestion=await request('/api/translations',{sourceLocale:'de',texts:source},undefined,true);assert.equal(suggestion.status,200);assert.equal(suggestion.data.cached,true);assert.equal(suggestion.data.translation.meaning,'A cached translation.');}
+  if(!process.env.DEEPL_API_KEY)assert.equal((await request('/api/translations',{sourceLocale:'de',texts:{meaning:`Ein nicht übersetzter Text ${stamp}.`}},undefined,true)).status,503);
   await request('/api/auth/sign-out',{},undefined,true);assert.equal((await request('/api/entries',{phrase:'Signed out test',language:'de',meaning:'Session must be invalid after logout.'},undefined,true)).status,401);
   const badLogin=await request('/api/auth/sign-in/email',{email,password:'wrong-password'},undefined,true);assert.equal(badLogin.status,401);
   const login=await request('/api/auth/sign-in/email',{email,password},undefined,true);assert.equal(login.status,200);assert.ok((await request('/api/auth/get-session',undefined,undefined,true)).data.user?.id);
@@ -55,15 +63,15 @@ try{
   assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((p:any)=>p.score),[10,0]);
   const solo=await request('/api/rooms',{name:'QA Solo',mode:'language-quiz'});assert.equal(solo.status,201);roomCodes.push(solo.data.room.code);assert.equal((await request(`/api/rooms/${solo.data.room.code}`,{action:'start'},solo.data.token!)).data.room.phase,'voting');
   for(const mode of ['dialect-detective','everyday-language']) {
-    const added=await request('/api/entries',{kind:mode==='dialect-detective'?'dialect':'situation',phrase:`QA-${mode}-${stamp}`,language:'de',meaning:'An original explanation for this test.',region:'Testregion',context:'Dank'},undefined,true);
+    const added=await request('/api/entries',{kind:mode==='dialect-detective'?'dialect':'situation',phrase:`QA-${mode}-${stamp}`,language:'de',meaning:'An original explanation for this test.',regionId:'at',contextId:'thanks'},undefined,true);
     assert.equal(added.status,201);createdIds.push(added.data.entry.id);assert.ok((await gamePrompts(mode as 'dialect-detective'|'everyday-language')).some(entry=>entry.id===added.data.entry.id));
     const host=await request('/api/rooms',{name:`QA ${mode.slice(0,8)}`,mode,locale:'en'});assert.equal(host.status,201);code=host.data.room.code;roomCodes.push(code!);
     current=await request(`/api/rooms/${code}`,{action:'start'},host.data.token!);assert.equal(current.status,200);
     for(let round=0;round<5;round++) {
       const projected=current.data.room;assert.equal(projected.phase,'voting');assert.equal(projected.options.length,4);assert.equal(projected.revelation,null);assert.ok(!('region' in projected.prompt)&&!('context' in projected.prompt));
       const rows=await sql`SELECT state->'round'->'entry' AS entry FROM game_rooms WHERE code=${code}`;
-      const entry=rows[0].entry as {region:string;context:string};const target=mode==='dialect-detective'?entry.region:entry.context;
-      const correct=projected.options.find((option:any)=>option.text===target);assert.ok(correct);
+      const entry=rows[0].entry as {regionId:string;contextId:string};const target=mode==='dialect-detective'?entry.regionId:entry.contextId;
+      const correct=projected.options.find((option:any)=>option.categoryId===target);assert.ok(correct);
       const reveal=await request(`/api/rooms/${code}`,{action:'vote',optionId:correct.id},host.data.token!);assert.equal(reveal.data.room.phase,'reveal');assert.equal(reveal.data.room.options.filter((option:any)=>option.correct).length,1);
       current=await request(`/api/rooms/${code}`,{action:'next'},host.data.token!);assert.equal(current.status,200);
     }
@@ -88,9 +96,10 @@ try{
     current=await request(`/api/rooms/${code}`,{action:'next'},speechTokens[0]);assert.equal(current.status,200);
   }
   assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((player:any)=>player.score),[20,20,20]);
-  console.log('PASS: auth, protected community contributions, five complete rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
+  console.log('PASS: auth, bilingual community contributions, fixed quiz IDs, cached translations and missing-key fallback, five complete rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
 }finally{
   const sql=neon(process.env.DATABASE_URL_UNPOOLED!);
+  for(const key of cacheKeys)await sql`DELETE FROM translation_suggestions WHERE cache_key=${key}`;
   for(const id of createdIds)await sql`DELETE FROM content_entries WHERE id=${id}`;
   for(const roomCode of roomCodes)await sql`DELETE FROM game_rooms WHERE code=${roomCode}`;
   if(accountId) { await request('/api/auth/sign-out',{},undefined,true); /* Disposable auth identity is retained; no provider-side destructive operation. */ }

@@ -1,12 +1,14 @@
 import { languages, ratingScores, type Entry, type RatingScores, type RoomAction } from './content';
 import type { Locale } from './translations';
 import { localizeEntry } from './entry-localization';
-import { contextPool, isQuizMode, modeInfo, prepareChoices, prepareLanguageQuiz, regionPool, type PlayableGameMode } from './modes';
+import { isQuizMode, modeInfo, prepareChoices, prepareLanguageQuiz, type PlayableGameMode } from './modes';
 import { shuffled } from './random';
+import { categoryId, categoryLabel, contextIds, regionIds, type CategoryKind } from './quiz-categories';
+import { translationStatus } from './content-translations';
 
 export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished';
 export type Player={id:string;name:string;tokenHash:string;score:number};
-export type Option={id:string;text:string;authorId:string|null;language?:string};
+export type Option={id:string;text:string;authorId:string|null;language?:string;categoryId?:string;categoryKind?:CategoryKind};
 export type PronunciationRound={speakerIndex:number;ratings:Record<string,Record<string,RatingScores>>};
 export type Round={entry:Entry;answers:Record<string,string>;votes:Record<string,string>;options:Option[];pronunciation?:PronunciationRound};
 export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number};
@@ -27,14 +29,16 @@ function newRound(game:Game) {
   if(game.mode==='tongue-twisters') {
     game.round.pronunciation={speakerIndex:0,ratings:{}};game.phase='speaking';
   } else if(isQuizMode(game.mode)) {
+    const categoryKind=game.mode==='dialect-detective'?'region':'context';
+    const target=categoryKind==='region'?(entry.regionId??categoryId('region',entry.region)):(entry.contextId??categoryId('context',entry.context));
     const choices=game.mode==='language-quiz'
       ?prepareLanguageQuiz(entry.phrase,entry.language,Object.keys(languages)).options
-      :prepareChoices(game.mode==='dialect-detective'?entry.region:entry.context,game.mode==='dialect-detective'?regionPool:contextPool);
-    game.round.options=choices.map(value=>({id:crypto.randomUUID(),text:game.mode==='language-quiz'?(languages[value]??value):value,authorId:null,...(game.mode==='language-quiz'?{language:value}:{})}));
+      :prepareChoices(target??'',categoryKind==='region'?regionIds:contextIds);
+    game.round.options=choices.map(value=>({id:crypto.randomUUID(),text:game.mode==='language-quiz'?(languages[value]??value):categoryLabel(categoryKind,value,game.locale),authorId:null,...(game.mode==='language-quiz'?{language:value}:{categoryId:value,categoryKind})}));
     game.phase='voting';
   }
 }
-const correctOption=(game:Omit<Game,'prompts'>,option:Option)=>game.mode==='language-quiz'?option.language===game.round?.entry.language:game.mode==='dialect-detective'?option.text===game.round?.entry.region:game.mode==='everyday-language'?option.text===game.round?.entry.context:option.authorId===null;
+const correctOption=(game:Omit<Game,'prompts'>,option:Option)=>game.mode==='language-quiz'?option.language===game.round?.entry.language:game.mode==='dialect-detective'?(option.categoryId?option.categoryId===game.round?.entry.regionId:option.text===game.round?.entry.region):game.mode==='everyday-language'?(option.categoryId?option.categoryId===game.round?.entry.contextId:option.text===game.round?.entry.context):option.authorId===null;
 const rounded=(value:number)=>Math.round(value*10)/10;
 function pronunciationResults(game:Omit<Game,'prompts'>) {
   return game.players.map(player=>{
@@ -51,7 +55,7 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(game.phase!=='lobby')throw new GameError('Das Spiel läuft bereits.');
     const info=modeInfo(game.mode);
     if(game.players.length<info.minPlayers)throw new GameError(info.minPlayers===2?'Zum Start braucht ihr mindestens 2 Personen.':'Zum Start braucht ihr mindestens 3 Personen.');
-    const eligible=prompts.filter(entry=>entry.kind===info.kind&&(game.mode!=='dialect-detective'||entry.region.trim())&&(game.mode!=='everyday-language'||entry.context.trim()));
+    const eligible=prompts.filter(entry=>entry.kind===info.kind&&(game.mode!=='dialect-detective'||categoryId('region',entry.regionId??entry.region))&&(game.mode!=='everyday-language'||categoryId('context',entry.contextId??entry.context)));
     const unique=[...new Map(eligible.map(entry=>[entry.phrase.trim().toLocaleLowerCase(),entry])).values()];
     if(unique.length<game.totalRounds)throw new GameError('Es sind noch nicht genügend Spielkarten vorhanden.');
     game.prompts=shuffled(unique).slice(0,game.totalRounds).map(entry=>localizeEntry(entry,game.locale??'de'));
@@ -127,14 +131,14 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
     roundNumber:Math.min(game.roundIndex+1,game.totalRounds),totalRounds:game.totalRounds,
     players:game.players.map(p=>({id:p.id,name:p.name,score:p.score,answered:!!round?.answers[p.id],voted:!!round?.votes[p.id],rated:!!activeRatings[p.id]})),
     prompt:round?{phrase:round.entry.phrase,...(!quiz||game.mode==='everyday-language'?{language:round.entry.language,literal:round.entry.literal}:{})}:null,
-    options:round&&game.phase!=='writing'?round.options.map(option=>({id:option.id,text:option.text,isOwn:option.authorId===playerId,...(option.language?{language:option.language}:{}),...(revealed?{correct:correctOption(game,option),authorName:quiz?'':game.players.find(p=>p.id===option.authorId)?.name??'Die echte Bedeutung',voters:Object.entries(round.votes).filter(([,id])=>id===option.id).map(([id])=>game.players.find(p=>p.id===id)!.name)}:{})})):[],
+    options:round&&game.phase!=='writing'?round.options.map(option=>({id:option.id,text:option.text,isOwn:option.authorId===playerId,...(option.language?{language:option.language}:{}),...(option.categoryId?{categoryId:option.categoryId,categoryKind:option.categoryKind}:{}),...(revealed?{correct:correctOption(game,option),authorName:quiz?'':game.players.find(p=>p.id===option.authorId)?.name??'Die echte Bedeutung',voters:Object.entries(round.votes).filter(([,id])=>id===option.id).map(([id])=>game.players.find(p=>p.id===id)!.name)}:{})})):[],
     selectedOptionId:round?.votes[playerId]??null,
     pronunciation:performance&&speaker?{
       speaker:{id:speaker.id,name:speaker.name},speakerNumber:performance.speakerIndex+1,totalSpeakers:game.players.length,
       ratingCount:Object.keys(activeRatings).length,requiredRatings:game.players.length-1,hasRated:!!activeRatings[playerId],
       results:revealed?pronunciationResults(game):[],
     }:null,
-    revelation:revealed&&round?{language:round.entry.language,region:round.entry.region,context:round.entry.context,meaning:round.entry.meaning,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.authorName}:null,
+    revelation:revealed&&round?{language:round.entry.language,region:round.entry.region,regionId:round.entry.regionId,context:round.entry.context,contextId:round.entry.contextId,meaning:round.entry.meaning,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.authorName,sourceLocale:round.entry.sourceLocale??'de',translationStatus:round.entry.status==='curated'?'original' as const:translationStatus(round.entry,game.locale)}:null,
   };
 }
 export type GameView=ReturnType<typeof viewGame>;

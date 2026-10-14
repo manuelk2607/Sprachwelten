@@ -9,6 +9,8 @@ import { Header } from './header';
 import { AuthDialog } from './auth-dialog';
 import { RoomForm } from './room-form';
 import { isQuizMode, modeInfo } from '@/lib/modes';
+import { categoryLabel } from '@/lib/quiz-categories';
+import { TranslationNotice } from './translation-notice';
 import { PronunciationRound, PronunciationResults } from './pronunciation-round';
 
 export function GameRoom({code}:{code:string}) {
@@ -71,7 +73,7 @@ export function GameRoom({code}:{code:string}) {
   const pronunciation=room?.mode==='tongue-twisters';
   const info=modeInfo(room?.mode);
   const minimum=info.minPlayers;
-  const optionText=(option:GameView['options'][number])=>option.language?t(languages[option.language]??option.language):quiz?t(option.text):option.text;
+  const optionText=(option:GameView['options'][number])=>option.language?t(languages[option.language]??option.language):option.categoryId&&option.categoryKind?categoryLabel(option.categoryKind,option.categoryId,locale):quiz?t(option.text):option.text;
   const ranking=room?[...room.players].sort((a,b)=>b.score-a.score):[];
   const winners=ranking.filter(p=>p.score===ranking[0]?.score);
   async function copyInvite() {
@@ -118,10 +120,11 @@ export function GameRoom({code}:{code:string}) {
             {room.phase==='reveal'&&<>
               <div className="revelation"><Lightbulb size={26}/><div>
                 <span className="eyebrow">{t(info.revealTitle)}</span>
-                <h2>{room.mode==='language-quiz'?t(languages[room.revelation?.language??'']??room.revelation?.language??''):room.mode==='dialect-detective'?t(room.revelation?.region??''):room.mode==='everyday-language'?t(room.revelation?.context??''):pronunciation?t('Ein Text, eure Fortschritte.'):room.revelation?.meaning}</h2>
+                <h2>{room.mode==='language-quiz'?t(languages[room.revelation?.language??'']??room.revelation?.language??''):room.mode==='dialect-detective'?room.revelation?.regionId?categoryLabel('region',room.revelation.regionId,locale):t(room.revelation?.region??''):room.mode==='everyday-language'?room.revelation?.contextId?categoryLabel('context',room.revelation.contextId,locale):t(room.revelation?.context??''):pronunciation?t('Ein Text, eure Fortschritte.'):room.revelation?.meaning}</h2>
                 {(quiz||pronunciation)&&room.revelation?.meaning&&<p>{room.revelation.meaning}</p>}
                 {room.revelation?.example&&<blockquote>{room.revelation.example}</blockquote>}
                 <p>{room.revelation?.culturalNote}</p>
+                {room.revelation?.status==='community'&&<TranslationNotice status={room.revelation.translationStatus} sourceLocale={room.revelation.sourceLocale}/>}
                 {(quiz||pronunciation)&&room.revelation?.status==='community'&&<p className="muted">{t('Community-Beitrag')} · {room.revelation.authorName}</p>}
                 {room.revelation?.sourceUrl&&<a className="text-link" href={room.revelation.sourceUrl} target="_blank" rel="noreferrer">{t('Quelle ansehen')}<ArrowRight size={14}/></a>}
               </div></div>

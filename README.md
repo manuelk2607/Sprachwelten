@@ -11,8 +11,8 @@ Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Q
 - **Kann man das so sagen?**: Formulierungen einem von vier Gesprächskontexten zuordnen und Ton, Höflichkeit und Verwendung kennenlernen. 1–10 Personen und fünf Runden.
 - **Entdecken**: 50 Startkarten (20 Redewendungen, zehn Wörter, sechs regionale Ausdrücke, acht Alltagssituationen und sechs Zungenbrecher), Suche, Sprachfilter, Bedeutungen, Beispielsätze, kulturelle Hinweise und Quellenlinks.
 - **Mitmachen**: Registrierung und Anmeldung mit E-Mail und Passwort über Managed Better Auth auf Neon. Angemeldete Mitglieder können eigene Einträge und zusätzliche Erklärungen veröffentlichen. Spielen und Lesen sind in der App ohne Konto möglich.
-- **Deutsch und Englisch**: Umschalter DE/EN mit gespeicherter Präferenz. Die Startsammlung enthält Erklärungen in beiden Sprachen. Der Gastgeber wählt die Sprache der Spielkarten; Beiträge aus der Community bleiben in ihrer Originalsprache.
-- **Gemeinsame Inhalte**: Alle fünf Eintragstypen können beigetragen werden. Dialekte benötigen eine Region, Alltagssituationen einen Gesprächskontext. Wörter, Dialekte, Situationen und Zungenbrecher können direkt in ihrem passenden Spielmodus erscheinen.
+- **Deutsch und Englisch**: Umschalter DE/EN mit gespeicherter Präferenz. Die Startsammlung enthält Erklärungen in beiden Sprachen. Der Gastgeber wählt die Sprache der Spielkarten. Eigene Erklärungen, Beispiele und kulturelle Hinweise können mit getrennten DE/EN-Fassungen veröffentlicht werden. Originalausdrücke bleiben unverändert; fehlende Übersetzungen werden mit Originalsprache gekennzeichnet.
+- **Gemeinsame Inhalte**: Alle fünf Eintragstypen können beigetragen werden. Dialekte benötigen eine Region, Alltagssituationen einen Gesprächskontext aus festen zweisprachigen Kategorien. Die drei falschen Quizantworten werden aus anderen Kategorien ergänzt. Wörter, Dialekte, Situationen und Zungenbrecher können direkt in ihrem passenden Spielmodus erscheinen.
 
 
 Community-Beiträge sind sichtbar gekennzeichnet. Das Bluffspiel nutzt die separat gepflegte Startsammlung. Die übrigen Modi nutzen Startkarten und passende Community-Beiträge. Quizfragen verwenden die angegebene Sprache, Region oder Situation als Lösung. Schreibweisen, die beim selben Inhaltstyp mehreren Lösungen zugeordnet sind, werden ausgelassen, ebenso doppelte Ausdrücke innerhalb einer Partie. Die Erläuterungen wurden für dieses Projekt formuliert; Quellen dienen der Nachprüfung. Sprachkenntnisse sind zum Bluffen nicht erforderlich.
@@ -36,7 +36,7 @@ Die `.env.local` enthält den gepoolten `DATABASE_URL`, den direkten `DATABASE_U
 
 ## Architektur
 
-TypeScript (`.ts`, `.tsx`, `.mts`) für Anwendung, Konfiguration und eigene Laufzeitskripte; React / Next.js App Router über Vinext und Vite; serverseitige HTTP-Abfragen mit `@neondatabase/serverless`; PostgreSQL auf Neon. Die öffentliche Anwendung läuft über Sites auf Cloudflare Workers. Der Code kann unabhängig davon mit eigener Infrastruktur betrieben werden.
+TypeScript (`.ts`, `.tsx`, `.mts`) für Anwendung, Konfiguration und eigene Laufzeitskripte; React / Next.js App Router über Vinext und Vite; serverseitige HTTP-Abfragen mit `@neondatabase/serverless`; PostgreSQL auf Neon. Die Anwendung ist für Cloudflare Workers vorbereitet und kann direkt im eigenen Cloudflare-Konto oder über Sites veröffentlicht werden. Der Code kann unabhängig davon mit eigener Infrastruktur betrieben werden.
 
 - `lib/game.ts`: Spielregeln, Phasen, Wertung und explizite öffentliche Projektion.
 - `lib/i18n.tsx` / `lib/translations.ts`: zweisprachige Oberfläche; `lib/entry-localization.ts`: englische Startsammlung.
@@ -54,6 +54,28 @@ Eine Spieleridentität besteht aus einem zufälligen raumbezogenen Token. Der Se
 
 Schreibanfragen sind an dieselbe Origin gebunden und begrenzt. Autoren werden aus der serverseitigen Sitzung übernommen. Beiträge werden als Text dargestellt. Die Queries sind paginiert, liefern benannte Spalten und schließen zukünftige Spielkarten schon in SQL aus Polling-Abfragen aus. Räume werden nach 24 Stunden unzugänglich.
 
+## Zweisprachige Community-Beiträge und DeepL
+
+`source_locale` bezeichnet die Sprache der Erklärung, unabhängig von der Sprache des Originalausdrucks. Der Originaltext bleibt in den bisherigen Spalten, die zweite Sprachfassung liegt in `translations` als JSON. Beide Fassungen werden getrennt gespeichert. Die Formularvorschau kann vor der Veröffentlichung bearbeitet werden und benötigt eine Bestätigung. Auch zusätzliche Erklärungen unterstützen beide Sprachen. Fehlende Felder zeigen den Originaltext mit Sprachhinweis; für kulturelle Nuancen ist die Prüfung durch den Beitragenden erforderlich. Ändert sich der Ausgangstext im Formular, wird eine vorhandene zweite Fassung zurückgesetzt.
+
+Für Vorschläge `DEEPL_API_KEY` als **serverseitiges Geheimnis** hinterlegen. Verwendet wird ausschließlich `https://api-free.deepl.com/v2/translate`. Die App sendet nur Erklärungstexte, keine Originalausdrücke, Konto- oder Sitzungsdaten. Ohne Schlüssel und bei Ausfällen bleiben manuelle Übersetzungen und Originaltexte verfügbar. Es findet keine Übersetzung während Spielrunden oder Polling statt. `/api/translations` erfordert eine Anmeldung und begrenzt Vorschläge pro Mitglied auf 20 pro Stunde. Vorschläge werden anhand von Text und Sprachrichtung in der Datenbank wiederverwendet. Ein konservatives appweites Limit reserviert maximal 450.000 Zeichen pro UTC-Monat; fehlgeschlagene Versuche behalten ihre Reservierung. Das ergänzt die Limits des DeepL-Kontos und ersetzt sie nicht.
+
+Neue Quizbeiträge speichern Sprachcodes, `region_id` beziehungsweise `context_id`. Anzeigenamen werden separat lokalisiert, die Wertung verwendet die Kennungen. Migration 004 ordnet bekannte Altbezeichnungen zu. Unbekannte alte Regionen/Kontexte bleiben in der Sammlung erhalten und werden im Quiz ausgelassen, bis sie einer Kategorie zugeordnet sind.
+
+## Direkt im eigenen Cloudflare-Konto veröffentlichen
+
+```sh
+npm run typecheck
+npm test
+npm run build
+npx wrangler login
+npm run deploy:cloudflare
+```
+
+Das TypeScript-Skript verwendet den erzeugten Worker-Build, aktiviert `workers.dev` für den Worker `sprachwelten` und übernimmt `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` sowie optional `DEEPL_API_KEY` aus `.env.local` als Cloudflare-Secrets. Der direkte Datenbankzugang für Migrationen wird nicht hochgeladen. Die temporäre Secret-Datei wird nach dem Aufruf entfernt. Bestehende Dashboard-Variablen und Secrets bleiben erhalten. Bei mehreren Konten `CLOUDFLARE_ACCOUNT_ID` setzen. Die neue Origin muss vor einem Anmeldetest in Neon Auth als vertrauenswürdige Domain eingetragen werden. Die Datenbank bleibt dieselbe, es werden keine Inhalte in ein neues Projekt kopiert.
+
+Ein später ergänzter DeepL-Schlüssel kann mit `npx wrangler secret put DEEPL_API_KEY --name sprachwelten` direkt im Terminal eingegeben werden. Schlüssel nicht in Git oder im Chat speichern. [DeepL-API-Dokumentation](https://developers.deepl.com/api-reference/translate/request-translation).
+
 ## Prüfen
 
 ```sh
@@ -64,7 +86,7 @@ npm run build
 node --env-file=.env.local --import tsx scripts/smoke.mts
 ```
 
-Die Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung, vollständige Spiele, vier Quizantworten, Aussprachebewertungen und englische Spielkarten. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte Beiträge, Community-Wörter, je fünf komplette Runden in allen fünf Modi durch, einschließlich konkurrierender Stimmen und Aussprachebewertungen sowie Solo-Quizstarts. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
+Die Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung, vollständige Spiele, vier Quizantworten, Aussprachebewertungen, englische Spielkarten, feste Kategoriekennungen, unveränderte Originalausdrücke, getrennte Übersetzungen sowie Fehlerantworten des DeepL-Anschlusses. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte zweisprachige Beiträge und Ergänzungen, gespeicherte Übersetzungsvorschläge, den Fall ohne Dienstschlüssel, Community-Wörter, je fünf komplette Runden in allen fünf Modi durch, einschließlich konkurrierender Stimmen und Aussprachebewertungen sowie Solo-Quizstarts. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
 
 ## Betrieb und nächste Schritte
 

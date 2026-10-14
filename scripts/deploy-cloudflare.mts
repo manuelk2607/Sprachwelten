@@ -14,7 +14,7 @@ const configPath=path.join(directory,'wrangler.direct.json');
 writeFileSync(configPath,JSON.stringify(config,null,2)+'\n');
 const temporary=mkdtempSync(path.join(tmpdir(),'sprachwelten-secrets-'));
 try {
-  const keys=['DATABASE_URL','NEON_AUTH_BASE_URL','NEON_AUTH_COOKIE_SECRET','DEEPL_API_KEY'];
+  const keys=['DATABASE_URL','NEON_AUTH_BASE_URL','NEON_AUTH_COOKIE_SECRET','DEEPL_API_KEY','DEEPL_API_URL'];
   const secrets=Object.fromEntries(keys.filter(key=>process.env[key]?.trim()).map(key=>[key,process.env[key]]));
   if(!dryRun&&keys.slice(0,3).some(key=>!secrets[key]))throw new Error('Missing required production database/auth secrets. See .env.example.');
   const secretsPath=path.join(temporary,'secrets.json');writeFileSync(secretsPath,JSON.stringify(secrets),{mode:0o600});

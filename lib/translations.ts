@@ -1,5 +1,6 @@
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Der DeepL-Verbrauch kann gerade nicht geprüft werden. Du kannst die Übersetzung selbst ergänzen.':'DeepL usage cannot currently be checked. You can add the translation yourself.',
   "Sprache des Originalausdrucks":"Language of the original expression",
   "Richtige Region":"Correct region",
   "Richtiger Gesprächskontext":"Correct conversational context",

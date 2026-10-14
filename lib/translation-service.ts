@@ -5,10 +5,22 @@ import { otherLocale, textsOf, translationFields, translationKeys, type Translat
 import type { Locale } from './translations';
 
 export const translationRequest=z.object({sourceLocale:z.enum(['de','en']),texts:translationFields}).refine(input=>translationKeys.some(key=>input.texts[key]),{message:'Bitte zuerst einen Text für die Übersetzung eingeben.'});
+export const translationCharacterLimit=1_000_000;
 export function translationAvailable(){return !!process.env.DEEPL_API_KEY?.trim();}
+export function deeplBaseUrl(apiKey:string,configured=process.env.DEEPL_API_URL) {
+  if(configured)return z.enum(['https://api.deepl.com','https://api-free.deepl.com']).parse(configured);
+  // Same endpoint selection as the official DeepL clients, including legacy :fx keys.
+  return apiKey.endsWith(':fx')?'https://api-free.deepl.com':'https://api.deepl.com';
+}
+export async function checkDeepLAllowance(apiKey:string,characters:number,fetcher:typeof fetch=fetch) {
+  const response=await fetcher(`${deeplBaseUrl(apiKey)}/v2/usage`,{headers:{Authorization:`DeepL-Auth-Key ${apiKey}`},signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw new GameError('Der DeepL-Verbrauch kann gerade nicht geprüft werden. Du kannst die Übersetzung selbst ergänzen.',503);
+  const usage=z.object({character_count:z.number().nonnegative(),character_limit:z.number().nonnegative()}).parse(await response.json());
+  if(usage.character_count+characters>usage.character_limit)throw new GameError('Das Übersetzungskontingent ist aufgebraucht. Du kannst die Übersetzung selbst ergänzen.',429);
+}
 export async function requestDeepL(texts:TranslationTexts,sourceLocale:Locale,apiKey:string,fetcher:typeof fetch=fetch):Promise<TranslationTexts> {
   const keys=translationKeys.filter(key=>texts[key]);
-  const response=await fetcher('https://api-free.deepl.com/v2/translate',{
+  const response=await fetcher(`${deeplBaseUrl(apiKey)}/v2/translate`,{
     method:'POST',headers:{Authorization:`DeepL-Auth-Key ${apiKey}`,'Content-Type':'application/json'},
     body:JSON.stringify({text:keys.map(key=>texts[key]),source_lang:sourceLocale.toUpperCase(),target_lang:otherLocale(sourceLocale).toUpperCase(),preserve_formatting:true}),signal:AbortSignal.timeout(15000),
   });
@@ -31,9 +43,9 @@ export async function suggestTranslation(source:TranslationTexts,sourceLocale:Lo
   const apiKey=process.env.DEEPL_API_KEY?.trim();
   if(!apiKey)throw new GameError('Die automatische Übersetzung ist noch nicht eingerichtet. Du kannst die Übersetzung selbst ergänzen.',503);
   const characters=translationKeys.reduce((count,field)=>count+[...texts[field]].length,0);
-  const month=new Date().toISOString().slice(0,7);
-  // Conservative local cap below the API Free allowance. Failed attempts retain their reservation.
-  const reserved=await sql`INSERT INTO translation_usage(month,characters) VALUES (${month},${characters}) ON CONFLICT(month) DO UPDATE SET characters=translation_usage.characters+EXCLUDED.characters WHERE translation_usage.characters+EXCLUDED.characters<=450000 RETURNING characters`;
+  try{await checkDeepLAllowance(apiKey,characters);}catch(error){if(error instanceof GameError)throw error;throw new GameError('Der DeepL-Verbrauch kann gerade nicht geprüft werden. Du kannst die Übersetzung selbst ergänzen.',503);}
+  // Developer's allowance is a lifetime total. Failed attempts retain their reservation.
+  const reserved=await sql`INSERT INTO translation_usage(month,characters) VALUES ('lifetime',${characters}) ON CONFLICT(month) DO UPDATE SET characters=translation_usage.characters+EXCLUDED.characters WHERE translation_usage.characters+EXCLUDED.characters<=${translationCharacterLimit} RETURNING characters`;
   if(!reserved.length)throw new GameError('Das Übersetzungskontingent ist aufgebraucht. Du kannst die Übersetzung selbst ergänzen.',429);
   let result:TranslationTexts;
   try{result=await requestDeepL(texts,sourceLocale,apiKey);}catch(error){if(error instanceof GameError)throw error;throw new GameError('Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.',503);}

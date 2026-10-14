@@ -1,18 +1,21 @@
 # Sprachwelten
 
-Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Quellcode: Redewendungen entdecken, Erklärungen teilen und mit Freunden bluffen.
+Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Quellcode: Redewendungen entdecken, regionale Wörter und Gesprächskontexte erraten, Aussprache üben und mit Freunden bluffen.
 
 ## Spielmodi und Funktionen
 
 - **Was soll das heißen?**: Online-Bluffspiel für 3–10 Personen, fünf Runden, Einladungslink und gemeinsame Punktwertung. Alle erfinden eine plausible Bedeutung; anschließend wird die echte Erklärung zwischen den Bluffs gesucht.
 - **Wortdetektiv**: Ein Wort, vier Antwortsprachen und genau eine gesuchte Sprache. 1–10 Personen, fünf Runden, zwei Punkte je richtiger Antwort, gemeinsame Auflösung und Einladungslinks. Solo oder mit Freunden.
-- **Entdecken**: 20 Redewendungen und zehn Wörter, Suche, Sprachfilter, Bedeutungen, Beispielsätze, kulturelle Hinweise und Quellenlinks.
+- **Zungenbrecher**: 2–10 Personen, fünf Texte. Jede Person liest jeden Text im gemeinsamen Raum oder Sprachchat vor. Anschließend bewerten alle anderen Verständlichkeit, Genauigkeit und Rhythmus von 1 bis 5. Der Durchschnitt ergibt bis zu fünf Rundenpunkte; Die Oberfläche zeigt Durchschnittswerte pro Person und Kriterium. Bei zwei Personen entspricht der Durchschnitt der Bewertung durch die jeweils andere Person.
+- **So sagt man das bei uns**: Dialektquiz mit vier Regionen, Auflösung, Bedeutung und regionalen Hinweisen. 1–10 Personen und fünf Runden. Gesucht ist die beim Beitrag hinterlegte Region; regionale Wörter sind nicht exklusiv auf eine Gegend begrenzt.
+- **Kann man das so sagen?**: Formulierungen einem von vier Gesprächskontexten zuordnen und Ton, Höflichkeit und Verwendung kennenlernen. 1–10 Personen und fünf Runden.
+- **Entdecken**: 50 Startkarten (20 Redewendungen, zehn Wörter, sechs regionale Ausdrücke, acht Alltagssituationen und sechs Zungenbrecher), Suche, Sprachfilter, Bedeutungen, Beispielsätze, kulturelle Hinweise und Quellenlinks.
 - **Mitmachen**: Registrierung und Anmeldung mit E-Mail und Passwort über Managed Better Auth auf Neon. Angemeldete Mitglieder können eigene Einträge und zusätzliche Erklärungen veröffentlichen. Spielen und Lesen sind in der App ohne Konto möglich.
 - **Deutsch und Englisch**: Umschalter DE/EN mit gespeicherter Präferenz. Die Startsammlung enthält Erklärungen in beiden Sprachen. Der Gastgeber wählt die Sprache der Spielkarten; Beiträge aus der Community bleiben in ihrer Originalsprache.
-- **Weitere Modi**: Zungenbrecher (Nachsprechen und Bewertung durch Mitspieler), Dialekte und Alltagssituationen sind als „Bald verfügbar“ sichtbar. Wörter und Zungenbrecher können schon beigetragen werden. `lib/modes.ts` bereitet eindeutige Quizantworten und Bewertungskriterien vor. Noch kein Mikrofonzugriff und keine automatische Aussprachebewertung.
-- **Erweiterbares Fundament**: Die Eintragstypen `idiom`, `dialect`, `situation`, `word` und `tongue_twister` teilen eine Datenstruktur. Region, Sprachcode, Gesprächskontext, wörtliche Übersetzung und kulturelle Hinweise werden bereits gespeichert. Dialekte und Alltagseinträge können schon zur Sammlung beigetragen werden; eigene Spielmodi dafür folgen später.
+- **Gemeinsame Inhalte**: Alle fünf Eintragstypen können beigetragen werden. Dialekte benötigen eine Region, Alltagssituationen einen Gesprächskontext. Wörter, Dialekte, Situationen und Zungenbrecher können direkt in ihrem passenden Spielmodus erscheinen.
 
-Community-Beiträge sind sichtbar gekennzeichnet. Das Bluffspiel nutzt die separat gepflegte Startsammlung. Wortdetektiv nutzt Startwörter und Community-Wörter; die angegebene Sprache wird als Lösung verwendet. Schreibweisen, die in der Sammlung mehreren Sprachen zugeordnet sind, werden ausgelassen, ebenso doppelte Wörter innerhalb einer Partie. Die Erläuterungen wurden für dieses Projekt formuliert; Quellen dienen der Nachprüfung. Sprachkenntnisse sind zum Bluffen nicht erforderlich.
+
+Community-Beiträge sind sichtbar gekennzeichnet. Das Bluffspiel nutzt die separat gepflegte Startsammlung. Die übrigen Modi nutzen Startkarten und passende Community-Beiträge. Quizfragen verwenden die angegebene Sprache, Region oder Situation als Lösung. Schreibweisen, die beim selben Inhaltstyp mehreren Lösungen zugeordnet sind, werden ausgelassen, ebenso doppelte Ausdrücke innerhalb einer Partie. Die Erläuterungen wurden für dieses Projekt formuliert; Quellen dienen der Nachprüfung. Sprachkenntnisse sind zum Bluffen nicht erforderlich.
 
 ## Lokal starten
 
@@ -37,7 +40,9 @@ TypeScript (`.ts`, `.tsx`, `.mts`) für Anwendung, Konfiguration und eigene Lauf
 
 - `lib/game.ts`: Spielregeln, Phasen, Wertung und explizite öffentliche Projektion.
 - `lib/i18n.tsx` / `lib/translations.ts`: zweisprachige Oberfläche; `lib/entry-localization.ts`: englische Startsammlung.
-- `lib/modes.ts`: typisierte Modi, Quizvorbereitung und Aussprachebewertungen.
+- `lib/modes.ts`: alle fünf Modi, Spielerzahlen, Regeln und Quizvorbereitung.
+- `components/pronunciation-round.tsx`: Vorlesephase, geschützte Bewertung und Durchschnittswerte je Person.
+- `lib/extra-seeds.ts`: regionale Ausdrücke, Alltagssituationen und eigene Übungssätze mit deutschen und englischen Erläuterungen.
 - `lib/content.ts`: gemeinsame Inhaltstypen und Eingabeprüfung mit Zod.
 - `db/repository.ts`: parametrisierte Queries und atomare Änderungen an Räumen mit Versionsprüfung.
 - `db/migrations/`: Schema als versionierte Migrationen mit angewandtem Migrationsstand.
@@ -45,7 +50,7 @@ TypeScript (`.ts`, `.tsx`, `.mts`) für Anwendung, Konfiguration und eigene Lauf
 - `components/`: responsive Oberfläche mit nativen modalen Dialogen.
 - `lib/site.ts`: zentraler Appname und Repository-Link.
 
-Eine Spieleridentität besteht aus einem zufälligen raumbezogenen Token. Der Server speichert dessen SHA-256-Hash und prüft ihn vor jeder Spielaktion; Kontoidentität und Spielidentität sind getrennt. Lösungen, Zuordnung der Bluffs und kommende Karten erscheinen nicht in der Spielantwort vor ihrer vorgesehenen Phase. Die öffentliche Sammlung enthält ihre Bedeutungen bewusst; absichtliches Nachschlagen ist keine vom Spiel verhinderte Form des Schummelns.
+Eine Spieleridentität besteht aus einem zufälligen raumbezogenen Token. Der Server speichert dessen SHA-256-Hash und prüft ihn vor jeder Spielaktion; Kontoidentität und Spielidentität sind getrennt. Lösungen, Zuordnung der Bluffs und kommende Karten erscheinen nicht in der Spielantwort vor ihrer vorgesehenen Phase. Aussprachebewertungen sind an Sprecher, Runde und serverseitig geprüfte Mitspieleridentität gebunden. Selbstbewertungen, doppelte Bewertungen und Übertragungen aus einer früheren Runde werden abgewiesen; Rohbewertungen und Raterzuordnungen werden nicht veröffentlicht. Die öffentliche Sammlung enthält ihre Bedeutungen bewusst; absichtliches Nachschlagen ist keine vom Spiel verhinderte Form des Schummelns.
 
 Schreibanfragen sind an dieselbe Origin gebunden und begrenzt. Autoren werden aus der serverseitigen Sitzung übernommen. Beiträge werden als Text dargestellt. Die Queries sind paginiert, liefern benannte Spalten und schließen zukünftige Spielkarten schon in SQL aus Polling-Abfragen aus. Räume werden nach 24 Stunden unzugänglich.
 
@@ -59,7 +64,7 @@ npm run build
 node --env-file=.env.local --import tsx scripts/smoke.mts
 ```
 
-Die Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung, vollständige Spiele, vier Quizantworten, Aussprachebewertungen und englische Spielkarten. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte Beiträge, Community-Wörter, fünf Bluffrunden und fünf Quizrunden mit konkurrierenden Anfragen sowie einen Solo-Quizstart durch. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
+Die Verhaltenstests prüfen unter anderem versteckte Lösungen, Gastgeberrechte, doppelte Eingaben, Selbstwahl, Wertung, vollständige Spiele, vier Quizantworten, Aussprachebewertungen und englische Spielkarten. Der Integrationstest führt Registrierung, Sitzungsprüfung, Abmeldung, falsche/richtige Anmeldung, geschützte Beiträge, Community-Wörter, je fünf komplette Runden in allen fünf Modi durch, einschließlich konkurrierender Stimmen und Aussprachebewertungen sowie Solo-Quizstarts. Seine Inhalte und Räume werden danach entfernt. Er legt ein klar benanntes Testkonto unter `.invalid` an; die Auth-Identität bleibt beim Anbieter und kann dort administrativ verwaltet werden. CI führt Typprüfung und Verhaltenstests ohne externe Zugangsdaten aus.
 
 ## Betrieb und nächste Schritte
 
@@ -67,10 +72,12 @@ Die Website ist öffentlich unter https://sprachwelten.divinelynx3.chatgpt.site 
 
 Neons kostenloser Tarif genügt als Ausgangspunkt für kleine Freundesrunden. Bei dauerhaft aktivem Betrieb müssen Rechenzeit und Traffic gemessen werden. Die Spielfläche aktualisiert ihren Zustand höchstens etwa alle 3,5 Sekunden, pausiert bei verborgenem Tab und beendet Polling nach dem Ergebnis. Die Sammlung fragt nur bei Suche, Filtern oder Navigation nach. Aktuelle Ressourcenlimits: https://neon.com/pricing
 
-Noch offen für breiteren öffentlichen Betrieb: Moderation und Meldungen, Inhaltsbearbeitung, Raumverwaltung für ausgeschiedene Personen, regelmäßiges Entfernen abgelaufener Räume, verifizierte Sammlung, Mailversand/Passwort-Wiederherstellung mit eigener SMTP-Konfiguration, zusätzliche Spielmodi und Lasttests. Das Passwort-Reset-Formular ist vorbereitet; Zustellung wurde nicht getestet. Aktuell ist E-Mail-Verifizierung im Anbieterprojekt optional.
+Noch offen für breiteren öffentlichen Betrieb: Moderation und Meldungen, Inhaltsbearbeitung, Raumverwaltung für ausgeschiedene Personen, regelmäßiges Entfernen abgelaufener Räume, verifizierte Sammlung, Mailversand/Passwort-Wiederherstellung mit eigener SMTP-Konfiguration, Lasttests und optionale Audiofunktionen. Das Passwort-Reset-Formular ist vorbereitet; Zustellung wurde nicht getestet. Aktuell ist E-Mail-Verifizierung im Anbieterprojekt optional.
 
 ## Repository
 
 https://github.com/manuelk2607/sprachwelten
 
 Dieses Repository enthält keinen Code oder Daten aus anderen Spielen des Besitzers.
+
+Zungenbrecher sind ein gemeinsames Vorlesespiel. Der Ton kommt aus eurem vorhandenen Sprachchat oder dem gemeinsamen Raum; die App speichert die Bewertungen. Sie zeichnet keine Audiodaten auf.

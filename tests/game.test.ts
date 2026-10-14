@@ -42,6 +42,6 @@ test('join blocks duplicate names, full rooms and games already started',()=>{
   act(g,'p0',{action:'start'},seedEntries);assert.throws(()=>joinGame(g,{...players[0],id:'late',name:'Late'}),GameError);
 });
 test('all three content types validate and untrusted inputs cannot choose author or curated status',()=>{
-  for(const kind of ['idiom','dialect','situation']){const input=entryInput.parse({kind,phrase:'Ein Ausdruck',language:'de',meaning:'Eine verständliche Erklärung.',authorId:'forged',status:'curated'});assert.equal(input.kind,kind);assert.ok(!('authorId' in input));assert.ok(!('status' in input));}
+  for(const kind of ['idiom','dialect','situation']){const input=entryInput.parse({kind,phrase:'Ein Ausdruck',language:'de',meaning:'Eine verständliche Erklärung.',region:'Berlin',context:'Informelle Begrüßung',authorId:'forged',status:'curated'});assert.equal(input.kind,kind);assert.ok(!('authorId' in input));assert.ok(!('status' in input));}
   assert.throws(()=>entryInput.parse({phrase:'Valid phrase',language:'not-a-language',meaning:'A valid explanation.'}));assert.throws(()=>entryInput.parse({phrase:'Valid phrase',language:'en',meaning:'A valid explanation.',sourceUrl:'javascript:alert(1)'}));
 });

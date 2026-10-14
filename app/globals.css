@@ -15,3 +15,5 @@
 .option.selected-answer small{display:block;margin-top:5px;font-weight:600}
 .option.selected-answer:disabled{opacity:1}
 .prompt-card h1{overflow-wrap:anywhere}
+
+.pronunciation-turn{margin-top:28px}.pronunciation-turn>h2{font-size:29px;margin:15px 0}.pronunciation-turn>.muted{margin-bottom:24px}.rating-form{margin-top:24px}.rating-form label small{font-size:12px;color:var(--muted);font-weight:400;line-height:1.5}.pronunciation-results{margin:24px 0}.pronunciation-results>h3{margin-bottom:16px}.pronunciation-result{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;padding:20px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}.pronunciation-result>div{display:flex;flex-direction:column;gap:5px}.pronunciation-result span{font-size:12px;color:var(--muted)}.pronunciation-result>b{color:#557247}.pronunciation-result dl{display:flex;flex-wrap:wrap;gap:18px;width:100%;margin:0}.pronunciation-result dt{font-size:11px;color:var(--muted)}.pronunciation-result dd{margin:5px 0 0;font-weight:600}

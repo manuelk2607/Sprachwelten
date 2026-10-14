@@ -16,6 +16,8 @@ export const entryInput = z.object({
 }).superRefine((input, ctx) => {
   if (!['word','tongue_twister'].includes(input.kind) && input.meaning.length < 10) ctx.addIssue({code:'custom', path:['meaning'], message:'Bitte die Bedeutung etwas ausführlicher erklären.'});
   if (input.kind !== 'word' && input.phrase.length < 3) ctx.addIssue({code:'custom', path:['phrase'], message:'Der Ausdruck ist zu kurz.'});
+  if (input.kind === 'dialect' && input.region.length < 2) ctx.addIssue({code:'custom',path:['region'],message:'Bitte die Region des Dialekts angeben.'});
+  if (input.kind === 'situation' && input.context.length < 3) ctx.addIssue({code:'custom',path:['context'],message:'Bitte den passenden Gesprächskontext angeben.'});
 });
 export type EntryInput = z.infer<typeof entryInput>;
 export type Entry = EntryInput & { id: string; status: 'curated' | 'community'; authorName: string; createdAt: string };
@@ -23,10 +25,14 @@ export const explanationInput = z.object({ body: z.string().trim().min(10).max(1
 export type Explanation = { id: string; body: string; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);
 export const roomCode = z.string().regex(/^[A-Z0-9]{6}$/);
+export const ratingScores=z.object({clarity:z.number().int().min(1).max(5),accuracy:z.number().int().min(1).max(5),rhythm:z.number().int().min(1).max(5)});
+export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('start') }),
   z.object({ action: z.literal('answer'), text: z.string().trim().min(3).max(300) }),
   z.object({ action: z.literal('vote'), optionId: z.string().uuid() }),
   z.object({ action: z.literal('next') }),
+  z.object({ action:z.literal('performed'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(5) }),
+  ratingScores.extend({ action:z.literal('rate'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(5) }),
 ]);
 export type RoomAction = z.infer<typeof roomAction>;

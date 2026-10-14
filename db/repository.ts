@@ -28,10 +28,13 @@ export async function addExplanation(id: string, body: string, authorId: string,
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name) VALUES (${id},${body},${authorId},${authorName}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
-  if (mode === 'language-quiz') {
-    // A spelling recorded in multiple languages cannot have one clear answer.
-    return await database().query(`SELECT ${fields} FROM content_entries e WHERE kind='word' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.kind='word' AND lower(trim(other.phrase))=lower(trim(e.phrase)) AND other.language<>e.language) ORDER BY random() LIMIT 40`, []) as Entry[];
+  const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region'}, 'everyday-language': {kind:'situation',field:'context'} } as const;
+  if (mode in quiz) {
+    // Column names are a fixed server allowlist; values remain parameterized.
+    const {kind,field}=quiz[mode as keyof typeof quiz];
+    return await database().query(`SELECT ${fields} FROM content_entries e WHERE kind=$1 AND trim(${field})<>'' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.kind=$1 AND lower(trim(other.phrase))=lower(trim(e.phrase)) AND lower(trim(other.${field}))<>lower(trim(e.${field}))) ORDER BY random() LIMIT 40`, [kind]) as Entry[];
   }
+  if (mode === 'tongue-twisters') return await database().query(`SELECT ${fields} FROM content_entries WHERE kind='tongue_twister' ORDER BY random() LIMIT 40`, []) as Entry[];
   return await database().query(`SELECT ${fields} FROM content_entries WHERE kind='idiom' AND status='curated' ORDER BY random() LIMIT 40`, []) as Entry[];
 }
 export async function insertRoom(game: Game) { await database()`INSERT INTO game_rooms(code,state) VALUES (${game.code}, ${JSON.stringify(game)}::jsonb)`; }

@@ -106,8 +106,8 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(Object.keys(round.votes).length===game.players.length) {
       for(const [voter,optionId] of Object.entries(round.votes)) {
         const choice=round.options.find(o=>o.id===optionId)!;
-        if(isQuizMode(game.mode)) {if(correctOption(game,choice))game.players.find(p=>p.id===voter)!.score+=2;}
-        else game.players.find(p=>p.id===(choice.authorId??voter))!.score+=choice.authorId===null?2:1;
+        if(isQuizMode(game.mode)) {if(correctOption(game,choice))game.players.find(p=>p.id===voter)!.score+=1;}
+        else game.players.find(p=>p.id===(choice.authorId??voter))!.score+=1;
       }
       game.phase='reveal';
     }

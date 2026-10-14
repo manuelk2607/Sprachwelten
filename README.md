@@ -5,7 +5,7 @@ Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Q
 ## Spielmodi und Funktionen
 
 - **Was soll das heißen?**: Online-Bluffspiel für 3–10 Personen, fünf Runden, Einladungslink und gemeinsame Punktwertung. Alle erfinden eine plausible Bedeutung; anschließend wird die echte Erklärung zwischen den Bluffs gesucht.
-- **Wortdetektiv**: Ein Wort, vier Antwortsprachen und genau eine gesuchte Sprache. 1–10 Personen, fünf Runden, zwei Punkte je richtiger Antwort, gemeinsame Auflösung und Einladungslinks. Solo oder mit Freunden.
+- **Wortdetektiv**: Ein Wort, vier Antwortsprachen und genau eine gesuchte Sprache. 1–10 Personen, fünf Runden, ein Punkt je richtiger Antwort, gemeinsame Auflösung und Einladungslinks. Solo oder mit Freunden.
 - **Zungenbrecher**: 2–10 Personen, fünf Texte. Jede Person liest jeden Text im gemeinsamen Raum oder Sprachchat vor. Anschließend bewerten alle anderen Verständlichkeit, Genauigkeit und Rhythmus von 1 bis 5. Der Durchschnitt ergibt bis zu fünf Rundenpunkte; Die Oberfläche zeigt Durchschnittswerte pro Person und Kriterium. Bei zwei Personen entspricht der Durchschnitt der Bewertung durch die jeweils andere Person.
 - **So sagt man das bei uns**: Dialektquiz mit vier Regionen, Auflösung, Bedeutung und regionalen Hinweisen. 1–10 Personen und fünf Runden. Gesucht ist die beim Beitrag hinterlegte Region; regionale Wörter sind nicht exklusiv auf eine Gegend begrenzt.
 - **Kann man das so sagen?**: Formulierungen einem von vier Gesprächskontexten zuordnen und Ton, Höflichkeit und Verwendung kennenlernen. 1–10 Personen und fünf Runden.
@@ -14,6 +14,8 @@ Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Q
 - **Deutsch und Englisch**: Umschalter DE/EN mit gespeicherter Präferenz. Die Startsammlung enthält Erklärungen in beiden Sprachen. Der Gastgeber wählt die Sprache der Spielkarten. Eigene Erklärungen, Beispiele und kulturelle Hinweise können mit getrennten DE/EN-Fassungen veröffentlicht werden. Originalausdrücke bleiben unverändert; fehlende Übersetzungen werden mit Originalsprache gekennzeichnet.
 - **Gemeinsame Inhalte**: Alle fünf Eintragstypen können beigetragen werden. Dialekte benötigen eine Region, Alltagssituationen einen Gesprächskontext aus festen zweisprachigen Kategorien. Die drei falschen Quizantworten werden aus anderen Kategorien ergänzt. Wörter, Dialekte, Situationen und Zungenbrecher können direkt in ihrem passenden Spielmodus erscheinen.
 
+
+Richtige Antworten zählen in allen Quizzen und im Bluffspiel einen Punkt. Im Bluffspiel gibt es zusätzlich einen Punkt pro Person, die den eigenen Bluff wählt. Die drei Quizmodi ergeben nach fünf Runden maximal fünf Punkte; die Bewertung der Zungenbrecher bleibt bei 1 bis 5 je Kriterium.
 
 Community-Beiträge sind sichtbar gekennzeichnet. Das Bluffspiel nutzt die separat gepflegte Startsammlung. Die übrigen Modi nutzen Startkarten und passende Community-Beiträge. Quizfragen verwenden die angegebene Sprache, Region oder Situation als Lösung. Schreibweisen, die beim selben Inhaltstyp mehreren Lösungen zugeordnet sind, werden ausgelassen, ebenso doppelte Ausdrücke innerhalb einer Partie. Die Erläuterungen wurden für dieses Projekt formuliert; Quellen dienen der Nachprüfung. Sprachkenntnisse sind zum Bluffen nicht erforderlich.
 

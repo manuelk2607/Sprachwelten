@@ -9,7 +9,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Wahrheit suchen',text:'Wählt zwischen euren Bluffs und der echten Bedeutung. Die eigene Antwort ist gesperrt.'},
       {title:'Gemeinsam auflösen',text:'Entdeckt die Bedeutung und seht, wer auf welchen Bluff hereingefallen ist.'},
     ],
-    scoring:'2 Punkte für die Wahrheit. 1 Punkt für jede Person, die deinen Bluff wählt.',
+    scoring:'1 Punkt für die Wahrheit. 1 Punkt für jede Person, die deinen Bluff wählt.',
     tip:'Alle spielen in jeder Runde mit. Nach fünf Runden gewinnt die höchste Punktzahl.',
   },
   'language-quiz':{
@@ -19,7 +19,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Eine Sprache wählen',text:'Vier Sprachen stehen zur Auswahl. Jede Person stimmt für eine davon.'},
       {title:'Herkunft erfahren',text:'Sobald alle gewählt haben, erscheinen die richtige Sprache und die Erklärung.'},
     ],
-    scoring:'2 Punkte pro richtiger Sprache. In fünf Runden sind 10 Punkte möglich.',
+    scoring:'1 Punkt pro richtiger Sprache. In fünf Runden sind 5 Punkte möglich.',
     tip:'Du kannst allein starten oder mit bis zu neun Freunden spielen.',
   },
   'tongue-twisters':{
@@ -39,7 +39,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Region zuordnen',text:'Wählt aus vier Regionen die Herkunft, die ihr für richtig haltet.'},
       {title:'Besonderheiten entdecken',text:'Die Auflösung zeigt die hinterlegte Region, die Bedeutung und regionale Hinweise.'},
     ],
-    scoring:'2 Punkte pro richtiger Region. Fünf Runden, maximal 10 Punkte.',
+    scoring:'1 Punkt pro richtiger Region. Fünf Runden, maximal 5 Punkte.',
     tip:'Ähnliche Ausdrücke können auch anderswo vorkommen. Gesucht ist die beim Beitrag hinterlegte Region.',
   },
   'everyday-language':{
@@ -49,7 +49,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Die Absicht erkennen',text:'Welcher der vier Gesprächskontexte passt: etwa eine Bitte, eine Absage oder ein Dank?'},
       {title:'Den Ton verstehen',text:'Die Auflösung erklärt die Hauptabsicht und die kulturellen Feinheiten.'},
     ],
-    scoring:'2 Punkte pro passendem Kontext. Fünf Runden, maximal 10 Punkte.',
+    scoring:'1 Punkt pro passendem Kontext. Fünf Runden, maximal 5 Punkte.',
     tip:'Achtet auf die Hauptabsicht, den Ton und die Situation.',
   },
 };

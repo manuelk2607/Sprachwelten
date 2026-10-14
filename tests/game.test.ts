@@ -26,7 +26,7 @@ test('own votes and duplicate votes are rejected; correct votes and successful b
   assert.throws(()=>act(g,'p1',{action:'vote',optionId:bluff.id}),GameError);
   act(g,'p0',{action:'vote',optionId:bluff.id});assert.throws(()=>act(g,'p0',{action:'vote',optionId:real.id}),GameError);
   act(g,'p1',{action:'vote',optionId:real.id});assert.equal(g.phase,'voting');act(g,'p2',{action:'vote',optionId:real.id});
-  assert.equal(g.phase,'reveal');assert.deepEqual(g.players.map(p=>p.score),[0,3,2]);assert.equal(viewGame(g,'p0').revelation?.meaning,g.round!.entry.meaning);
+  assert.equal(g.phase,'reveal');assert.deepEqual(g.players.map(p=>p.score),[0,2,1]);assert.equal(viewGame(g,'p0').revelation?.meaning,g.round!.entry.meaning);
 });
 test('five rounds finish once, without repeating a prompt or scoring votes twice',()=>{
   const g=started();const ids=new Set<string>();
@@ -34,7 +34,7 @@ test('five rounds finish once, without repeating a prompt or scoring votes twice
     ids.add(g.round!.entry.id);for(const p of players)act(g,p.id,{action:'answer',text:`Round ${i} by ${p.name}`});const real=g.round!.options.find(o=>o.authorId===null)!;
     for(const p of players)act(g,p.id,{action:'vote',optionId:real.id});assert.throws(()=>act(g,'p1',{action:'next'}),GameError);act(g,'p0',{action:'next'});
   }
-  assert.equal(g.phase,'finished');assert.equal(ids.size,5);assert.deepEqual(g.players.map(p=>p.score),[10,10,10]);assert.throws(()=>act(g,'p0',{action:'next'}),GameError);
+  assert.equal(g.phase,'finished');assert.equal(ids.size,5);assert.deepEqual(g.players.map(p=>p.score),[5,5,5]);assert.throws(()=>act(g,'p0',{action:'next'}),GameError);
 });
 test('join blocks duplicate names, full rooms and games already started',()=>{
   const g=lobby();assert.throws(()=>joinGame(g,{...players[0],id:'extra',name:'ADA'}),GameError);

@@ -67,7 +67,7 @@ try{
     const reveal=await request(`/api/rooms/${code}`,undefined,quizTokens[0]);assert.equal(reveal.data.room.phase,'reveal');assert.equal(reveal.data.room.options.filter((o:any)=>o.correct).length,1);assert.equal(reveal.data.room.revelation.language,rows[0].language);
     current=await request(`/api/rooms/${code}`,{action:'next'},quizTokens[0]);assert.equal(current.status,200);
   }
-  assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((p:any)=>p.score),[10,0]);
+  assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((p:any)=>p.score),[5,0]);
   const solo=await request('/api/rooms',{name:'QA Solo',mode:'language-quiz'});assert.equal(solo.status,201);roomCodes.push(solo.data.room.code);assert.equal((await request(`/api/rooms/${solo.data.room.code}`,{action:'start'},solo.data.token!)).data.room.phase,'voting');
   for(const mode of ['dialect-detective','everyday-language']) {
     const added=await request('/api/entries',{kind:mode==='dialect-detective'?'dialect':'situation',phrase:`QA-${mode}-${stamp}`,language:'de',meaning:'An original explanation for this test.',regionId:'at',contextId:'thanks'},undefined,true);
@@ -82,7 +82,7 @@ try{
       const reveal=await request(`/api/rooms/${code}`,{action:'vote',optionId:correct.id},host.data.token!);assert.equal(reveal.data.room.phase,'reveal');assert.equal(reveal.data.room.options.filter((option:any)=>option.correct).length,1);
       current=await request(`/api/rooms/${code}`,{action:'next'},host.data.token!);assert.equal(current.status,200);
     }
-    assert.equal(current.data.room.phase,'finished');assert.equal(current.data.room.players[0].score,10);
+    assert.equal(current.data.room.phase,'finished');assert.equal(current.data.room.players[0].score,5);
   }
   const tongue=await request('/api/rooms',{name:'QA Speaker',mode:'tongue-twisters',locale:'en'});assert.equal(tongue.status,201);code=tongue.data.room.code;roomCodes.push(code!);
   const speechTokens=[tongue.data.token!];

@@ -98,7 +98,7 @@ export function GameRoom({code}:{code:string}) {
           </div>:room.phase==='finished'?<div className="finished-card">
             <Trophy size={48}/><div className="eyebrow">{t('FÜNF RUNDEN, VIELE NEUE WORTE')}</div>
             <h1>{room.players.length===1?t('Dein Sprachgefühl in Punkten'):winners.map(p=>p.name).join(' & ')+' '+t(winners.length>1?'gewinnen!':'gewinnt!')}</h1>
-            {room.players.length===1&&<h2>{me?.score} / 10 {t('Punkte')}</h2>}
+            {room.players.length===1&&<h2>{me?.score} / 5 {t('Punkte')}</h2>}
             <p>{t('Und ihr alle wisst jetzt ein bisschen mehr über die Welt.')}</p>
             <a className="button primary" href="/">{t('Neue Runde vorbereiten')}<ArrowRight size={18}/></a>
           </div>:<>
@@ -140,7 +140,7 @@ export function GameRoom({code}:{code:string}) {
         <aside className="players-panel">
           <h2><Users size={20}/>{t(quiz&&room.players.length===1?'Dein Spiel':'Eure Runde')}<span>{room.players.length}/10</span></h2>
           {ranking.map(player=><div className="player-row" key={player.id}><span className="player-avatar">{player.name.slice(0,1).toUpperCase()}</span><div><strong>{player.name}{player.id===room.playerId&&<small> {t('(du)')}</small>}</strong><span>{pronunciation&&room.phase==='speaking'?t(player.id===room.pronunciation?.speaker.id?'Spricht gerade':'Hört zu'):pronunciation&&room.phase==='rating'?t(player.id===room.pronunciation?.speaker.id?'Wird bewertet':player.rated?'Hat bewertet':'Bewertet noch …'):room.phase==='voting'?t(player.voted?'Hat abgestimmt':'Rätselt noch …'):room.phase==='writing'?t(player.answered?'Bluff abgegeben':'Denkt sich etwas aus …'):t(player.id===room.hostId?'Gastgeber':'Mit dabei')}</span></div><b>{player.score.toLocaleString(locale,{maximumFractionDigits:1})}<small> P.</small></b></div>)}
-          <div className="scoring"><h3>{t('So sammelt ihr Punkte')}</h3><p><strong>{pronunciation?'Ø 1–5':'+2'}</strong> {t(info.scoreLabel)}</p>{!quiz&&!pronunciation&&<p><strong>+1</strong> {t('Jemand glaubt deinen Bluff')}</p>}</div>
+          <div className="scoring"><h3>{t('So sammelt ihr Punkte')}</h3><p><strong>{pronunciation?'Ø 1–5':'+1'}</strong> {t(info.scoreLabel)}</p>{!quiz&&!pronunciation&&<p><strong>+1</strong> {t('Jemand glaubt deinen Bluff')}</p>}</div>
           <p className="room-note">{t('Du kannst die Seite neu laden und mit demselben Browser weiterspielen. Der Raum ist 24 Stunden erreichbar.')}</p>
         </aside>
       </div>}

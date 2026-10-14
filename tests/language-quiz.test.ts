@@ -46,13 +46,13 @@ test('only correct quiz answers score; no bluff points, duplicate votes or prema
   assert.throws(()=>act(game,'host',{action:'vote',optionId:wrong}),GameError);
   assert.throws(()=>act(game,'host',{action:'next'}),GameError);
   act(game,'guest1',{action:'vote',optionId:wrong});
-  assert.equal(game.phase,'reveal');assert.deepEqual(game.players.map(p=>p.score),[2,0]);
+  assert.equal(game.phase,'reveal');assert.deepEqual(game.players.map(p=>p.score),[1,0]);
   const view=viewGame(game,'guest1');assert.equal(view.options.filter(o=>o.correct).length,1);
   assert.equal(view.revelation!.language,game.round!.entry.language);
   assert.equal(view.revelation!.meaning,game.round!.entry.meaning);
   assert.throws(()=>act(game,'guest1',{action:'next'}),GameError);
 });
-test('a full solo quiz has five distinct words and a score out of ten, including community words',()=>{
+test('a full solo quiz has five distinct words and a score out of five, including community words',()=>{
   const community=wordSeeds.slice(0,5).map(entry=>({...entry,status:'community' as const,authorName:'Community'}));
   const game=createGame('ABC234',player('host'),'en','language-quiz');
   act(game,'host',{action:'start'},community);
@@ -62,7 +62,7 @@ test('a full solo quiz has five distinct words and a score out of ten, including
     assert.equal(viewGame(game,'host').revelation!.status,'community');
     act(game,'host',{action:'next'});
   }
-  assert.equal(words.size,5);assert.equal(game.phase,'finished');assert.equal(game.players[0].score,10);
+  assert.equal(words.size,5);assert.equal(game.phase,'finished');assert.equal(game.players[0].score,5);
   assert.throws(()=>act(game,'host',{action:'next'}),GameError);
 });
 test('quiz needs five distinct words of the right kind and localizes curated explanations',()=>{

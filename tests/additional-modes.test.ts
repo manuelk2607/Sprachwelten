@@ -39,7 +39,7 @@ for(const mode of ['dialect-detective','everyday-language'] as const) {
       assert.equal(mode==='dialect-detective'?result.revelation!.region:result.revelation!.context,answer);
       act(game,ids[0],{action:'next'});
     }
-    assert.equal(seen.size,5);assert.equal(game.phase,'finished');assert.deepEqual(game.players.map(p=>p.score),[10,0]);
+    assert.equal(seen.size,5);assert.equal(game.phase,'finished');assert.deepEqual(game.players.map(p=>p.score),[5,0]);
   });
 }
 test('dialect and context entries need their target; untrusted author and ratings fields are stripped',()=>{

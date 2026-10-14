@@ -39,7 +39,7 @@ test('quiz answers remain stable IDs across German and English rooms and UI labe
     const view=viewGame(game,'host');const target=mode==='dialect-detective'?game.round!.entry.regionId:game.round!.entry.contextId;
     assert.equal(view.options.filter(option=>option.categoryId===target).length,1);assert.ok(!('translations' in view.prompt!));assert.ok(!('regionId' in view.prompt!));assert.ok(!('contextId' in view.prompt!));
     for(const option of view.options)assert.equal(option.text,categoryLabel(option.categoryKind!,option.categoryId!,locale));
-    act(game,'host',{action:'vote',optionId:view.options.find(option=>option.categoryId===target)!.id});assert.equal(game.players[0].score,2);
+    act(game,'host',{action:'vote',optionId:view.options.find(option=>option.categoryId===target)!.id});assert.equal(game.players[0].score,1);
   }
 });
 test('Workers AI translates only explanation fields with explicit source and target languages',async()=>{

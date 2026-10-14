@@ -6,7 +6,9 @@ import { localizedTexts, storedTranslation, textsOf, translationStatus } from '.
 import { categoryId, categoryLabel, regionIds, contextIds } from '../lib/quiz-categories';
 import { extraSeeds } from '../lib/extra-seeds';
 import { act, createGame, viewGame } from '../lib/game';
-import { requestDeepL, checkDeepLAllowance, deeplBaseUrl, translationCharacterLimit } from '../lib/translation-service';
+import { requestCloudflareTranslation, splitTranslationText, translationAvailable, translationCacheKey, translationModel, type TranslationAI } from '../lib/translation-service';
+import { modeGuides } from '../lib/mode-guides';
+import { translate } from '../lib/translations';
 
 test('category IDs normalize legacy labels and cannot be replaced by arbitrary answers',()=>{
   assert.equal(categoryId('region',' Austria '),'at');assert.equal(categoryId('context','Höfliche Absage'),'polite-refusal');
@@ -40,30 +42,40 @@ test('quiz answers remain stable IDs across German and English rooms and UI labe
     act(game,'host',{action:'vote',optionId:view.options.find(option=>option.categoryId===target)!.id});assert.equal(game.players[0].score,2);
   }
 });
-test('DeepL sends only explanation fields to the official endpoint with explicit languages',async()=>{
-  let calls=0;
-  const fetcher:typeof fetch=async(input,init)=>{
-    calls++;assert.equal(input,'https://api.deepl.com/v2/translate');assert.equal(new Headers(init?.headers).get('Authorization'),'DeepL-Auth-Key fixture-key');
-    const payload=JSON.parse(init?.body as string);assert.deepEqual(payload.text,['Eine Bedeutung.','Ein Beispiel.']);assert.equal(payload.source_lang,'DE');assert.equal(payload.target_lang,'EN');assert.ok(!('phrase' in payload));
-    return Response.json({translations:[{text:'A meaning.'},{text:'An example.'}]});
-  };
-  const result=await requestDeepL(textsOf({meaning:'Eine Bedeutung.',example:'Ein Beispiel.'}),'de','fixture-key',fetcher);assert.equal(result.meaning,'A meaning.');assert.equal(result.example,'An example.');assert.equal(calls,1);
+test('Workers AI translates only explanation fields with explicit source and target languages',async()=>{
+  const calls:string[]=[];
+  const ai:TranslationAI={run:async(model,input)=>{
+    assert.equal(model,translationModel);assert.equal(input.source_lang,'de');assert.equal(input.target_lang,'en');
+    assert.deepEqual(Object.keys(input).sort(),['source_lang','target_lang','text']);calls.push(input.text);
+    return {translated_text:input.text==='Eine Bedeutung.'?'A meaning.':'An example.'};
+  }};
+  const result=await requestCloudflareTranslation(textsOf({meaning:'Eine Bedeutung.',example:'Ein Beispiel.'}),'de',ai);
+  assert.deepEqual(calls,['Eine Bedeutung.','Ein Beispiel.']);assert.equal(result.meaning,'A meaning.');assert.equal(result.example,'An example.');assert.equal(result.body,'');
 });
-test('DeepL quota failures, incomplete results and oversized translations fail safely',async()=>{
+test('long explanations are split without losing characters or breaking Unicode',async()=>{
+  const source=('Ein Satz mit einem Emoji 🌍. ').repeat(30);
+  const chunks=splitTranslationText(source);assert.equal(chunks.join(''),source);assert.ok(chunks.length>1);
+  assert.ok(chunks.every(chunk=>chunk.length<=400&&!/[\uD800-\uDBFF]$/.test(chunk)&&!/^([\uDC00-\uDFFF])/.test(chunk)));
+  const unbroken='🌍'.repeat(350);assert.equal(splitTranslationText(unbroken).join(''),unbroken);assert.ok(splitTranslationText(unbroken).every(chunk=>chunk.length<=400));
+  const ai:TranslationAI={run:async(_model,input)=>{assert.ok(input.text.length<=400);assert.equal(input.source_lang,'en');assert.equal(input.target_lang,'de');return {translated_text:input.text};}};
+  const translated=await requestCloudflareTranslation(textsOf({meaning:source}),'en',ai);assert.equal(translated.meaning,source.trim());
+});
+test('empty, malformed and oversized model results fail without publishing a suggestion',async()=>{
   const source=textsOf({meaning:'A meaning.'});
-  await assert.rejects(requestDeepL(source,'en','fixture',async()=>new Response('',{status:456})),/Kontingent|kontingent/);
-  await assert.rejects(requestDeepL(source,'en','fixture',async()=>Response.json({translations:[]})),/unvollständig/);
-  await assert.rejects(requestDeepL(source,'en','fixture',async()=>Response.json({translations:[{text:'x'.repeat(1501)}]})),/zu lang/);
+  for(const response of [{},{translated_text:''},{translated_text:42}])await assert.rejects(requestCloudflareTranslation(source,'en',{run:async()=>response}),/unvollständig/);
+  await assert.rejects(requestCloudflareTranslation(source,'en',{run:async()=>({translated_text:'x'.repeat(1501)})}),/zu lang/);
+  await assert.rejects(requestCloudflareTranslation(source,'en',{run:async()=>{throw new Error('Unavailable');}}),/Unavailable/);
+  assert.equal(translationAvailable(),false);assert.equal(translationAvailable({run:async()=>({})}),true);
 });
-
-test('DeepL endpoint selection follows key type and only allows official hosts',()=>{
-  assert.equal(deeplBaseUrl('fixture:fx',''),'https://api-free.deepl.com');assert.equal(deeplBaseUrl('fixture',''),'https://api.deepl.com');
-  assert.equal(deeplBaseUrl('fixture','https://api-free.deepl.com'),'https://api-free.deepl.com');
-  assert.throws(()=>deeplBaseUrl('fixture','https://another.example'));
-  assert.equal(translationCharacterLimit,1_000_000);
+test('translation cache separates language direction and content',async()=>{
+  const source=textsOf({meaning:'A meaning.'});const key=await translationCacheKey(source,'en');
+  assert.match(key,/^[a-f0-9]{64}$/);assert.equal(key,await translationCacheKey(source,'en'));
+  assert.notEqual(key,await translationCacheKey(source,'de'));assert.notEqual(key,await translationCacheKey(textsOf({meaning:'A different meaning.'}),'en'));
 });
-test('DeepL allowance uses actual account usage and refuses exhausted or unverified quotas',async()=>{
-  await checkDeepLAllowance('fixture:fx',100,async(input,init)=>{assert.equal(input,'https://api-free.deepl.com/v2/usage');assert.equal(new Headers(init?.headers).get('Authorization'),'DeepL-Auth-Key fixture:fx');return Response.json({character_count:999900,character_limit:1000000});});
-  await assert.rejects(checkDeepLAllowance('fixture',101,async()=>Response.json({character_count:999900,character_limit:1000000})),/kontingent/);
-  await assert.rejects(checkDeepLAllowance('fixture',1,async()=>new Response('',{status:503})),/Verbrauch/);
+test('every mode has a complete, bilingual guide',()=>{
+  assert.equal(Object.keys(modeGuides).length,5);
+  for(const guide of Object.values(modeGuides)){
+    assert.equal(guide.steps.length,3);
+    for(const text of [guide.category,guide.scoring,guide.tip,...guide.steps.flatMap(step=>[step.title,step.text])])assert.notEqual(translate(text,'en'),text,`Missing English: ${text}`);
+  }
 });

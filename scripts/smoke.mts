@@ -4,7 +4,7 @@ import { gamePrompts } from '../db/repository';
 import { textsOf } from '../lib/content-translations';
 import { translationCacheKey } from '../lib/translation-service';
 const base=process.env.TEST_BASE_URL??'http://localhost:5176';
-type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;explanations?:any[];};
+type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;available?:boolean;explanations?:any[];};
 const cookieJar=new Map<string,string>();
 async function request(path:string,data?:unknown,token?:string,cookies=false){
   const res=await fetch(base+path,{method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json',Origin:base}:{}),...(token?{Authorization:`Bearer ${token}`}:{}) ,...(cookies?{Cookie:[...cookieJar].map(([k,v])=>`${k}=${v}`).join('; ')}:{})},...(data?{body:JSON.stringify(data)}:{})});
@@ -26,7 +26,14 @@ try{
   const source=textsOf({meaning:`Ein Cachetest ${stamp}.`});const cacheKey=await translationCacheKey(source,'de');cacheKeys.push(cacheKey);
   const testSql=neon(process.env.DATABASE_URL_UNPOOLED!);await testSql`INSERT INTO translation_suggestions(cache_key,result) VALUES (${cacheKey},${JSON.stringify(textsOf({meaning:'A cached translation.'}))}::jsonb)`;
   for(let attempt=0;attempt<2;attempt++){const suggestion=await request('/api/translations',{sourceLocale:'de',texts:source},undefined,true);assert.equal(suggestion.status,200);assert.equal(suggestion.data.cached,true);assert.equal(suggestion.data.translation.meaning,'A cached translation.');}
-  if(!process.env.DEEPL_API_KEY)assert.equal((await request('/api/translations',{sourceLocale:'de',texts:{meaning:`Ein nicht übersetzter Text ${stamp}.`}},undefined,true)).status,503);
+  const availability=await request('/api/translations');assert.equal(availability.status,200);
+  if(!availability.data.available)assert.equal((await request('/api/translations',{sourceLocale:'de',texts:{meaning:`Ein nicht übersetzter Text ${stamp}.`}},undefined,true)).status,503);
+  else for(const [sourceLocale,meaning] of [['de','Man verwendet diesen Ausdruck, wenn man jemandem Glück wünschen möchte.'],['en','People use this phrase to politely refuse an invitation.']] as const){
+    const texts=textsOf({meaning,example:`QA ${stamp}`});cacheKeys.push(await translationCacheKey(texts,sourceLocale));
+    const fresh=await request('/api/translations',{sourceLocale,texts},undefined,true);assert.equal(fresh.status,200,JSON.stringify(fresh.data));assert.equal(fresh.data.cached,false);assert.ok(fresh.data.translation.meaning);assert.notEqual(fresh.data.translation.meaning,meaning);
+    const repeated=await request('/api/translations',{sourceLocale,texts},undefined,true);assert.equal(repeated.status,200);assert.equal(repeated.data.cached,true);assert.deepEqual(repeated.data.translation,fresh.data.translation);
+    console.log(`Workers AI ${sourceLocale}: ${fresh.data.translation.meaning}`);
+  }
   await request('/api/auth/sign-out',{},undefined,true);assert.equal((await request('/api/entries',{phrase:'Signed out test',language:'de',meaning:'Session must be invalid after logout.'},undefined,true)).status,401);
   const badLogin=await request('/api/auth/sign-in/email',{email,password:'wrong-password'},undefined,true);assert.equal(badLogin.status,401);
   const login=await request('/api/auth/sign-in/email',{email,password},undefined,true);assert.equal(login.status,200);assert.ok((await request('/api/auth/get-session',undefined,undefined,true)).data.user?.id);
@@ -96,7 +103,7 @@ try{
     current=await request(`/api/rooms/${code}`,{action:'next'},speechTokens[0]);assert.equal(current.status,200);
   }
   assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((player:any)=>player.score),[20,20,20]);
-  console.log('PASS: auth, bilingual community contributions, fixed quiz IDs, cached translations and missing-key fallback, five complete rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
+  console.log('PASS: auth, bilingual community contributions, fixed quiz IDs, cached translations and binding availability, five complete rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
 }finally{
   const sql=neon(process.env.DATABASE_URL_UNPOOLED!);
   for(const key of cacheKeys)await sql`DELETE FROM translation_suggestions WHERE cache_key=${key}`;

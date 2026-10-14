@@ -27,9 +27,9 @@ export function TranslationEditor({sourceLocale,setSourceLocale,fields,getSource
     <h3>{t('Übersetzung ins')} {t(target==='de'?'Deutsche':'Englische')}</h3>
     <p className="muted">{t('Du kannst die zweite Sprachfassung selbst schreiben oder einen Vorschlag bearbeiten. Fehlende Felder erscheinen später als gekennzeichneter Originaltext.')}</p>
     <button type="button" className="button outline" disabled={busy||available!==true} onClick={()=>void suggest()}>{busy?t('Wird übersetzt …'):t('Übersetzung vorschlagen')}</button>
-    {available===true&&<p className="form-note">{t('Für Vorschläge werden deine Erklärungstexte an DeepL gesendet.')}</p>}
+    {available===true&&<p className="form-note">{t('Für Vorschläge werden deine Erklärungstexte an Cloudflare Workers AI gesendet.')}</p>}
     {available===false&&<p className="form-note">{t('Automatische Übersetzung ist momentan nicht verfügbar. Du kannst die Übersetzung selbst ergänzen.')}</p>}
-    {machine&&hasTranslation&&<p role="status" className="form-note">{t('Automatischer DeepL-Vorschlag: Bitte Bedeutung und kulturelle Feinheiten prüfen und bei Bedarf korrigieren.')}</p>}
+    {machine&&hasTranslation&&<p role="status" className="form-note">{t('Automatischer Übersetzungsvorschlag: Bitte Bedeutung und kulturelle Feinheiten prüfen und bei Bedarf korrigieren.')}</p>}
     {fields.map(field=><label key={field.key}>{t(field.label)} · {t(target==='de'?'Deutsch':'Englisch')}<textarea value={translation[field.key]??''} maxLength={field.max} rows={field.key==='meaning'||field.key==='body'?3:2} onChange={e=>{onChange({...translation,[field.key]:e.target.value});setReviewed(false);}}/></label>)}
     {hasTranslation&&<label className="translation-review"><input type="checkbox" checked={reviewed} required onChange={e=>setReviewed(e.target.checked)}/><span>{t('Ich habe die zweite Sprachfassung geprüft.')}</span></label>}
     {error&&<p role="alert" className="error">{t(error)}</p>}

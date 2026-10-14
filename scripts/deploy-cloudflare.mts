@@ -9,12 +9,13 @@ const root=process.cwd();const directory=path.join(root,'dist/server');
 const config=JSON.parse(readFileSync(path.join(directory,'wrangler.json'),'utf8'));
 // Generated build config is reused, with direct public routing in the owner's account.
 config.name='sprachwelten';config.workers_dev=true;config.preview_urls=false;
+config.ai={binding:'AI'};
 delete config.topLevelName;delete config.routes;delete config.route;delete config.dispatch_namespaces;
 const configPath=path.join(directory,'wrangler.direct.json');
 writeFileSync(configPath,JSON.stringify(config,null,2)+'\n');
 const temporary=mkdtempSync(path.join(tmpdir(),'sprachwelten-secrets-'));
 try {
-  const keys=['DATABASE_URL','NEON_AUTH_BASE_URL','NEON_AUTH_COOKIE_SECRET','DEEPL_API_KEY','DEEPL_API_URL'];
+  const keys=['DATABASE_URL','NEON_AUTH_BASE_URL','NEON_AUTH_COOKIE_SECRET'];
   const secrets=Object.fromEntries(keys.filter(key=>process.env[key]?.trim()).map(key=>[key,process.env[key]]));
   if(!dryRun&&keys.slice(0,3).some(key=>!secrets[key]))throw new Error('Missing required production database/auth secrets. See .env.example.');
   const secretsPath=path.join(temporary,'secrets.json');writeFileSync(secretsPath,JSON.stringify(secrets),{mode:0o600});

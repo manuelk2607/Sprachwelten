@@ -6,9 +6,9 @@ import { localizeEntry } from '../lib/entry-localization';
 import { seedEntries } from '../lib/seeds';
 import { translate } from '../lib/translations';
 import { act, createGame, joinGame } from '../lib/game';
-test('only the idiom mode is playable; the four expansions remain coming soon',()=>{
-  assert.deepEqual(gameModes.filter(m=>m.status==='playable').map(m=>m.id),['idiom-bluff']);
-  assert.equal(gameModes.filter(m=>m.status==='coming-soon').length,4);
+test('the idiom game and word detective are playable; three expansions remain coming soon',()=>{
+  assert.deepEqual(gameModes.filter(m=>m.status==='playable').map(m=>m.id),['idiom-bluff','language-quiz']);
+  assert.equal(gameModes.filter(m=>m.status==='coming-soon').length,3);
 });
 test('language quiz has exactly four unique choices and exactly one declared language',()=>{
   for(let i=0;i<20;i++){const quiz=prepareLanguageQuiz('saudade','pt',['pt','de','en','en','sv','fr']);assert.equal(quiz.options.length,4);assert.equal(new Set(quiz.options).size,4);assert.equal(quiz.options.filter(o=>o===quiz.correctLanguage).length,1);}

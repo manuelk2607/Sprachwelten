@@ -4,8 +4,8 @@ import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/lib/auth/provider";
 
 export const metadata: Metadata = {
-  title: "Sprachwelten – Andere Worte. Neue Welten.",
-  description: "Redewendungen entdecken, Bedeutungen erfinden und mit Freunden bluffen.",
+  title: "Sprachwelten",
+  description: "Redewendungen entdecken, Sprachen erraten und mit Freunden spielen.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

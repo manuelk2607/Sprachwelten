@@ -10,3 +10,8 @@
 @media(max-width:1300px){.mode-section{margin-left:5.5%;margin-right:5.5%}}
 @media(max-width:1050px){.header nav{gap:12px}.mode-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.header{gap:15px 8px}.header-actions{gap:5px}.header .brand{font-size:25px;gap:5px}.header .brand-dot{margin-left:-4px}.header .brand-mark svg{width:19px}.language-switch button{padding:5px;font-size:9px}.header-actions>.button{font-size:11px;padding:9px}.header-actions>.button svg{display:none}.account-name{max-width:68px;font-size:10px}.account-name svg{display:none}.mode-section{margin-top:40px}.mode-section>h2{font-size:31px}.mode-grid{grid-template-columns:1fr}.mode-card{padding:23px}.kind-tabs{justify-content:flex-start}.kind-tabs button{padding:10px 11px}.form-stack select{font-size:14px}}
+
+.option.selected-answer{border-color:var(--coral);box-shadow:inset 0 0 0 1px var(--coral)}
+.option.selected-answer small{display:block;margin-top:5px;font-weight:600}
+.option.selected-answer:disabled{opacity:1}
+.prompt-card h1{overflow-wrap:anywhere}

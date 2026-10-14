@@ -2,6 +2,7 @@ import { neon } from '@neondatabase/serverless';
 import type { Entry, EntryInput, Explanation } from '@/lib/content';
 import type { Game } from '@/lib/game';
 import { GameError } from '@/lib/game';
+import type { PlayableGameMode } from '@/lib/modes';
 
 export const database = () => {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL fehlt.');
@@ -26,7 +27,13 @@ export async function listExplanations(id: string) {
 export async function addExplanation(id: string, body: string, authorId: string, authorName: string) {
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name) VALUES (${id},${body},${authorId},${authorName}) RETURNING id`;
 }
-export async function gamePrompts() { return await database().query(`SELECT ${fields} FROM content_entries WHERE kind='idiom' AND status='curated' ORDER BY random() LIMIT 40`, []) as Entry[]; }
+export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
+  if (mode === 'language-quiz') {
+    // A spelling recorded in multiple languages cannot have one clear answer.
+    return await database().query(`SELECT ${fields} FROM content_entries e WHERE kind='word' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.kind='word' AND lower(trim(other.phrase))=lower(trim(e.phrase)) AND other.language<>e.language) ORDER BY random() LIMIT 40`, []) as Entry[];
+  }
+  return await database().query(`SELECT ${fields} FROM content_entries WHERE kind='idiom' AND status='curated' ORDER BY random() LIMIT 40`, []) as Entry[];
+}
 export async function insertRoom(game: Game) { await database()`INSERT INTO game_rooms(code,state) VALUES (${game.code}, ${JSON.stringify(game)}::jsonb)`; }
 export async function getRoom(code: string) {
   const rows = await database()`SELECT state, version FROM game_rooms WHERE code=${code} AND expires_at > now()`;

@@ -1,5 +1,6 @@
 import type { Entry } from './content';
 import type { Locale } from './translations';
+import { englishWordMeanings } from './word-seeds';
 const meanings = [
   'The real cause or the crucial point of a problem.',
   'To understand absolutely nothing about what is being discussed.',
@@ -46,6 +47,7 @@ const culturalNotes = [
   'A similar image is also used in German.',
 ];
 export function localizeEntry(entry: Entry, locale: Locale): Entry {
+  if (locale === 'en' && entry.status === 'curated' && englishWordMeanings[entry.id]) return {...entry,meaning:englishWordMeanings[entry.id]};
   if (locale !== 'en' || entry.status !== 'curated' || !entry.id.startsWith('10000000-0000-4000-8000-')) return entry;
   const index=Number(entry.id.slice(-12))-1;
   if(!meanings[index])return entry;

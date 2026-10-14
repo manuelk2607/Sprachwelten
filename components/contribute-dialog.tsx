@@ -20,7 +20,7 @@ export function ContributeDialog({close,saved}:{close:()=>void;saved:()=>void}) 
     {kind==='situation'&&<label>{t("Gesprächskontext")}<input name="context" maxLength={200} placeholder={t("z. B. unter Freunden, auf der Arbeit, bei Fremden")}/></label>}
     <label>{t("Kultureller Hinweis")} <span>{t("(optional)")}</span><textarea name="culturalNote" rows={2} maxLength={1000} placeholder={t("Wann passt das? Wann eher nicht?")}/></label>
     <label>{t("Quelle")} <span>{t("(optional)")}</span><input name="sourceUrl" type="url" maxLength={500} placeholder="https://…"/></label>
-    <p className="form-note">{t("Dein Beitrag und dein Anzeigename werden öffentlich sichtbar. Er erscheint als Community-Beitrag in der Sammlung. Die Spielkarten werden separat ausgewählt.")}</p>
+    <p className="form-note">{t(kind==='word'?'Dein Beitrag und dein Anzeigename werden öffentlich sichtbar. Wörter können im Wortdetektiv erscheinen. Bei mehreren eingetragenen Sprachen für dieselbe Schreibweise wird das Wort ausgelassen.':'Dein Beitrag und dein Anzeigename werden öffentlich sichtbar. Er erscheint als Community-Beitrag in der Sammlung. Die Spielkarten werden separat ausgewählt.')}</p>
     {error&&<p className="error" role="alert">{t(error)}</p>}<button disabled={busy} className="button primary">{busy?t("Wird gespeichert …"):t("Beitrag veröffentlichen")}</button></form>
   </Dialog>;
 }

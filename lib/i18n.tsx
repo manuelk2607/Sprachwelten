@@ -7,7 +7,7 @@ export function I18nProvider({children}:{children:React.ReactNode}) {
   const [locale,setLanguage] = useState<Locale>('de');
   useEffect(()=>{const stored=localStorage.getItem('sprachwelten-language');if(stored==='de'||stored==='en')setLanguage(stored);},[]);
   const setLocale=useCallback((value:Locale)=>{setLanguage(value);localStorage.setItem('sprachwelten-language',value);},[]);
-  useEffect(()=>{document.documentElement.lang=locale;document.title=locale==='de'?'Sprachwelten – Andere Worte. Neue Welten.':'Sprachwelten – Different words. New worlds.';},[locale]);
+  useEffect(()=>{document.documentElement.lang=locale;document.title='Sprachwelten';},[locale]);
   const t=useCallback((text:string)=>translate(text,locale),[locale]);
   return <I18n.Provider value={{locale,setLocale,t}}>{children}</I18n.Provider>;
 }

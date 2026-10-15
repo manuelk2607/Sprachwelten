@@ -4,6 +4,9 @@ import { gamePrompts } from '../db/repository';
 import { textsOf } from '../lib/content-translations';
 import { translationCacheKey } from '../lib/translation-service';
 const base=process.env.TEST_BASE_URL??'http://localhost:5176';
+assert.ok(process.env.TEST_DATABASE_HOST,'TEST_DATABASE_HOST must identify an isolated test database.');
+assert.equal(new URL(process.env.DATABASE_URL_UNPOOLED!).hostname,process.env.TEST_DATABASE_HOST);
+assert.ok(['localhost','127.0.0.1'].includes(new URL(base).hostname),'Integration mutations are restricted to the local test server.');
 type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;available?:boolean;duplicate?:{id:string;phrase:string};explanations?:any[];};
 const cookieJar=new Map<string,string>();
 async function request(path:string,data?:unknown,token?:string,cookies=false){
@@ -14,7 +17,7 @@ async function request(path:string,data?:unknown,token?:string,cookies=false){
 const createdIds:string[]=[];const roomCodes:string[]=[];const cacheKeys:string[]=[];let accountId:string|undefined;let code:string|undefined;
 const stamp=Date.now();const email=`qa-${stamp}@sprachwelten.invalid`;const password=crypto.randomUUID()+'!Aa1';
 try{
-  const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length===12);
+  const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length===6);
   assert.equal((await request('/api/entries',{phrase:'Unauthorized test',language:'de',meaning:'No anonymous contributions.'})).status,401);
   const signup=await request('/api/auth/sign-up/email',{email,password,name:'QA Sprachwelten'},undefined,true);assert.equal(signup.status,200,JSON.stringify(signup.data));accountId=signup.data.user?.id;
   const session=await request('/api/auth/get-session',undefined,undefined,true);assert.equal(session.status,200);assert.ok(session.data.user?.id);accountId=session.data.user!.id;

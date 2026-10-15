@@ -14,7 +14,7 @@
     "test": "tsx --test tests/*.test.ts",
     "db:migrate": "node --env-file=.env.local --import tsx scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
-    "test:integration": "node --env-file=.env.local --import tsx scripts/smoke.mts",
+    "test:integration": "node --env-file=.env.test.local --import tsx scripts/smoke.mts",
     "deploy:cloudflare": "node --env-file=.env.local scripts/deploy-cloudflare.mts"
   },
   "dependencies": {

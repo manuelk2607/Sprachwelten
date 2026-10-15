@@ -1,4 +1,5 @@
 'use client';
+import {Select} from './select';
 import { useEffect, useRef, useState } from 'react';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { otherLocale, textsOf, type TranslationTexts } from '@/lib/content-translations';
@@ -22,7 +23,7 @@ export function TranslationEditor({sourceLocale,setSourceLocale,fields,getSource
     }catch(error){setError(error instanceof Error?error.message:'Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.');}finally{setBusy(false);}
   }
   return <section className="translation-editor" aria-label={t('Übersetzung ergänzen')}>
-    <label>{t('Sprache deiner Erklärung')}<select value={sourceLocale} onChange={e=>{setSourceLocale(e.target.value as Locale);onChange({});setReviewed(false);setMachine(false);setError('');}}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></select></label>
+    <label>{t('Sprache deiner Erklärung')}<Select value={sourceLocale} onValueChange={value=>{setSourceLocale(value as Locale);onChange({});setReviewed(false);setMachine(false);setError('');}}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>
     <p className="form-note">{t('Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.')}</p>
     <h3>{t('Übersetzung ins')} {t(target==='de'?'Deutsche':'Englische')}</h3>
     <p className="muted">{t('Du kannst die zweite Sprachfassung selbst schreiben oder einen Vorschlag bearbeiten. Fehlende Felder erscheinen später als gekennzeichneter Originaltext.')}</p>

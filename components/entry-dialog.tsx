@@ -1,4 +1,5 @@
 'use client';
+import {ChallengeDetails} from './challenge-details';
 import { useEffect, useState } from 'react';
 import { BookOpen, ExternalLink, Lightbulb } from 'lucide-react';
 import { useI18n, type Locale } from '@/lib/i18n';
@@ -26,6 +27,7 @@ export function EntryDialog({entry:original,close,login,signedIn}:{entry:Entry;c
     <PronunciationAudio id={entry.audioId}/>{entry.status==='community'&&<TranslationNotice status={translationStatus(original,locale)} sourceLocale={original.sourceLocale??'de'}/>}
     {entry.literal&&<p className="literal">{t('Wörtlich: „')}{entry.literal}{locale==='en'?'”':'“'}</p>}
     {entry.meaning&&<div className="meaning-block"><Lightbulb size={24}/><div><span className="eyebrow">{t('DAS STECKT DAHINTER')}</span><p>{entry.meaning}</p></div></div>}
+    <ChallengeDetails challenge={entry.challenge}/>
     {entry.example&&<blockquote>{entry.example}</blockquote>}{entry.culturalNote&&<p className="cultural-note"><BookOpen size={19}/>{entry.culturalNote}</p>}{entry.context&&<p>{t('Gesprächskontext:')} {entry.context}</p>}
     <div className="detail-source"><span>{t('Von')} {entry.status==='curated'?t('Redaktion'):entry.creditName||entry.authorName} · {t(entry.status==='curated'?'Startsammlung':'Community-Beitrag')}</span>{entry.sourceUrl&&<a href={entry.sourceUrl} target="_blank" rel="noreferrer">{t('Quelle ansehen')} <ExternalLink size={13}/></a>}</div>
     <section className="explanations"><h3>{t('Weitere Erklärungen & Perspektiven')}</h3>

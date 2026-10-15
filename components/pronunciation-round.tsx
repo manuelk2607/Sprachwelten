@@ -1,4 +1,5 @@
 'use client';
+import {Select} from './select';
 import type { GameView } from '@/lib/game';
 import type { RoomAction } from '@/lib/content';
 import { useI18n } from '@/lib/i18n';
@@ -21,7 +22,7 @@ export function PronunciationRound({room,busy,action}:{room:GameView;busy:boolea
     }}>
       <h3>{t('Wie hat sich der Vortrag angehört?')}</h3>
       <p className="form-note">{t('1 = noch schwierig · 5 = sehr sicher. Bewertet jeden Vortrag fair. Die App zeigt nur Durchschnittswerte.')}</p>
-      {([['clarity','Verständlichkeit','Waren die Wörter gut zu verstehen?'],['accuracy','Genauigkeit','Wurde der Text vollständig und sorgfältig gesprochen?'],['rhythm','Rhythmus','War der Vortrag flüssig und gut betont?']] as const).map(([id,label,hint])=><label key={id}>{t(label)}<small>{t(hint)}</small><select name={id} defaultValue="" required><option value="" disabled>{t('Bitte wählen')}</option>{[1,2,3,4,5].map(value=><option key={value} value={value}>{value}</option>)}</select></label>)}
+      {([['clarity','Verständlichkeit','Waren die Wörter gut zu verstehen?'],['accuracy','Genauigkeit','Wurde der Text vollständig und sorgfältig gesprochen?'],['rhythm','Rhythmus','War der Vortrag flüssig und gut betont?']] as const).map(([id,label,hint])=><label key={id}>{t(label)}<small>{t(hint)}</small><Select name={id} defaultValue="" required><option value="" disabled>{t('Bitte wählen')}</option>{[1,2,3,4,5].map(value=><option key={value} value={value}>{value}</option>)}</Select></label>)}
       <button className="button primary full" disabled={busy}>{t('Bewertung abgeben')}<ArrowRight size={17}/></button>
     </form>}
   </section>;

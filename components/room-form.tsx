@@ -1,4 +1,5 @@
 'use client';
+import {Select} from './select';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
@@ -19,7 +20,7 @@ export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false
     try {
       const response=await fetch(join?`/api/rooms/${room}/join`:'/api/rooms',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:data.get('name'),locale:data.get('locale')??locale,mode}),
+        body:JSON.stringify({name:data.get('name'),locale:data.get('locale')??locale,mode,pronunciationCategory:data.get('pronunciationCategory')??undefined,attributionCategory:data.get('attributionCategory')??undefined}),
       });
       const json=await response.json() as {token:string;room:{code:string};error:string};
       if(!response.ok)throw new Error(json.error);
@@ -36,9 +37,11 @@ export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false
       <button className={join?'selected':''} onClick={()=>{setJoin(true);setError('');}}>{t('Raum beitreten')}</button>
     </div>}
     <form className="form-stack" onSubmit={submit}>
-      {!join&&<label>{t('Spielmodus')}<select value={mode} onChange={e=>setMode(e.target.value as PlayableGameMode)}>{gameModes.filter(m=>m.status==='playable').map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</select></label>}
+      {!join&&<label>{t('Spielmodus')}<Select value={mode} onValueChange={value=>setMode(value as PlayableGameMode)}>{gameModes.filter(m=>m.status==='playable').map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</Select></label>}
+      {!join&&mode==='tongue-twisters'&&<label>{t('Kategorie')}<Select name="pronunciationCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="twister">{t('Zungenknoten')}</option><option value="sound">{t('Klangfallen')}</option></Select></label>}
+      {!join&&mode==='who-said-it'&&<label>{t('Kategorie')}<Select name="attributionCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="person">{t('Personenzitat')}</option><option value="song">{t('Liedstelle')}</option></Select></label>}
       <label>{t('Dein Spielname')}<input name="name" required minLength={2} maxLength={24} autoComplete="nickname" placeholder={t('Dein Name in dieser Runde')}/></label>
-      {!join&&<label>{t('Spielsprache')}<select name="locale" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></select></label>}
+      {!join&&<label>{t('Spielsprache')}<Select name="locale" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
       {!join&&<p className="form-note">{t(info.details)}<br/>{t(info.rule)}</p>}
       {join&&<label>{t('Raumcode')}<input name="code" className="code-input" required pattern="[A-Za-z0-9]{6}" minLength={6} maxLength={6} defaultValue={code} placeholder="ABC123" autoComplete="off"/></label>}
       {error&&<p className="error" role="alert">{error}</p>}

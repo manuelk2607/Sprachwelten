@@ -58,7 +58,7 @@ function localizeCuratedEntry(entry: Entry, locale: Locale): Entry {
   return {...entry, meaning:meanings[index],literal:literals[index],culturalNote:culturalNotes[index]};
 }
 export function localizeEntry(entry:Entry,locale:Locale):Entry {
-  const result=entry.status==='curated'?localizeCuratedEntry(entry,locale):localizedTexts(entry,locale);
+  const result=entry.status==='curated'?localizeCuratedEntry(localizedTexts(entry,locale),locale):localizedTexts(entry,locale);
   const regionId=entry.regionId??categoryId('region',entry.region);
   const contextId=entry.contextId??categoryId('context',entry.context);
   if(!regionId&&!contextId)return result;

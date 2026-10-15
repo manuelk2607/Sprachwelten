@@ -6,8 +6,8 @@ import { localizeEntry } from '../lib/entry-localization';
 import { seedEntries } from '../lib/seeds';
 import { translate } from '../lib/translations';
 import { act, createGame, joinGame } from '../lib/game';
-test('all five modes are playable',()=>{
-  assert.deepEqual(gameModes.filter(m=>m.status==='playable').map(m=>m.id),['idiom-bluff','language-quiz','tongue-twisters','dialect-detective','everyday-language']);
+test('all eleven modes are playable',()=>{
+  assert.deepEqual(gameModes.filter(m=>m.status==='playable').map(m=>m.id),['idiom-bluff','language-quiz','tongue-twisters','dialect-detective','everyday-language','gaming-call','generation-chat','plain-talk','who-said-it','false-friends','word-builder']);
 });
 test('language quiz has exactly four unique choices and exactly one declared language',()=>{
   for(let i=0;i<20;i++){const quiz=prepareLanguageQuiz('saudade','pt',['pt','de','en','en','sv','fr']);assert.equal(quiz.options.length,4);assert.equal(new Set(quiz.options).size,4);assert.equal(quiz.options.filter(o=>o===quiz.correctLanguage).length,1);}

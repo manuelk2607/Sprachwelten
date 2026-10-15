@@ -1,0 +1,8 @@
+import ts from 'typescript';import {readFile,readdir,writeFile} from 'node:fs/promises';
+import {english} from '../lib/translations';import {gameModes} from '../lib/modes';import {modeGuides} from '../lib/mode-guides';import {kindLabels} from '../lib/content';
+const texts=new Set<string>();
+for(const dir of ['components','lib'])for(const name of await readdir(dir)){if(!/\.tsx?$/.test(name)||name.includes('translations')||name.includes('seeds')||name.includes('localization')||name==='language-registry.ts')continue;const content=await readFile(`${dir}/${name}`,'utf8'),file=ts.createSourceFile(name,content,ts.ScriptTarget.Latest,true,name.endsWith('x')?ts.ScriptKind.TSX:ts.ScriptKind.TS);function visit(n:ts.Node){if(ts.isCallExpression(n)&&(n.expression.getText(file)==='t'||n.expression.getText(file)==='GameError')||ts.isNewExpression(n)&&n.expression.getText(file)==='GameError')for(const arg of n.arguments??[]){function strings(node:ts.Node){if(ts.isStringLiteral(node)&&/[A-ZÄÖÜa-zäöüß]/.test(node.text)&&node.text.length>1)texts.add(node.text);else if(ts.isConditionalExpression(node)){strings(node.whenTrue);strings(node.whenFalse);}}strings(arg);}ts.forEachChild(n,visit);}visit(file);}
+for(const m of gameModes)for(const key of ['title','description','headline','intro','details','rule','promptLabel','question','hint','revealTitle','scoreLabel'] as const)if(m[key])texts.add(m[key]);
+for(const guide of Object.values(modeGuides))for(const text of [guide.category,guide.scoring,guide.tip,...guide.steps.flatMap(s=>[s.title,s.text])])texts.add(text);
+Object.values(kindLabels).forEach(v=>texts.add(v));
+console.log([...texts].filter(t=>!english[t]).sort().join('\n'));

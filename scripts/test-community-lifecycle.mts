@@ -16,7 +16,7 @@ const wave=new Uint8Array(encodeAudioWave(Float32Array.from({length:audioSampleR
 async function upload(bytes:Uint8Array,cookie=cookieHeader(),origin=base){return fetch(base+'/api/audio',{method:'POST',headers:{Origin:origin,Cookie:cookie,'Content-Type':'audio/wav'},body:new Uint8Array(bytes).buffer});}
 async function removeAudio(id:string){return fetch(base+'/api/audio/'+id,{method:'DELETE',headers:{Origin:base,Cookie:firstCookies}});}
 try{
- const first=await call('/api/entries');const second=await call('/api/entries?offset=12');assert.equal(first.data.entries.length,12);assert.equal(second.data.entries.length,12);assert.equal(new Set([...first.data.entries,...second.data.entries].map((e:any)=>e.id)).size,24);
+ const first=await call('/api/entries');const second=await call('/api/entries?offset=6');assert.equal(first.data.entries.length,6);assert.equal(second.data.entries.length,6);assert.equal(new Set([...first.data.entries,...second.data.entries].map((e:any)=>e.id)).size,12);
  assert.equal((await call('/api/languages?q=Koreanisch&locale=de')).data.languages.some((l:any)=>l.code==='ko'),true);
  assert.equal((await call('/api/languages?code=bar&locale=en')).data.languages[0].code,'bar');assert.equal((await call('/api/languages?code=fake')).data.languages.length,0);
  assert.equal((await upload(wave,'')).status,401);

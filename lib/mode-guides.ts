@@ -10,7 +10,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Gemeinsam auflösen',text:'Entdeckt die Bedeutung und seht, wer auf welchen Bluff hereingefallen ist.'},
     ],
     scoring:'1 Punkt für die Wahrheit. 1 Punkt für jede Person, die deinen Bluff wählt.',
-    tip:'Alle spielen in jeder Runde mit. Nach fünf Runden gewinnt die höchste Punktzahl.',
+    tip:'Alle spielen in jeder Runde mit. Die Rundenzahl legt ihr in der Lobby fest.',
   },
   'language-quiz':{
     category:'WÖRTER & SPRACHGEFÜHL',
@@ -19,7 +19,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Eine Sprache wählen',text:'Vier Sprachen stehen zur Auswahl. Jede Person stimmt für eine davon.'},
       {title:'Herkunft erfahren',text:'Sobald alle gewählt haben, erscheinen die richtige Sprache und die Erklärung.'},
     ],
-    scoring:'1 Punkt pro richtiger Sprache. In fünf Runden sind 5 Punkte möglich.',
+    scoring:'1 Punkt pro richtiger Sprache. Die Rundenzahl legt ihr selbst fest.',
     tip:'Du kannst allein starten oder mit bis zu neun Freunden spielen.',
   },
   'tongue-twisters':{
@@ -29,8 +29,8 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Fair bewerten',text:'Alle anderen vergeben je 1 bis 5 für Verständlichkeit, Genauigkeit und Rhythmus.'},
       {title:'Fortschritte sehen',text:'Nach allen Vorträgen seht ihr die Durchschnittswerte. Danach folgt der nächste Text.'},
     ],
-    scoring:'Der Durchschnitt zählt: bis zu 5 Punkte pro Text und 25 Punkte insgesamt.',
-    tip:'Ihr bewertet einander. Die App zeichnet keinen Ton auf.',
+    scoring:'Der Durchschnitt zählt: bis zu 5 Punkte pro Text.',
+    tip:'Ihr bewertet einander. Die Spielvorträge werden nicht aufgenommen.',
   },
   'dialect-detective':{
     category:'DIALEKTE & REGIONEN',
@@ -39,7 +39,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Region zuordnen',text:'Wählt aus vier Regionen die Herkunft, die ihr für richtig haltet.'},
       {title:'Besonderheiten entdecken',text:'Die Auflösung zeigt die hinterlegte Region, die Bedeutung und regionale Hinweise.'},
     ],
-    scoring:'1 Punkt pro richtiger Region. Fünf Runden, maximal 5 Punkte.',
+    scoring:'1 Punkt pro richtiger Region. Die Rundenzahl legt ihr selbst fest.',
     tip:'Ähnliche Ausdrücke können auch anderswo vorkommen. Gesucht ist die beim Beitrag hinterlegte Region.',
   },
   'everyday-language':{
@@ -49,7 +49,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
       {title:'Die Absicht erkennen',text:'Welcher der vier Gesprächskontexte passt: etwa eine Bitte, eine Absage oder ein Dank?'},
       {title:'Den Ton verstehen',text:'Die Auflösung erklärt die Hauptabsicht und die kulturellen Feinheiten.'},
     ],
-    scoring:'1 Punkt pro passendem Kontext. Fünf Runden, maximal 5 Punkte.',
+    scoring:'1 Punkt pro passendem Kontext. Die Rundenzahl legt ihr selbst fest.',
     tip:'Achtet auf die Hauptabsicht, den Ton und die Situation.',
   },
 };

@@ -52,20 +52,20 @@ test('only correct quiz answers score; no bluff points, duplicate votes or prema
   assert.equal(view.revelation!.meaning,game.round!.entry.meaning);
   assert.throws(()=>act(game,'guest1',{action:'next'}),GameError);
 });
-test('a full solo quiz has five distinct words and a score out of five, including community words',()=>{
+test('a full solo quiz has two distinct words and a score out of two, including community words',()=>{
   const community=wordSeeds.slice(0,5).map(entry=>({...entry,status:'community' as const,authorName:'Community'}));
   const game=createGame('ABC234',player('host'),'en','language-quiz');
   act(game,'host',{action:'start'},community);
   const words=new Set<string>();
-  for(let round=0;round<5;round++){
+  for(let round=0;round<2;round++){
     words.add(game.round!.entry.phrase);act(game,'host',{action:'vote',optionId:correctId(game)});
     assert.equal(viewGame(game,'host').revelation!.status,'community');
     act(game,'host',{action:'next'});
   }
-  assert.equal(words.size,5);assert.equal(game.phase,'finished');assert.equal(game.players[0].score,5);
+  assert.equal(words.size,2);assert.equal(game.phase,'finished');assert.equal(game.players[0].score,2);
   assert.throws(()=>act(game,'host',{action:'next'}),GameError);
 });
-test('quiz needs five distinct words of the right kind and localizes curated explanations',()=>{
+test('quiz needs enough distinct words of the right kind and localizes curated explanations',()=>{
   const game=createGame('ABC234',player('host'),'en','language-quiz');
   assert.throws(()=>act(game,'host',{action:'start'},seedEntries),GameError);
   assert.throws(()=>act(game,'host',{action:'start'},Array(5).fill(wordSeeds[0])),GameError);

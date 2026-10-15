@@ -4,7 +4,7 @@ import { gamePrompts } from '../db/repository';
 import { textsOf } from '../lib/content-translations';
 import { translationCacheKey } from '../lib/translation-service';
 const base=process.env.TEST_BASE_URL??'http://localhost:5176';
-type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;available?:boolean;explanations?:any[];};
+type Payload={error?:string;room?:any;token?:string;entry?:any;entries?:any[];user?:{id:string};translation?:any;cached?:boolean;available?:boolean;duplicate?:{id:string;phrase:string};explanations?:any[];};
 const cookieJar=new Map<string,string>();
 async function request(path:string,data?:unknown,token?:string,cookies=false){
   const res=await fetch(base+path,{method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json',Origin:base}:{}),...(token?{Authorization:`Bearer ${token}`}:{}) ,...(cookies?{Cookie:[...cookieJar].map(([k,v])=>`${k}=${v}`).join('; ')}:{})},...(data?{body:JSON.stringify(data)}:{})});
@@ -14,11 +14,17 @@ async function request(path:string,data?:unknown,token?:string,cookies=false){
 const createdIds:string[]=[];const roomCodes:string[]=[];const cacheKeys:string[]=[];let accountId:string|undefined;let code:string|undefined;
 const stamp=Date.now();const email=`qa-${stamp}@sprachwelten.invalid`;const password=crypto.randomUUID()+'!Aa1';
 try{
-  const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length>=20);
+  const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length===12);
   assert.equal((await request('/api/entries',{phrase:'Unauthorized test',language:'de',meaning:'No anonymous contributions.'})).status,401);
   const signup=await request('/api/auth/sign-up/email',{email,password,name:'QA Sprachwelten'},undefined,true);assert.equal(signup.status,200,JSON.stringify(signup.data));accountId=signup.data.user?.id;
   const session=await request('/api/auth/get-session',undefined,undefined,true);assert.equal(session.status,200);assert.ok(session.data.user?.id);accountId=session.data.user!.id;
   const entry=await request('/api/entries',{kind:'dialect',phrase:`QA-${stamp}`,language:'de',meaning:'Nur ein kurzlebiger Integrationstest.',regionId:'at',sourceLocale:'de',translation:{meaning:'Only a temporary integration test.'},translationReviewed:true},undefined,true);assert.equal(entry.status,201,JSON.stringify(entry.data));createdIds.push(entry.data.entry.id);assert.equal(entry.data.entry.status,'community');assert.equal(entry.data.entry.regionId,'at');assert.equal(entry.data.entry.translations.en.meaning,'Only a temporary integration test.');assert.equal(entry.data.entry.meaning,'Nur ein kurzlebiger Integrationstest.');
+  const duplicate=await request('/api/entries',{kind:'dialect',phrase:`  qa-${stamp}!  `,language:'de',meaning:'Eine andere Erklärung macht keinen neuen Ausdruck.',regionId:'at'},undefined,true);assert.equal(duplicate.status,409);assert.equal(duplicate.data.duplicate?.id,entry.data.entry.id);
+  const lookup=await request('/api/entries/duplicates?'+new URLSearchParams({kind:'dialect',phrase:`QA-${stamp}?`,language:'de',regionId:'at'}));assert.equal(lookup.status,200);assert.equal(lookup.data.duplicate?.id,entry.data.entry.id);
+  const curatedDuplicate=await request('/api/entries',{kind:'word',phrase:'  SAUDADE!!! ',language:'pt'},undefined,true);assert.equal(curatedDuplicate.status,409);assert.ok(curatedDuplicate.data.duplicate?.id);
+  const racing=await Promise.all([request('/api/entries',{kind:'word',phrase:`QA-race-${stamp}`,language:'en'},undefined,true),request('/api/entries',{kind:'word',phrase:`qa-race-${stamp}!`,language:'en'},undefined,true)]);
+  for(const result of racing)if(result.status===201)createdIds.push(result.data.entry.id);
+  assert.deepEqual(racing.map(result=>result.status).sort(),[201,409]);
   for(const kind of ['word','tongue_twister']){const added=await request('/api/entries',{kind,phrase:kind==='word'?`QA-word-${stamp}`:'She sells seashells by the seashore.',language:'en'},undefined,true);assert.equal(added.status,201);createdIds.push(added.data.entry.id);assert.equal(added.data.entry.meaning,'');if(kind==='word')assert.ok((await gamePrompts('language-quiz')).some(prompt=>prompt.id===added.data.entry.id));}
   const explanation=await request(`/api/entries/${entry.data.entry.id}`,{body:'Eine zusätzliche Erklärung für den Integrationstest.',sourceLocale:'de',translation:{body:'An additional explanation for the integration test.'},translationReviewed:true},undefined,true);assert.equal(explanation.status,201);
   const detail=await request(`/api/entries/${entry.data.entry.id}`);assert.equal(detail.data.explanations![0].translations.en.body,'An additional explanation for the integration test.');
@@ -41,6 +47,9 @@ try{
   assert.equal((await request(`/api/rooms/${code}`)).status,401);
   for(const name of ['QA Bo','QA Cam']){const join=await request(`/api/rooms/${code}/join`,{name});assert.equal(join.status,201);tokens.push(join.data.token!);}
   assert.equal((await request(`/api/rooms/${code}`,{action:'start'},tokens[1])).status,403);
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:7},tokens[0])).status,422);
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:5},tokens[1])).status,403);
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:5},tokens[0])).status,200);
   let current=await request(`/api/rooms/${code}`,{action:'start'},tokens[0]);assert.equal(current.status,200);assert.equal(current.data.room.phase,'writing');assert.equal(current.data.room.locale,'en');
   for(let round=0;round<5;round++){
     const answers=await Promise.all(tokens.map((token,i)=>request(`/api/rooms/${code}`,{action:'answer',text:`QA bluff ${round} ${i}`},token)));assert.ok(answers.every(a=>a.status===200));
@@ -56,9 +65,10 @@ try{
   const quiz=await request('/api/rooms',{name:'QA Quiz',locale:'en',mode:'language-quiz'});assert.equal(quiz.status,201);code=quiz.data.room.code;roomCodes.push(code!);
   const quizTokens=[quiz.data.token!];
   const guest=await request(`/api/rooms/${code}/join`,{name:'QA Other'});assert.equal(guest.status,201);quizTokens.push(guest.data.token!);
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:4},quizTokens[0])).status,200);
   current=await request(`/api/rooms/${code}`,{action:'start'},quizTokens[0]);assert.equal(current.status,200);assert.equal(current.data.room.phase,'voting');
   const sql=neon(process.env.DATABASE_URL_UNPOOLED!);
-  for(let round=0;round<5;round++){
+  for(let round=0;round<4;round++){
     const projected=current.data.room;assert.equal(projected.mode,'language-quiz');assert.equal(projected.options.length,4);assert.equal(new Set(projected.options.map((o:any)=>o.language)).size,4);assert.ok(!('language' in projected.prompt));assert.equal(projected.revelation,null);assert.ok(projected.options.every((o:any)=>!('correct' in o)));assert.ok(!('prompts' in projected));
     const rows=await sql`SELECT state->'round'->'entry'->>'language' AS language FROM game_rooms WHERE code=${code}`;
     const right=projected.options.find((o:any)=>o.language===rows[0].language).id;
@@ -67,14 +77,14 @@ try{
     const reveal=await request(`/api/rooms/${code}`,undefined,quizTokens[0]);assert.equal(reveal.data.room.phase,'reveal');assert.equal(reveal.data.room.options.filter((o:any)=>o.correct).length,1);assert.equal(reveal.data.room.revelation.language,rows[0].language);
     current=await request(`/api/rooms/${code}`,{action:'next'},quizTokens[0]);assert.equal(current.status,200);
   }
-  assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((p:any)=>p.score),[5,0]);
+  assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((p:any)=>p.score),[4,0]);
   const solo=await request('/api/rooms',{name:'QA Solo',mode:'language-quiz'});assert.equal(solo.status,201);roomCodes.push(solo.data.room.code);assert.equal((await request(`/api/rooms/${solo.data.room.code}`,{action:'start'},solo.data.token!)).data.room.phase,'voting');
   for(const mode of ['dialect-detective','everyday-language']) {
     const added=await request('/api/entries',{kind:mode==='dialect-detective'?'dialect':'situation',phrase:`QA-${mode}-${stamp}`,language:'de',meaning:'An original explanation for this test.',regionId:'at',contextId:'thanks'},undefined,true);
     assert.equal(added.status,201);createdIds.push(added.data.entry.id);assert.ok((await gamePrompts(mode as 'dialect-detective'|'everyday-language')).some(entry=>entry.id===added.data.entry.id));
     const host=await request('/api/rooms',{name:`QA ${mode.slice(0,8)}`,mode,locale:'en'});assert.equal(host.status,201);code=host.data.room.code;roomCodes.push(code!);
     current=await request(`/api/rooms/${code}`,{action:'start'},host.data.token!);assert.equal(current.status,200);
-    for(let round=0;round<5;round++) {
+    for(let round=0;round<2;round++) {
       const projected=current.data.room;assert.equal(projected.phase,'voting');assert.equal(projected.options.length,4);assert.equal(projected.revelation,null);assert.ok(!('region' in projected.prompt)&&!('context' in projected.prompt));
       const rows=await sql`SELECT state->'round'->'entry' AS entry FROM game_rooms WHERE code=${code}`;
       const entry=rows[0].entry as {regionId:string;contextId:string};const target=mode==='dialect-detective'?entry.regionId:entry.contextId;
@@ -82,12 +92,13 @@ try{
       const reveal=await request(`/api/rooms/${code}`,{action:'vote',optionId:correct.id},host.data.token!);assert.equal(reveal.data.room.phase,'reveal');assert.equal(reveal.data.room.options.filter((option:any)=>option.correct).length,1);
       current=await request(`/api/rooms/${code}`,{action:'next'},host.data.token!);assert.equal(current.status,200);
     }
-    assert.equal(current.data.room.phase,'finished');assert.equal(current.data.room.players[0].score,5);
+    assert.equal(current.data.room.phase,'finished');assert.equal(current.data.room.players[0].score,2);
   }
   const tongue=await request('/api/rooms',{name:'QA Speaker',mode:'tongue-twisters',locale:'en'});assert.equal(tongue.status,201);code=tongue.data.room.code;roomCodes.push(code!);
   const speechTokens=[tongue.data.token!];
   assert.equal((await request(`/api/rooms/${code}`,{action:'start'},speechTokens[0])).status,409);
   for(const name of ['QA Listener 1','QA Listener 2']){const guest=await request(`/api/rooms/${code}/join`,{name});assert.equal(guest.status,201);speechTokens.push(guest.data.token!);}
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:5},speechTokens[0])).status,200);
   current=await request(`/api/rooms/${code}`,{action:'start'},speechTokens[0]);assert.equal(current.status,200);
   for(let round=0;round<5;round++) {
     for(let speaker=0;speaker<3;speaker++) {
@@ -103,7 +114,7 @@ try{
     current=await request(`/api/rooms/${code}`,{action:'next'},speechTokens[0]);assert.equal(current.status,200);
   }
   assert.equal(current.data.room.phase,'finished');assert.deepEqual(current.data.room.players.map((player:any)=>player.score),[20,20,20]);
-  console.log('PASS: auth, bilingual community contributions, fixed quiz IDs, cached translations and binding availability, five complete rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
+  console.log('PASS: auth, bilingual community contributions, fixed quiz IDs, duplicate rejection and simultaneous submissions, cached translations and binding availability, configured rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.');
 }finally{
   const sql=neon(process.env.DATABASE_URL_UNPOOLED!);
   for(const key of cacheKeys)await sql`DELETE FROM translation_suggestions WHERE cache_key=${key}`;

@@ -9,7 +9,7 @@ const root=process.cwd();const directory=path.join(root,'dist/server');
 const config=JSON.parse(readFileSync(path.join(directory,'wrangler.json'),'utf8'));
 // Generated build config is reused, with direct public routing in the owner's account.
 config.name='sprachwelten';config.workers_dev=true;config.preview_urls=false;
-config.ai={binding:'AI'};
+config.ai={binding:'AI'};config.r2_buckets=[...(config.r2_buckets??[]).filter((bucket:{binding:string})=>bucket.binding!=='AUDIO'),{binding:'AUDIO',bucket_name:'sprachwelten-audio'}];
 delete config.topLevelName;delete config.routes;delete config.route;delete config.dispatch_namespaces;
 const configPath=path.join(directory,'wrangler.direct.json');
 writeFileSync(configPath,JSON.stringify(config,null,2)+'\n');

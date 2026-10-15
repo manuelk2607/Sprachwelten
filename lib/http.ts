@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import { getAuth } from '@/lib/auth/server';
 import { GameError } from '@/lib/game';
+import { DuplicateEntryError } from '@/lib/entry-duplicates';
 
 export function respond(body: unknown, status = 200) { return Response.json(body, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } }); }
 export async function safe(work: () => Promise<Response>) {
   try { return await work(); }
   catch (error) {
     if (error instanceof z.ZodError) return respond({ error: error.issues[0]?.message ?? 'Bitte die Eingaben prüfen.' }, 422);
+    if (error instanceof DuplicateEntryError) return respond({error:error.message,duplicate:error.duplicate},409);
     if (error instanceof GameError) return respond({ error: error.message }, error.status);
     console.error('Request failed:', error instanceof Error ? error.name : 'Unknown');
     return respond({ error: 'Gerade nicht erreichbar. Bitte versuche es gleich noch einmal.' }, 503);

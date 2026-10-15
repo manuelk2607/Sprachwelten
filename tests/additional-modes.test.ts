@@ -21,9 +21,9 @@ function finishTurn(game:Game,scores={clarity:3,accuracy:4,rhythm:5}) {
   for(const player of game.players.filter(p=>p.id!==speakerId))act(game,player.id,{action:'rate',...target,...scores});
 }
 for(const mode of ['dialect-detective','everyday-language'] as const) {
-  test(`${mode} has four unique choices, hides the target and completes five rounds`,()=>{
-    const game=started(mode,2);const seen=new Set<string>();
-    for(let round=0;round<5;round++) {
+  test(`${mode} has four unique choices, hides the target and completes four configured rounds`,()=>{
+    const game=lobby(mode,2);act(game,ids[0],{action:'configure',rounds:4});act(game,ids[0],{action:'start'},extraSeeds);const seen=new Set<string>();
+    for(let round=0;round<4;round++) {
       const view=viewGame(game,ids[0]);seen.add(game.round!.entry.id);
       assert.equal(game.phase,'voting');assert.equal(view.options.length,4);assert.equal(new Set(view.options.map(o=>o.text)).size,4);
       assert.equal(view.revelation,null);assert.ok(!('region' in view.prompt!));assert.ok(!('context' in view.prompt!));
@@ -39,7 +39,7 @@ for(const mode of ['dialect-detective','everyday-language'] as const) {
       assert.equal(mode==='dialect-detective'?result.revelation!.region:result.revelation!.context,answer);
       act(game,ids[0],{action:'next'});
     }
-    assert.equal(seen.size,5);assert.equal(game.phase,'finished');assert.deepEqual(game.players.map(p=>p.score),[5,0]);
+    assert.equal(seen.size,4);assert.equal(game.phase,'finished');assert.deepEqual(game.players.map(p=>p.score),[4,0]);
   });
 }
 test('dialect and context entries need their target; untrusted author and ratings fields are stripped',()=>{
@@ -81,15 +81,15 @@ test('ratings are anonymous and cannot be replaced, forged for another turn or s
   assert.equal(results.length,3);assert.ok(results.every(r=>r.ratingCount===2&&!('raterId' in r)&&!('ratings' in r)));
   assert.throws(()=>act(game,ids[1],{action:'next'}),GameError);
 });
-test('five pronunciation rounds score once with predictable rounding and no repeated text',()=>{
-  const game=started('tongue-twisters',2);const seen=new Set<string>();
-  for(let round=0;round<5;round++) {
+test('four configured pronunciation rounds score once with predictable rounding and no repeated text',()=>{
+  const game=lobby('tongue-twisters',2);act(game,ids[0],{action:'configure',rounds:4});act(game,ids[0],{action:'start'},extraSeeds);const seen=new Set<string>();
+  for(let round=0;round<4;round++) {
     seen.add(game.round!.entry.id);finishTurn(game,{clarity:3,accuracy:4,rhythm:4});finishTurn(game,{clarity:5,accuracy:5,rhythm:5});
     assert.equal(game.phase,'reveal');assert.equal(viewGame(game,ids[0]).pronunciation!.results[0].score,3.7);
     assert.throws(()=>act(game,ids[0],{action:'rate',speakerId:ids[1],roundNumber:round+1,clarity:5,accuracy:5,rhythm:5}),GameError);
     act(game,ids[0],{action:'next'});
   }
-  assert.equal(game.phase,'finished');assert.equal(seen.size,5);assert.deepEqual(game.players.map(p=>p.score),[18.5,25]);
+  assert.equal(game.phase,'finished');assert.equal(seen.size,4);assert.deepEqual(game.players.map(p=>p.score),[14.8,20]);
   assert.throws(()=>act(game,ids[0],{action:'next'}),GameError);
 });
 test('all mode instructions and new seed explanations have English translations',()=>{

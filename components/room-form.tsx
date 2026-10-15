@@ -5,9 +5,9 @@ import { useI18n } from '@/lib/i18n';
 import { gameModes, modeInfo, type PlayableGameMode } from '@/lib/modes';
 import { Dialog } from './dialog';
 
-export function RoomForm({close,code='',initialMode='idiom-bluff'}:{close:()=>void;code?:string;initialMode?:PlayableGameMode}) {
+export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false}:{close:()=>void;code?:string;initialMode?:PlayableGameMode;joinOnly?:boolean}) {
   const { t, locale } = useI18n();
-  const [join,setJoin]=useState(!!code);
+  const [join,setJoin]=useState(!!code||joinOnly);
   const [mode,setMode]=useState<PlayableGameMode>(initialMode);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -31,10 +31,10 @@ export function RoomForm({close,code='',initialMode='idiom-bluff'}:{close:()=>vo
   }
   return <Dialog title={join?t('Deine Runde wartet.'):t(info.title)} close={close}>
     <p className="muted">{t(join?'Einladungslink oder Raumcode genügen. Ein Konto brauchst du zum Spielen nicht.':info.intro)}</p>
-    <div className="segmented">
+    {!joinOnly&&<div className="segmented">
       <button className={!join?'selected':''} onClick={()=>{setJoin(false);setError('');}}>{t('Raum erstellen')}</button>
       <button className={join?'selected':''} onClick={()=>{setJoin(true);setError('');}}>{t('Raum beitreten')}</button>
-    </div>
+    </div>}
     <form className="form-stack" onSubmit={submit}>
       {!join&&<label>{t('Spielmodus')}<select value={mode} onChange={e=>setMode(e.target.value as PlayableGameMode)}>{gameModes.filter(m=>m.status==='playable').map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</select></label>}
       <label>{t('Dein Spielname')}<input name="name" required minLength={2} maxLength={24} autoComplete="nickname" placeholder={t('Dein Name in dieser Runde')}/></label>

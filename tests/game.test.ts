@@ -5,11 +5,11 @@ import { seedEntries } from '../lib/seeds';
 import { entryInput } from '../lib/content';
 const players:Player[]=['Ada','Bo','Cam'].map((name,i)=>({id:`p${i}`,name,tokenHash:`secret${i}`,score:0}));
 function lobby(){const g=createGame('ABC234',structuredClone(players[0]));joinGame(g,structuredClone(players[1]));joinGame(g,structuredClone(players[2]));return g;}
-function started(){const g=lobby();act(g,'p0',{action:'start'},seedEntries);return g;}
+function started(){const g=lobby();act(g,'p0',{action:'configure',rounds:5});act(g,'p0',{action:'start'},seedEntries);return g;}
 test('only the host can start and at least three players are required',()=>{
   const g=createGame('ABC234',structuredClone(players[0]));assert.throws(()=>act(g,'p0',{action:'start'},seedEntries),GameError);
   joinGame(g,structuredClone(players[1]));joinGame(g,structuredClone(players[2]));assert.throws(()=>act(g,'p1',{action:'start'},seedEntries),GameError);
-  act(g,'p0',{action:'start'},seedEntries);assert.equal(g.phase,'writing');assert.equal(new Set(g.prompts.map(p=>p.id)).size,5);
+  act(g,'p0',{action:'start'},seedEntries);assert.equal(g.phase,'writing');assert.equal(new Set(g.prompts.map(p=>p.id)).size,g.totalRounds);
 });
 test('writing projection never exposes the truth, other answers, tokens or future prompts',()=>{
   const g=started();act(g,'p0',{action:'answer',text:'This is a secret bluff.'});const view=viewGame(g,'p1');

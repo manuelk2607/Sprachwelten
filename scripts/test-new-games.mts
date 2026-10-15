@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {neon} from '@neondatabase/serverless';
+import {entryInput} from '../lib/content';
 import {newGameEntries} from '../lib/new-game-seeds';
 import {neighbors} from '../lib/challenges';
 import {gamePrompts,addEntry,findDuplicateEntry} from '../db/repository';
@@ -12,13 +13,13 @@ async function state(code:string){return (await sql`SELECT state FROM game_rooms
 function route(g:Game){const c=g.round!.entry.challenge;assert.ok(c?.type==='mission');let path=[c.start];for(let stage=0;stage<3;stage++){const target=c.checkpoints[stage],q=[path.slice(-1)],seen=new Set(q[0]);let found:number[]|undefined;for(const p of q){if(p.at(-1)===target){found=p;break;}for(const n of neighbors(p.at(-1)!))if(!seen.has(n)&&!c.blocked.includes(n)&&!c.checkpoints.slice(stage+1).includes(n)){seen.add(n);q.push([...p,n]);}}assert.ok(found);path.push(...found.slice(1));}return path;}
 try{
  // Prove the running server uses this QA database before any API mutations.
- const probe=await addEntry({...newGameEntries[48],phrase:'QA branch probe '+crypto.randomUUID()},'qa-new-games','QA New Games');entries.push(probe.id);assert.equal((await request('/api/entries/'+probe.id)).status,200,'Server must use the QA branch.');
+ const probe=await addEntry(entryInput.parse({...newGameEntries[48],phrase:'QA branch probe '+crypto.randomUUID()}),'qa-new-games','QA New Games');entries.push(probe.id);assert.equal((await request('/api/entries/'+probe.id)).status,200,'Server must use the QA branch.');
  for(const sample of [newGameEntries[0],newGameEntries[8],newGameEntries[16],newGameEntries[24],newGameEntries[32],newGameEntries[48],newGameEntries[56]]){
-  const input={...sample,phrase:'QA '+crypto.randomUUID()};const entry=await addEntry(input,'qa-new-games','QA New Games');entries.push(entry.id);assert.deepEqual(entry.challenge,input.challenge);await assert.rejects(addEntry({...input,phrase:input.phrase.toUpperCase()+'!'},'qa-new-games','QA New Games'));
+  const input=entryInput.parse({...sample,phrase:'QA '+crypto.randomUUID()});const entry=await addEntry(input,'qa-new-games','QA New Games');entries.push(entry.id);assert.deepEqual(entry.challenge,input.challenge);await assert.rejects(addEntry({...input,phrase:input.phrase.toUpperCase()+'!'},'qa-new-games','QA New Games'));
   assert.ok((await gamePrompts(sample.kind==='gaming_mission'?'gaming-call':sample.kind==='youth_chat'?'generation-chat':sample.kind==='academic'?'plain-talk':sample.kind==='sound_pair'?'tongue-twisters':sample.kind==='attribution'?'who-said-it':sample.kind==='false_friend'?'false-friends':'word-builder')).some(e=>e.id===entry.id));
  }
  // Simultaneous insertions are still protected by the database identity index.
- const sample={...newGameEntries[48],phrase:'QA concurrent '+crypto.randomUUID()};const race=await Promise.allSettled([addEntry(sample,'qa-new-games','QA New Games'),addEntry(sample,'qa-new-games','QA New Games')]);assert.equal(race.filter(r=>r.status==='fulfilled').length,1);for(const r of race)if(r.status==='fulfilled')entries.push(r.value.id);
+ const sample=entryInput.parse({...newGameEntries[48],phrase:'QA concurrent '+crypto.randomUUID()});const race=await Promise.allSettled([addEntry(sample,'qa-new-games','QA New Games'),addEntry(sample,'qa-new-games','QA New Games')]);assert.equal(race.filter(r=>r.status==='fulfilled').length,1);for(const r of race)if(r.status==='fulfilled')entries.push(r.value.id);
  for(const mode of ['gaming-call','generation-chat','plain-talk','who-said-it','false-friends','word-builder','tongue-twisters'] as const){
   const host=await request('/api/rooms',{name:'QA Host',mode,locale:'en',pronunciationCategory:'sound'});assert.equal(host.status,201);const code=host.room.code;rooms.push(code);const guest=await request(`/api/rooms/${code}/join`,{name:'QA Guest'});assert.equal(guest.status,201);const tokens=[host.token,guest.token];let current=await request(`/api/rooms/${code}`,{action:'configure',rounds:2},host.token);assert.equal(current.status,200);current=await request(`/api/rooms/${code}`,{action:'start'},host.token);assert.equal(current.status,200,current.error);
   for(let number=1;number<=2;number++){

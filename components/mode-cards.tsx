@@ -1,17 +1,17 @@
 'use client';
 import {useState} from 'react';
-import { ArrowRight, Compass, Globe2, MessageCircle, Mic2, Trophy } from 'lucide-react';
+import { Compass, Globe2, MessageCircle, Mic2, Trophy } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import {gameFamilies} from '@/lib/game-families';
-import { gameModes, type PlayableGameMode } from '@/lib/modes';
+import { gameModes } from '@/lib/modes';
 import { modeGuides } from '@/lib/mode-guides';
 const icons=[MessageCircle,Globe2,Mic2,Compass,MessageCircle];
-const buttons:Partial<Record<PlayableGameMode,string>>={'idiom-bluff':'Mit Freunden spielen','language-quiz':'Wörterquiz starten','tongue-twisters':'Vorlesen starten','dialect-detective':'Dialektquiz starten','everyday-language':'Alltagsquiz starten'};
 export function ModeCards() {
   const {t}=useI18n();const [expanded,setExpanded]=useState(false);
+  const initialCount=Math.ceil(gameFamilies.length/2);
   return <section id="spiele" className="mode-section" aria-labelledby="game-modes-heading">
     <div className="section-top"><div><div className="eyebrow">{t('SPIELERISCH DURCH DIE SPRACHWELTEN')}</div><h2 id="game-modes-heading">{t('Welches Spiel passt zu euch?')}</h2><p className="muted">{t('Hier findet ihr den Ablauf und die Regeln. Startet eure Runde oben im Spielmenü.')}</p></div><span className="mode-section-note">{t('Ohne Konto spielen · Gemeinsam entdecken')}</span></div>
-    <div className="mode-grid">{gameFamilies.slice(0,expanded?gameFamilies.length:6).map((family,index)=>{
+    <div className="mode-grid">{gameFamilies.slice(0,expanded?gameFamilies.length:initialCount).map((family,index)=>{
       const mode=gameModes.find(m=>m.id===family.id)!;
       const Icon=icons[index%icons.length];const guide=family.id==='plain-talk'?{category:'GEMEINSAM VERSTEHEN',steps:[{title:'Kategorie wählen',text:'Wählt Gaming, Jugendwörter oder Hochschulsprache im Spielmenü.'},{title:'Mit eigenen Worten erklären',text:'Eine Person kennt die Aufgabe und erklärt sie unter den Regeln der Kategorie.'},{title:'Als Team entscheiden',text:'Die anderen wählen eine passende Handlung oder Reaktion. Alle zusammen sammeln Punkte.'}],scoring:'1 Punkt für alle, wenn das gesamte Team richtig antwortet.',tip:'Die erklärende Person wechselt jede Runde.'}:family.id==='language-quiz'?{category:'SPRACHE, HERKUNFT & ALLTAG',steps:[{title:'Kategorie wählen',text:'Sucht eine Sprache, eine Region oder einen Gesprächskontext.'},{title:'Eine von vier Antworten',text:'Alle wählen unabhängig die passende Antwort zur Text- oder Audiovorgabe.'},{title:'Gemeinsam auflösen',text:'Nach allen Antworten erscheinen Lösung und Erklärung.'}],scoring:'1 Punkt pro richtiger Antwort.',tip:'Allein oder mit Freunden spielbar.'}:modeGuides[mode.id];
       return <article className={`mode-card mode-tone-${index%5}`} key={mode.id} aria-labelledby={`mode-${mode.id}`}>
@@ -24,6 +24,6 @@ export function ModeCards() {
         <p className="mode-tip">{t(guide.tip)}</p>
 
       </article>;
-    })}</div>{!expanded&&gameFamilies.length>6&&<button className="button outline show-more-modes" onClick={()=>setExpanded(true)}>{t('Mehr anzeigen')} · {gameFamilies.length-6}{' '}{t('weitere Spiele')}</button>}
+    })}</div>{!expanded&&gameFamilies.length>initialCount&&<button className="button outline show-more-modes" onClick={()=>setExpanded(true)}>{t('Mehr anzeigen')} · {gameFamilies.length-initialCount}{' '}{t('weitere Spiele')}</button>}
   </section>;
 }

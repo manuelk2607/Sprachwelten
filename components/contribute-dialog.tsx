@@ -1,4 +1,5 @@
 'use client';
+import {MediaChoiceInput,type MediaChoice} from './media-choice';
 import {ChallengeEditor,initialChallenge} from './challenge-editor';
 import type {Challenge} from '@/lib/challenges';
 import {Select} from './select';
@@ -14,13 +15,14 @@ import { LanguagePicker } from './language-picker';
 import { duplicateEntryMessage, type ExistingEntry } from '@/lib/entry-duplicates';
 export function ContributeDialog({close,saved,openExisting}:{close:()=>void;saved:()=>void;openExisting:(id:string)=>Promise<void>}) {
   const {t,locale}=useI18n();const formRef=useRef<HTMLFormElement>(null);
+  const [media,setMedia]=useState<MediaChoice>({text:true,audio:false});
   const [challenge,setChallenge]=useState<Challenge|undefined>();
   const [kind,setKind]=useState<ContentKind>('idiom');const [busy,setBusy]=useState(false);const [error,setError]=useState('');
   const [phrase,setPhrase]=useState('');const [language,setLanguage]=useState('de');const [regionId,setRegionId]=useState('');const [contextId,setContextId]=useState('');
   const [duplicate,setDuplicate]=useState<ExistingEntry|null>(null);const [opening,setOpening]=useState(false);const [audio,setAudio]=useState<{id:string;durationMs:number}|null>(null);const [audioBusy,setAudioBusy]=useState(false);
   useEffect(()=>{
     setDuplicate(null);
-    if(!phrase.trim()||(kind==='dialect'&&!regionId)||(kind==='situation'&&!contextId))return;
+    if(!media.text||!phrase.trim()||(kind==='dialect'&&!regionId)||(kind==='situation'&&!contextId))return;
     const controller=new AbortController();
     const timer=setTimeout(()=>{
       const query=new URLSearchParams({kind,phrase:phrase.trim(),language,...(kind==='dialect'?{regionId}:{}),...(kind==='situation'?{contextId}:{}),...(challenge?.type==='attribution'?{attributionCategory:challenge.category}:{}),...(challenge?.type==='friends'?{otherLanguage:challenge.otherLanguage,otherWord:challenge.otherWord}:{}),...(challenge?.type==='order'?{targetLanguage:challenge.targetLanguage}:{})});
@@ -30,7 +32,7 @@ export function ContributeDialog({close,saved,openExisting}:{close:()=>void;save
       }).catch(()=>{/* The database still enforces uniqueness if the preview is unavailable. */});
     },350);
     return()=>{clearTimeout(timer);controller.abort();};
-  },[kind,phrase,language,regionId,contextId,challenge]);
+  },[kind,phrase,language,regionId,contextId,challenge,media.text]);
   const showExisting=async()=>{
     if(!duplicate)return;setOpening(true);setError('');
     try{await openExisting(duplicate.id);}catch{setError(t('Der vorhandene Beitrag konnte gerade nicht geladen werden. Bitte versuche es erneut.'));}finally{setOpening(false);}
@@ -40,16 +42,20 @@ export function ContributeDialog({close,saved,openExisting}:{close:()=>void;save
   const sourceChanged=()=>{setRevision(value=>value+1);setTranslation({});setReviewed(false);};
   const getSource=()=>textsOf(Object.fromEntries(new FormData(formRef.current!).entries()));
   async function submit(e:React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();setBusy(true);setError('');const data={...Object.fromEntries(new FormData(e.currentTarget)),sourceLocale,translation,translationReviewed:reviewed,audioId:audio?.id,challenge};
+    e.preventDefault();if(!media.text&&!media.audio){setError(t('Bitte mindestens Text oder Audio auswählen.'));return;}if(media.audio&&!audio){setError(t('Bitte eine Aufnahme oder Audiodatei hinzufügen.'));return;}setBusy(true);setError('');const data={...Object.fromEntries(new FormData(e.currentTarget)),sourceLocale,translation,translationReviewed:reviewed,presentation:media.text?(media.audio?'both':'text'):'audio',phrase:media.text?phrase:'',audioId:media.audio?audio?.id:undefined,challenge};
     try {const response=await fetch('/api/entries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const json=await response.json() as {error:string;duplicate?:ExistingEntry};if(!response.ok){if(json.duplicate)setDuplicate(json.duplicate);throw new Error(json.error);}saved();close();}
     catch(error){setError(error instanceof Error?t(error.message):t('Dein Beitrag konnte nicht gespeichert werden.'));}finally{setBusy(false);}
   }
   return <Dialog title={t('Ein Stück Sprache teilen.')} close={close} wide><p className="muted">{t('Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.')}</p>
     <form ref={formRef} className="form-stack" onSubmit={submit}>
       <div className="form-row"><label>{t('Art des Beitrags')}<Select name="kind" disabled={busy} value={kind} onValueChange={value=>{setKind(value as ContentKind);setChallenge(initialChallenge(value as ContentKind));sourceChanged();}}>{Object.entries(kindLabels).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label><LanguagePicker label="Sprache des Originalausdrucks" name="language" value={language} onChange={setLanguage} disabled={busy}/></div>
-      <label>{t(kind==='word'||kind==='false_friend'?'Wort oder kurzer Ausdruck':kind==='tongue_twister'||kind==='sound_pair'?'Satz zum Nachsprechen':kind==='situation'?'Situation oder Formulierung':'Originalausdruck')}<input name="phrase" disabled={busy} value={phrase} onChange={e=>setPhrase(e.target.value)} required minLength={kind==='word'||kind==='false_friend'?1:3} maxLength={180}/></label>
+      <MediaChoiceInput value={media} onChange={value=>{setMedia(value);setError('');}} disabled={busy||audioBusy}/>
+      {media.text&&<label>{t(kind==='word'||kind==='false_friend'?'Wort oder kurzer Ausdruck':kind==='tongue_twister'||kind==='sound_pair'?'Satz zum Nachsprechen':kind==='situation'?'Situation oder Formulierung':'Originalausdruck')}<input name="phrase" disabled={busy} value={phrase} onChange={e=>setPhrase(e.target.value)} required minLength={kind==='word'||kind==='false_friend'?1:3} maxLength={180}/></label>}
+      <div hidden={!media.audio}><AudioInput onChange={setAudio} onBusy={setAudioBusy} disabled={busy} required={media.audio}/></div>
       {kind==='dialect'?<label>{t('Richtige Region')}<Select name="regionId" disabled={busy} required value={regionId} onValueChange={value=>setRegionId(value)}><option value="" disabled>{t('Bitte auswählen')}</option>{Object.entries(regions).map(([id,labels])=><option key={id} value={id}>{labels[locale]}</option>)}</Select></label>:<label>{t('Region')} <span>{t('(optional)')}</span><input name="region" maxLength={100} placeholder={t('z. B. Bayern, Québec, Stockholm')}/></label>}
       {kind==='situation'&&<label>{t('Richtiger Gesprächskontext')}<Select name="contextId" disabled={busy} required value={contextId} onValueChange={value=>setContextId(value)}><option value="" disabled>{t('Bitte auswählen')}</option>{Object.entries(contexts).map(([id,labels])=><option key={id} value={id}>{labels[locale]}</option>)}</Select></label>}
+      {media.audio&&!media.text&&kind==='false_friend'&&<p className="form-note">{t('Sprich beide Wörter in derselben Reihenfolge wie im Formular ein. Die Bedeutungen und das zweite Wort werden für die Auflösung gespeichert.')}</p>}
+      {media.audio&&!media.text&&kind==='word_order'&&<p className="form-note">{t('Sprich den Ausgangssatz ein. Die Wortbausteine und gültigen Reihenfolgen ergänzt du weiterhin als Text.')}</p>}
       {challenge&&<ChallengeEditor value={challenge} onChange={setChallenge}/>}
       {duplicate&&<div className="duplicate-notice" role="status"><p>{t(duplicateEntryMessage)}</p><button type="button" className="button outline" disabled={opening} onClick={()=>void showExisting()}>{opening?t('Wird geladen …'):t('Vorhandenen Beitrag öffnen')}</button></div>}
       {['word','dialect','situation'].includes(kind)&&<p className="form-note">{t('Du wählst die richtige Antwort. Drei andere Möglichkeiten ergänzt die App automatisch und zeigt sie in der jeweiligen Oberflächensprache an.')}</p>}
@@ -61,11 +67,10 @@ export function ContributeDialog({close,saved,openExisting}:{close:()=>void;save
         <label>{t('Kultureller Hinweis')} <span>{t('(optional)')}</span><textarea name="culturalNote" maxLength={1000} rows={2}/></label>
       </fieldset>
       <TranslationEditor sourceLocale={sourceLocale} setSourceLocale={value=>{setSourceLocale(value);sourceChanged();}} fields={fields} getSource={getSource} translation={translation} onChange={setTranslation} revision={revision} reviewed={reviewed} setReviewed={setReviewed}/>
-      <AudioInput onChange={setAudio} onBusy={setAudioBusy} disabled={busy}/>
       <label>{t('Beitragende Person')} <span>{t('(optional)')}</span><input name="creditName" maxLength={80} placeholder={t('z. B. deine Oma oder dein Anzeigename')}/></label><p className="form-note">{t('Nenne die Person, von der der Ausdruck stammt. Ohne Angabe erscheint dein Anzeigename.')}</p>
       <label>{t('Quelle')} <span>{t('(optional)')}</span><input name="sourceUrl" type="url" maxLength={500} placeholder="https://…"/></label>
       <p className="form-note">{t('Dein Beitrag und dein Anzeigename werden öffentlich sichtbar und können in den passenden Spielmodus gelangen. Bei Quizfragen wird die angegebene Sprache, Region oder Situation als Lösung verwendet.')}</p>
-      {error&&<p className="error" role="alert">{error}</p>}<button disabled={busy||opening||audioBusy||!!duplicate||!language} className="button primary">{busy?t('Wird gespeichert …'):t('Beitrag veröffentlichen')}</button>
+      {error&&<p className="error" role="alert">{error}</p>}<button disabled={busy||opening||audioBusy||!!duplicate||!language||!media.text&&!media.audio||media.audio&&!audio} className="button primary">{busy?t('Wird gespeichert …'):t('Beitrag veröffentlichen')}</button>
     </form>
   </Dialog>;
 }

@@ -1,3 +1,4 @@
+import {hasText,hasAudio,presentationOf} from './content-media';
 import {initializeTeam,settleTeam,teamMemberLeft,actTeam,viewTeam,type TeamRound} from './team-game';
 import {challengeText,challengeHasFallback,type PronunciationCategory,type AttributionCategory} from './challenges';
 import { languages, ratingScores, type Entry, type RatingScores, type RoomAction } from './content';
@@ -42,7 +43,7 @@ function newRound(game:Game) {
     const categoryKind=game.mode==='dialect-detective'?'region':'context';
     const target=categoryKind==='region'?(entry.regionId??categoryId('region',entry.region)):(entry.contextId??categoryId('context',entry.context));
     const choices=game.mode==='language-quiz'
-      ?prepareLanguageQuiz(entry.phrase,entry.language,Object.keys(languages)).options
+      ?(entry.phrase?prepareLanguageQuiz(entry.phrase,entry.language,Object.keys(languages)).options:prepareChoices(entry.language,Object.keys(languages)))
       :prepareChoices(target??'',categoryKind==='region'?regionIds:contextIds);
     game.round.options=choices.map(value=>({id:crypto.randomUUID(),text:game.mode==='language-quiz'?registeredLanguageNames(value)[game.locale]:categoryLabel(categoryKind,value,game.locale),authorId:null,...(game.mode==='language-quiz'?{language:value}:{categoryId:value,categoryKind})}));
     game.phase='voting';
@@ -139,7 +140,7 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(game.players.length<info.minPlayers)throw new GameError(info.minPlayers===2?'Zum Start braucht ihr mindestens 2 Personen.':'Zum Start braucht ihr mindestens 3 Personen.');
     if(game.totalRounds<1||game.totalRounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
     const eligible=prompts.filter(entry=>(game.mode==='tongue-twisters'?((entry.kind==='tongue_twister'&&game.pronunciationCategory!=='sound')||(entry.kind==='sound_pair'&&game.pronunciationCategory!=='twister')):entry.kind===info.kind)&&(game.mode!=='who-said-it'||!game.attributionCategory||game.attributionCategory==='both'||entry.challenge?.type==='attribution'&&entry.challenge.category===game.attributionCategory)&&(game.mode!=='dialect-detective'||categoryId('region',entry.regionId??entry.region))&&(game.mode!=='everyday-language'||categoryId('context',entry.contextId??entry.context)));
-    const unique=[...new Map(eligible.map(entry=>[entry.phrase.trim().toLocaleLowerCase(),entry])).values()];
+    const unique=[...new Map(eligible.map(entry=>[entry.phrase?'text:'+entry.phrase.trim().toLocaleLowerCase():'audio:'+entry.audioId,entry])).values()];
     if(unique.length<game.totalRounds)throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.');
     let ordered=shuffled(unique);if(game.mode==='plain-talk'){const plain=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='plain'),precise=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='precise');ordered=[];while(plain.length||precise.length){const a=plain.shift(),b=precise.shift();if(a)ordered.push(a);if(b)ordered.push(b);}}
     game.prompts=ordered.slice(0,game.totalRounds).map(entry=>localizeEntry(entry,game.locale??'de'));
@@ -199,7 +200,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
   const revealed=game.phase==='reveal'||game.phase==='finished';
   const quiz=isQuizMode(game.mode)||isTeamMode(game.mode);
   const c=round?.entry.challenge;const team=viewTeam(game,playerId);const hidden=!!team&&!team.briefing;
-  const order=c?.type==='order'?c:null;
+  const order=c?.type==='order'?c:null;const textVisible=!!round&&hasText(round.entry);const audioVisible=!!round&&hasAudio(round.entry)&&!hidden;
   const performance=round?.pronunciation;
   const speaker=performance?game.players[performance.speakerIndex]:undefined;
   const activeRatings=speaker?performance?.ratings[speaker.id]??{}:{};
@@ -207,13 +208,14 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
     team,pronunciationCategory:game.pronunciationCategory??'both',attributionCategory:game.attributionCategory??'both',
     challengeFallback:c?challengeHasFallback(c,game.locale):false,
     attributionType:c?.type==='attribution'?c.category:null,
-    soundWords:c?.type==='sound'?c.words.map(w=>({...w,meaning:challengeText(w.meaning,game.locale)})):null,
-    friends:c?.type==='friends'?{otherWord:c.otherWord,otherLanguage:c.otherLanguage,context:challengeText(c.context,game.locale),...(revealed?{firstMeaning:challengeText(c.firstMeaning,game.locale),secondMeaning:challengeText(c.secondMeaning,game.locale)}:{})}:null,
-    wordOrder:order?{targetLanguage:order.targetLanguage,source:order.source[game.locale],tiles:round?.tiles?.map(t=>({id:t.id,text:t.text}))??[],submitted:!!round?.orders?.[playerId],ownOrder:round?.orders?.[playerId]?.map(id=>round.tiles!.find(t=>t.sourceId===id)!.id)??null,...(revealed?{solution:order.accepted[0].map(id=>order.tiles.find(t=>t.id===id)!.text).join(' '),correct:order.accepted.some(a=>a.join('|')===round?.orders?.[playerId]?.join('|'))}:{})}:null,
+    pronunciationType:round?.entry.kind==='sound_pair'?'sound' as const:'twister' as const,
+    soundWords:c?.type==='sound'&&(textVisible||revealed)?c.words.map(w=>({...w,meaning:challengeText(w.meaning,game.locale)})):null,
+    friends:c?.type==='friends'?{otherWord:textVisible||revealed?c.otherWord:'',otherLanguage:c.otherLanguage,context:challengeText(c.context,game.locale),...(revealed?{firstMeaning:challengeText(c.firstMeaning,game.locale),secondMeaning:challengeText(c.secondMeaning,game.locale)}:{})}:null,
+    wordOrder:order?{targetLanguage:order.targetLanguage,source:textVisible||revealed?order.source[game.locale]:'',tiles:round?.tiles?.map(t=>({id:t.id,text:t.text}))??[],submitted:!!round?.orders?.[playerId],ownOrder:round?.orders?.[playerId]?.map(id=>round.tiles!.find(t=>t.sourceId===id)!.id)??null,...(revealed?{solution:order.accepted[0].map(id=>order.tiles.find(t=>t.id===id)!.text).join(' '),correct:order.accepted.some(a=>a.join('|')===round?.orders?.[playerId]?.join('|'))}:{})}:null,
     matchId:game.matchId??game.code,maxRounds:game.players.length*2,notice:game.notice,code:game.code,locale:game.locale??'de',mode:game.mode??'idiom-bluff',hostId:game.hostId,phase:game.phase,playerId,
     roundNumber:Math.min(game.roundIndex+1,game.totalRounds),totalRounds:game.totalRounds,
     players:game.players.map(p=>({id:p.id,name:p.name,score:p.score,answered:!!round?.answers[p.id]||!!round?.team?.paths[p.id]||!!round?.orders?.[p.id],voted:!!round?.votes[p.id],rated:!!activeRatings[p.id]})),
-    prompt:round?{phrase:hidden?'':order?order.source[game.locale]:round.entry.phrase,...(!hidden&&round.entry.audioId?{audioId:round.entry.audioId}:{}),...(!hidden&&(!quiz||game.mode==='everyday-language'||game.mode==='false-friends')?{language:round.entry.language,languageNames:round.entry.languageNames,literal:order?'':round.entry.literal}:{})}:null,
+    prompt:round?{presentation:presentationOf(round.entry),phrase:hidden||!textVisible?'':order?order.source[game.locale]:round.entry.phrase,...(audioVisible&&round.entry.audioId?{audioId:round.entry.audioId}:{}),...(!hidden&&(!quiz||game.mode==='everyday-language'||game.mode==='false-friends')?{language:round.entry.language,languageNames:round.entry.languageNames,literal:order||!textVisible?'':round.entry.literal}:{})}:null,
     options:round&&['voting','reveal','finished'].includes(game.phase)?round.options.map(option=>({id:option.id,text:option.text,isOwn:option.authorId===playerId,...(option.language?{language:option.language}:{}),...(option.categoryId?{categoryId:option.categoryId,categoryKind:option.categoryKind}:{}),...(revealed?{correct:correctOption(game,option),authorName:quiz?'':game.players.find(p=>p.id===option.authorId)?.name??'Die echte Bedeutung',voters:Object.entries(round.votes).filter(([,id])=>id===option.id).map(([id])=>game.players.find(p=>p.id===id)?.name).filter((name):name is string=>!!name)}:{})})):[],
     selectedOptionId:round?.votes[playerId]??null,
     pronunciation:performance&&speaker?{

@@ -1,0 +1,10 @@
+ALTER TABLE pronunciation_audio ADD COLUMN content_hash text CHECK (content_hash IS NULL OR content_hash ~ '^[a-f0-9]{64}$');
+ALTER TABLE content_entries ADD COLUMN presentation text NOT NULL DEFAULT 'text' CHECK (presentation IN ('text','audio','both'));
+ALTER TABLE content_entries ADD COLUMN audio_hash text CHECK (audio_hash IS NULL OR audio_hash ~ '^[a-f0-9]{64}$');
+UPDATE content_entries SET presentation='both' WHERE audio_id IS NOT NULL;
+ALTER TABLE content_entries DROP CONSTRAINT content_entries_phrase_check;
+ALTER TABLE content_entries ADD CONSTRAINT content_entries_phrase_check CHECK (length(phrase)<=180 AND ((presentation='audio' AND phrase='' AND audio_id IS NOT NULL AND audio_hash IS NOT NULL) OR (presentation IN ('text','both') AND length(phrase)>=1)));
+ALTER TABLE content_entries ADD CONSTRAINT content_entries_presentation_media CHECK ((presentation='text' AND audio_id IS NULL AND audio_hash IS NULL) OR (presentation IN ('audio','both') AND audio_id IS NOT NULL));
+DROP INDEX content_entries_identity;
+CREATE UNIQUE INDEX content_entries_identity ON content_entries (kind,lower(language),content_phrase_key(phrase),(CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') ELSE '' END)) WHERE presentation<>'audio';
+CREATE UNIQUE INDEX content_entries_audio_identity ON content_entries (kind,lower(language),audio_hash,(CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') ELSE '' END)) WHERE audio_hash IS NOT NULL;

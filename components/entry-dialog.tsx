@@ -1,4 +1,5 @@
 'use client';
+import {hasAudio,hasText} from '@/lib/content-media';
 import {ChallengeDetails} from './challenge-details';
 import { useEffect, useState } from 'react';
 import { BookOpen, ExternalLink, Lightbulb } from 'lucide-react';
@@ -22,10 +23,10 @@ export function EntryDialog({entry:original,close,login,signedIn}:{entry:Entry;c
     try {const response=await fetch(`/api/entries/${entry.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({body:text,creditName,sourceLocale,translation,translationReviewed:reviewed})});const result=await response.json() as {error:string};if(!response.ok)throw new Error(result.error);setText('');setCreditName('');setTranslation({});setReviewed(false);setRefresh(value=>value+1);}
     catch(error){setError(t((error as Error).message));}finally{setBusy(false);}
   }
-  return <Dialog title={entry.phrase} close={close} wide>
+  return <Dialog title={entry.phrase||t('Audiobeitrag')} close={close} wide>
     <div className="detail-meta"><span className="kind-pill">{t(kindLabels[entry.kind])}</span><span>{languageLabel(entry.language,locale,entry.languageNames)}{entry.region&&' · '+t(entry.region)}</span></div>
-    <PronunciationAudio id={entry.audioId}/>{entry.status==='community'&&<TranslationNotice status={translationStatus(original,locale)} sourceLocale={original.sourceLocale??'de'}/>}
-    {entry.literal&&<p className="literal">{t('Wörtlich: „')}{entry.literal}{locale==='en'?'”':'“'}</p>}
+    <PronunciationAudio id={hasAudio(entry)?entry.audioId:undefined}/>{entry.status==='community'&&<TranslationNotice status={translationStatus(original,locale)} sourceLocale={original.sourceLocale??'de'}/>}
+    {hasText(entry)&&entry.literal&&<p className="literal">{t('Wörtlich: „')}{entry.literal}{locale==='en'?'”':'“'}</p>}
     {entry.meaning&&<div className="meaning-block"><Lightbulb size={24}/><div><span className="eyebrow">{t('DAS STECKT DAHINTER')}</span><p>{entry.meaning}</p></div></div>}
     <ChallengeDetails challenge={entry.challenge}/>
     {entry.example&&<blockquote>{entry.example}</blockquote>}{entry.culturalNote&&<p className="cultural-note"><BookOpen size={19}/>{entry.culturalNote}</p>}{entry.context&&<p>{t('Gesprächskontext:')} {entry.context}</p>}

@@ -28,7 +28,7 @@ test('quiz projection hides the correct language, meaning, source and future wor
   act(game,'host',{action:'vote',optionId:correctId(game)});
   const view=viewGame(game,'guest1');
   assert.equal(view.phase,'voting');assert.equal(view.mode,'language-quiz');assert.equal(view.revelation,null);
-  assert.deepEqual(Object.keys(view.prompt!),['phrase']);
+  assert.deepEqual(Object.keys(view.prompt!).sort(),['phrase','presentation']);
   assert.ok(view.options.every(option=>!('correct' in option)&&!('authorName' in option)&&!('voters' in option)));
   assert.ok(!JSON.stringify(view).includes(game.round!.entry.meaning));
   assert.ok(!JSON.stringify(view).includes(game.round!.entry.sourceUrl));

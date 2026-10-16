@@ -15,7 +15,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
   'language-quiz':{
     category:'WÖRTER & SPRACHGEFÜHL',
     steps:[
-      {title:'Ein Wort entdecken',text:'Ihr seht ein Wort in seiner Originalschreibweise.'},
+      {title:'Ein Wort entdecken',text:'Ihr lest oder hört ein Wort in seiner Originalsprache.'},
       {title:'Eine Sprache wählen',text:'Vier Sprachen stehen zur Auswahl. Jede Person stimmt für eine davon.'},
       {title:'Herkunft erfahren',text:'Sobald alle gewählt haben, erscheinen die richtige Sprache und die Erklärung.'},
     ],
@@ -25,7 +25,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
   'tongue-twisters':{
     category:'VORLESEN & LACHEN',
     steps:[
-      {title:'Reihum vorlesen',text:'Jede Person liest denselben vorgegebenen Satz im Raum oder in eurem Sprachchat vor.'},
+      {title:'Reihum nachsprechen',text:'Jede Person spricht dieselbe Text- oder Audiovorgabe im Raum oder in eurem Sprachchat nach.'},
       {title:'Fair bewerten',text:'Alle anderen vergeben je 1 bis 5 für Verständlichkeit, Genauigkeit und Rhythmus.'},
       {title:'Fortschritte sehen',text:'Nach allen Vorträgen seht ihr die Durchschnittswerte. Danach folgt der nächste Text.'},
     ],
@@ -35,7 +35,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
   'dialect-detective':{
     category:'DIALEKTE & REGIONEN',
     steps:[
-      {title:'Regionalen Ausdruck lesen',text:'Ihr bekommt ein Wort oder einen Ausdruck aus einer bestimmten Region.'},
+      {title:'Regionalen Ausdruck entdecken',text:'Ihr lest oder hört einen Ausdruck aus einer bestimmten Region.'},
       {title:'Region zuordnen',text:'Wählt aus vier Regionen die Herkunft, die ihr für richtig haltet.'},
       {title:'Besonderheiten entdecken',text:'Die Auflösung zeigt die hinterlegte Region, die Bedeutung und regionale Hinweise.'},
     ],
@@ -45,7 +45,7 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
   'everyday-language':{
     category:'ALLTAG & KULTUR',
     steps:[
-      {title:'Eine Formulierung lesen',text:'Ihr seht einen Satz aus dem Alltag und seine Originalsprache.'},
+      {title:'Eine Formulierung entdecken',text:'Ihr lest oder hört einen Satz aus dem Alltag und erfahrt seine Originalsprache.'},
       {title:'Die Absicht erkennen',text:'Welcher der vier Gesprächskontexte passt: etwa eine Bitte, eine Absage oder ein Dank?'},
       {title:'Den Ton verstehen',text:'Die Auflösung erklärt die Hauptabsicht und die kulturellen Feinheiten.'},
     ],
@@ -56,6 +56,6 @@ export const modeGuides:Record<PlayableGameMode,ModeGuide>={
 "generation-chat":{"category": "JUGENDCHAT", "steps": [{"title": "Aufgabe entdecken", "text": "Eine Person erklärt die Nachricht ohne das Jugendwort. Die anderen wählen eine passende Reaktion."}, {"title": "In eigene Worte fassen", "text": "Die erklärende Person darf das Jugendwort nicht wiederholen. Die anderen wählen eine von vier Reaktionen."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Erklärt die Nachricht in eigenen Worten. Wählen alle anderen die passende Reaktion, erhält jede Person 1 Punkt.", "tip": "Fragt nach, wenn die Erklärung noch unklar ist."},
 "plain-talk":{"category": "AKADEMISCH & ALLTÄGLICH", "steps": [{"title": "Aufgabe entdecken", "text": "Eine Person erklärt den Gedanken mit höchstens 25 Wörtern. Drei Tabuwörter bleiben draußen."}, {"title": "Mit 25 Wörtern erklären", "text": "Vermeidet die drei Tabuwörter. Eine Rückfrage pro Person ist erlaubt; Antworten zählen zum Wortbudget."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Erklärt alltagstauglich oder präzise. Alle Rückantworten zählen zum Wortbudget. Wählt das gesamte Team richtig, erhält jede Person 1 Punkt.", "tip": "Die Richtung wechselt zwischen Alltagssprache und präziser Erklärung."},
 "who-said-it":{"category": "ZITAT ODER LIEDSTELLE", "steps": [{"title": "Aufgabe entdecken", "text": "Bei Personenzitaten sucht ihr die Person, bei Liedstellen den Liedtitel. Die Kategorie steht immer dabei."}, {"title": "Antwort abgeben", "text": "Wer steckt dahinter? Die gesuchte Kategorie steht über der Frage."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Wählt die Person oder den Liedtitel. Drei falsche Antworten kommen aus derselben Kategorie. Jede richtige Antwort bringt 1 Punkt.", "tip": "Die gesuchte Kategorie steht über der Frage."},
-"false-friends":{"category": "ZWEI SPRACHEN", "steps": [{"title": "Aufgabe entdecken", "text": "Ihr seht zwei Wörter aus unterschiedlichen Sprachen und ihren Verwendungskontext."}, {"title": "Antwort abgeben", "text": "Gleiche Bedeutung oder False Friend? Bezieht euch auf den angegebenen Kontext. Wörter können mehrere Bedeutungen haben."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Entscheidet, ob die angegebenen Bedeutungen im gezeigten Kontext übereinstimmen. Eine richtige Antwort bringt 1 Punkt.", "tip": "Bezieht euch auf den angegebenen Kontext. Wörter können mehrere Bedeutungen haben."},
-"word-builder":{"category": "SATZBAU & ÜBERSETZEN", "steps": [{"title": "Aufgabe entdecken", "text": "Lest den Satz in eurer Oberflächensprache und ordnet die Bausteine zur Übersetzung."}, {"title": "Antwort abgeben", "text": "Wie lautet die Übersetzung? Nur ausdrücklich hinterlegte Lösungen werden gewertet."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Verwendet jeden Baustein genau einmal. Hinterlegte alternative Wortfolgen zählen ebenfalls. Jede richtige Übersetzung bringt 1 Punkt.", "tip": "Nur ausdrücklich hinterlegte Lösungen werden gewertet."}
+"false-friends":{"category": "ZWEI SPRACHEN", "steps": [{"title": "Aufgabe entdecken", "text": "Ihr lest oder hört zwei Wörter aus unterschiedlichen Sprachen. Der Verwendungskontext steht dabei."}, {"title": "Antwort abgeben", "text": "Gleiche Bedeutung oder False Friend? Bezieht euch auf den angegebenen Kontext. Wörter können mehrere Bedeutungen haben."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Entscheidet, ob die angegebenen Bedeutungen im gezeigten Kontext übereinstimmen. Eine richtige Antwort bringt 1 Punkt.", "tip": "Bezieht euch auf den angegebenen Kontext. Wörter können mehrere Bedeutungen haben."},
+"word-builder":{"category": "SATZBAU & ÜBERSETZEN", "steps": [{"title": "Aufgabe entdecken", "text": "Lest oder hört den Ausgangssatz und ordnet die Bausteine zur Übersetzung."}, {"title": "Antwort abgeben", "text": "Wie lautet die Übersetzung? Nur ausdrücklich hinterlegte Lösungen werden gewertet."}, {"title": "Auflösen & lernen", "text": "Nach allen Antworten seht ihr die Lösung und die Erklärung."}], "scoring": "Verwendet jeden Baustein genau einmal. Hinterlegte alternative Wortfolgen zählen ebenfalls. Jede richtige Übersetzung bringt 1 Punkt.", "tip": "Nur ausdrücklich hinterlegte Lösungen werden gewertet."}
 };

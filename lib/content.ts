@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {presentations,type Presentation} from './content-media';
 import {challengeSchema,challengeTypes} from './challenges';
 import { isRegisteredLanguage } from './language-codes';
 import type { LanguageNames } from './language-label';
@@ -13,7 +14,8 @@ const text = (max: number) => z.string().trim().max(max).default('');
 export const entryInput = z.object({
   challenge:challengeSchema.optional(),
   kind: z.enum(contentKinds).default('idiom'),
-  phrase: z.string().trim().min(1, 'Der Ausdruck ist zu kurz.').max(180),
+  presentation:z.enum(presentations).optional(),
+  phrase:z.string().trim().max(180).default(''),
   language:z.string().trim().max(30).refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.'),
   literal: text(300),
   meaning: z.string().trim().max(1500).default(''),
@@ -26,6 +28,10 @@ export const entryInput = z.object({
   translation:translationFields.optional(),
   translationReviewed:z.boolean().optional(),
 }).superRefine((input, ctx) => {
+  const presentation=input.presentation??(input.audioId?'both':'text');
+  if(presentation!=='audio'&&input.phrase.length<(input.kind==='word'||input.kind==='false_friend'?1:3))ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck ist zu kurz.'});
+  if(presentation!=='text'&&!input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Bitte eine Aufnahme oder Audiodatei hinzufügen.'});
+  if(presentation==='text'&&input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Wähle Audio aus, um eine Aufnahme zu verwenden.'});
   const expected=challengeTypes[input.kind as keyof typeof challengeTypes];
   if(expected&&input.challenge?.type!==expected)ctx.addIssue({code:'custom',path:['challenge'],message:'Bitte die Spielaufgabe vollständig ausfüllen.'});
   if(!expected&&input.challenge)ctx.addIssue({code:'custom',path:['challenge'],message:'Diese Beitragsart benötigt keine Zusatzaufgabe.'});
@@ -33,16 +39,16 @@ export const entryInput = z.object({
   if(input.challenge?.type==='relay'||input.challenge?.type==='academic')for(const locale of ['de','en'] as const){const values=input.challenge.choices.map(v=>(v[locale]||v[locale==='de'?'en':'de']).trim().toLocaleLowerCase());if(new Set(values).size!==4)ctx.addIssue({code:'custom',path:['challenge'],message:'Antworten müssen verschieden sein.'});}
   if(input.translation&&Object.values(input.translation).some(value=>value.trim())&&!input.translationReviewed)ctx.addIssue({code:'custom',path:['translationReviewed'],message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
   if (!['word','tongue_twister','sound_pair','attribution','false_friend','word_order'].includes(input.kind) && input.meaning.length < 10) ctx.addIssue({code:'custom', path:['meaning'], message:'Bitte die Bedeutung etwas ausführlicher erklären.'});
-  if (!['word','false_friend'].includes(input.kind) && input.phrase.length < 3) ctx.addIssue({code:'custom', path:['phrase'], message:'Der Ausdruck ist zu kurz.'});
   if (input.kind === 'dialect' && !categoryId('region',input.regionId??input.region)) ctx.addIssue({code:'custom',path:['regionId'],message:'Bitte eine Region aus der Liste wählen.'});
   if (input.kind === 'situation' && !categoryId('context',input.contextId??input.context)) ctx.addIssue({code:'custom',path:['contextId'],message:'Bitte einen Gesprächskontext aus der Liste wählen.'});
 }).transform(input=>{
   const regionId=categoryId('region',input.regionId??input.region);
   const contextId=categoryId('context',input.contextId??input.context);
-  return {...input,regionId,contextId,...(input.kind==='dialect'&&regionId?{region:categoryLabel('region',regionId,'de')} :{}),...(input.kind==='situation'&&contextId?{context:categoryLabel('context',contextId,'de')}:{})};
+  const presentation=input.presentation??(input.audioId?'both':'text');
+  return {...input,presentation,phrase:presentation==='audio'?'':input.phrase,regionId,contextId,...(input.kind==='dialect'&&regionId?{region:categoryLabel('region',regionId,'de')} :{}),...(input.kind==='situation'&&contextId?{context:categoryLabel('context',contextId,'de')}:{})};
 });
 export type EntryInput = z.infer<typeof entryInput>;
-export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'> & {creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;languageNames?:LanguageNames };
+export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'> & {presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;languageNames?:LanguageNames };
 export const explanationInput = z.object({ creditName:text(80),body: z.string().trim().min(10).max(1500),sourceLocale:z.enum(['de','en']).optional(),translation:translationFields.optional(),translationReviewed:z.boolean().optional() }).refine(input=>!input.translation?.body||input.translationReviewed,{message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);

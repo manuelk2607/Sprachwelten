@@ -16,10 +16,11 @@ export const POST=(request:Request)=>safe(async()=>{
   let metadata:ReturnType<typeof validateAudioWave>;try{metadata=validateAudioWave(bytes);}catch(error){throw new GameError((error as Error).message,422);}
   const sql=database();const reserved=await sql`INSERT INTO audio_upload_budget(key,clips) VALUES ('global',1) ON CONFLICT(key) DO UPDATE SET clips=audio_upload_budget.clips+1 WHERE audio_upload_budget.clips<500 RETURNING clips`;
   if(!reserved.length)throw new GameError('Der Audiospeicher ist derzeit voll. Du kannst den Beitrag ohne Aufnahme veröffentlichen.',429);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);const contentHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
   const id=crypto.randomUUID();const key=`pronunciation/${id}.wav`;
   try{
     await bucket.put(key,bytes,{httpMetadata:{contentType:'audio/wav',cacheControl:'public, max-age=86400'}});
-    await sql`INSERT INTO pronunciation_audio(id,owner_id,storage_key,byte_size,duration_ms) VALUES (${id},${user.id},${key},${metadata.byteSize},${metadata.durationMs})`;
+    await sql`INSERT INTO pronunciation_audio(id,owner_id,storage_key,byte_size,duration_ms,content_hash) VALUES (${id},${user.id},${key},${metadata.byteSize},${metadata.durationMs},${contentHash})`;
   }catch(error){await bucket.delete(key);await sql`UPDATE audio_upload_budget SET clips=greatest(0,clips-1) WHERE key='global'`;throw error;}
   return respond({audio:{id,durationMs:metadata.durationMs}},201);
 });

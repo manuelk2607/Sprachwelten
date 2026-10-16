@@ -1,3 +1,4 @@
+import {hasText} from './content-media';
 import type {Game,Round} from './game';
 import {GameError} from './game';
 import type {RoomAction} from './content';
@@ -49,5 +50,5 @@ export function actTeam(game:Game,id:string,action:RoomAction):boolean{
 }
 export function viewTeam(game:Omit<Game,'prompts'>,id:string){
  const r=game.round,t=r?.team;if(!r||!t)return null;const c=r.entry.challenge,revealed=game.phase==='reveal'||game.phase==='finished',caller=id===t.callerId;
- return {callerId:t.callerId,call:t.call,questions:t.questions,briefing:caller||revealed?{phrase:r.entry.phrase,meaning:r.entry.meaning,term:c?.type==='relay'?c.term:'',direction:c?.type==='academic'?c.direction:null,taboo:c?.type==='academic'?c.taboo.map(v=>challengeText(v,game.locale)):[]}:null,mission:c?.type==='mission'?{start:c.start,blocked:c.blocked,checkpoints:caller||revealed?c.checkpoints:[],ownPath:t.paths[id]??null}:null,results:revealed?game.players.filter(p=>p.id!==t.callerId).map(p=>({name:p.name,correct:c?.type==='mission'?routeSucceeds(t.paths[p.id]??[],c.checkpoints):!!r.options.find(o=>o.id===r.votes[p.id])?.solution})):[],wordsUsed:wordTokens([t.call,...Object.values(t.questions).map(q=>q.reply??'')].join(' ')).length};
+ return {callerId:t.callerId,call:t.call,questions:t.questions,briefing:caller||revealed?{phrase:hasText(r.entry)?r.entry.phrase:'',meaning:r.entry.meaning,term:c?.type==='relay'?c.term:'',direction:c?.type==='academic'?c.direction:null,taboo:c?.type==='academic'?c.taboo.map(v=>challengeText(v,game.locale)):[]}:null,mission:c?.type==='mission'?{start:c.start,blocked:c.blocked,checkpoints:caller||revealed?c.checkpoints:[],ownPath:t.paths[id]??null}:null,results:revealed?game.players.filter(p=>p.id!==t.callerId).map(p=>({name:p.name,correct:c?.type==='mission'?routeSucceeds(t.paths[p.id]??[],c.checkpoints):!!r.options.find(o=>o.id===r.votes[p.id])?.solution})):[],wordsUsed:wordTokens([t.call,...Object.values(t.questions).map(q=>q.reply??'')].join(' ')).length};
 }

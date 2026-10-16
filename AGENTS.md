@@ -17,3 +17,5 @@ Primary production is the owner’s Cloudflare Worker `sprachwelten`: https://sp
 - Validate with `npm run typecheck`, `npm test` and `npm run build`. Use `npm run test:integration` with `.env.test.local` and a configured isolated test database and running server when changing auth, persistence or the game API.
 
 - Zungenbrecher has the Zungenknoten and Klangfallen categories; both repeat a supplied sentence and use peer ratings. Quote rooms distinguish person quotes from song titles. Word building accepts only stored sequences and randomizes public tile IDs per round. Cooperative tasks keep their source briefing and targets private to the caller until reveal.
+
+- Contributions explicitly select `presentation` as text, audio or both. Audio-only entries have an empty phrase and require owned audio with a server-computed hash. Preserve partial text uniqueness and the audio-content identity index. Do not collapse empty audio transcripts into one game prompt or disclose unselected media in room projections. Legacy rounds without presentation infer both when audioId exists.

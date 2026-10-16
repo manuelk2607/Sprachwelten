@@ -63,7 +63,7 @@ function settleVotes(game:Game){
   if(round.team){settleTeam(game);return;}
   if(game.phase==='ordering'&&game.players.every(p=>!!round.orders?.[p.id])){const c=round.entry.challenge;if(c?.type==='order')for(const p of game.players)if(c.accepted.some(a=>a.join('|')===round.orders![p.id].join('|')))p.score++;game.phase='reveal';return;}
   if(game.phase==='writing'&&game.players.every(player=>!!round.answers[player.id])){
-    round.options=shuffled([{id:crypto.randomUUID(),text:round.entry.meaning,authorId:null},...game.players.map(player=>({id:crypto.randomUUID(),text:round.answers[player.id],authorId:player.id}))]);game.phase='voting';
+    round.options=shuffled([{id:crypto.randomUUID(),text:round.entry.meaning||round.entry.literal,authorId:null},...game.players.map(player=>({id:crypto.randomUUID(),text:round.answers[player.id],authorId:player.id}))]);game.phase='voting';
   }
   if(game.phase==='voting'&&game.players.every(player=>!!round.votes[player.id])){
     for(const [voter,optionId] of Object.entries(round.votes)){
@@ -215,7 +215,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
     matchId:game.matchId??game.code,maxRounds:game.players.length*2,notice:game.notice,code:game.code,locale:game.locale??'de',mode:game.mode??'idiom-bluff',hostId:game.hostId,phase:game.phase,playerId,
     roundNumber:Math.min(game.roundIndex+1,game.totalRounds),totalRounds:game.totalRounds,
     players:game.players.map(p=>({id:p.id,name:p.name,score:p.score,answered:!!round?.answers[p.id]||!!round?.team?.paths[p.id]||!!round?.orders?.[p.id],voted:!!round?.votes[p.id],rated:!!activeRatings[p.id]})),
-    prompt:round?{presentation:presentationOf(round.entry),phrase:hidden||!textVisible?'':order?order.source[game.locale]:round.entry.phrase,...(audioVisible&&round.entry.audioId?{audioId:round.entry.audioId}:{}),...(!hidden&&(!quiz||game.mode==='everyday-language'||game.mode==='false-friends')?{language:round.entry.language,languageNames:round.entry.languageNames,literal:order||!textVisible?'':round.entry.literal}:{})}:null,
+    prompt:round?{presentation:presentationOf(round.entry),phrase:hidden||!textVisible?'':order?order.source[game.locale]:round.entry.phrase,...(audioVisible&&round.entry.audioId?{audioId:round.entry.audioId}:{}),...(!hidden&&(!quiz||game.mode==='everyday-language'||game.mode==='false-friends')?{language:round.entry.language,languageNames:round.entry.languageNames,literal:revealed&&!order&&textVisible?round.entry.literal:''}:{})}:null,
     options:round&&['voting','reveal','finished'].includes(game.phase)?round.options.map(option=>({id:option.id,text:option.text,isOwn:option.authorId===playerId,...(option.language?{language:option.language}:{}),...(option.categoryId?{categoryId:option.categoryId,categoryKind:option.categoryKind}:{}),...(revealed?{correct:correctOption(game,option),authorName:quiz?'':game.players.find(p=>p.id===option.authorId)?.name??'Die echte Bedeutung',voters:Object.entries(round.votes).filter(([,id])=>id===option.id).map(([id])=>game.players.find(p=>p.id===id)?.name).filter((name):name is string=>!!name)}:{})})):[],
     selectedOptionId:round?.votes[playerId]??null,
     pronunciation:performance&&speaker?{
@@ -223,7 +223,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
       ratingCount:Object.keys(activeRatings).length,requiredRatings:game.players.length-1,hasRated:!!activeRatings[playerId],
       results:revealed?pronunciationResults(game):[],
     }:null,
-    revelation:revealed&&round?{language:round.entry.language,languageNames:round.entry.languageNames,region:round.entry.region,regionId:round.entry.regionId,context:round.entry.context,contextId:round.entry.contextId,meaning:round.entry.meaning,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.creditName||round.entry.authorName,sourceLocale:round.entry.sourceLocale??'de',translationStatus:round.entry.status==='curated'?'original' as const:translationStatus(round.entry,game.locale)}:null,
+    revelation:revealed&&round?{language:round.entry.language,languageNames:round.entry.languageNames,region:round.entry.region,regionId:round.entry.regionId,context:round.entry.context,contextId:round.entry.contextId,meaning:round.entry.meaning||round.entry.literal,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.creditName||'',sourceLocale:round.entry.sourceLocale??'de',translationStatus:round.entry.status==='curated'?'original' as const:translationStatus(round.entry,game.locale)}:null,
   };
 }
 export type GameView=ReturnType<typeof viewGame>;

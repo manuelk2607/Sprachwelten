@@ -13,10 +13,10 @@ import { translate } from '../lib/translations';
 test('category IDs normalize legacy labels and cannot be replaced by arbitrary answers',()=>{
   assert.equal(categoryId('region',' Austria '),'at');assert.equal(categoryId('context','Höfliche Absage'),'polite-refusal');
   for(const kind of ['region','context'] as const)for(const id of kind==='region'?regionIds:contextIds)for(const locale of ['de','en'] as const)assert.equal(categoryId(kind,categoryLabel(kind,id,locale)),id);
-  const input=entryInput.parse({kind:'dialect',phrase:'A regional word',language:'de',meaning:'A useful explanation.',region:'forged region',regionId:'at'});
+  const input=entryInput.parse({literal:'Test translation',kind:'dialect',phrase:'A regional word',language:'de',meaning:'A useful explanation.',region:'forged region',regionId:'at'});
   assert.equal(input.region,'Österreich');assert.equal(input.regionId,'at');
   assert.ok(!entryInput.safeParse({...input,regionId:'unknown-region'}).success);
-  assert.ok(!entryInput.safeParse({kind:'situation',phrase:'A phrase',language:'en',meaning:'A useful explanation.',context:'Anything free-form'}).success);
+  assert.ok(!entryInput.safeParse({literal:'Test translation',kind:'situation',phrase:'A phrase',language:'en',meaning:'A useful explanation.',context:'Anything free-form'}).success);
 });
 test('community translations preserve original expressions and use per-field fallbacks',()=>{
   const original={...extraSeeds[0],status:'community' as const,sourceLocale:'de' as const,meaning:'Ein kurzer Gruß.',culturalNote:'Ein regionaler Hinweis.',translations:{en:{meaning:'A short greeting.',origin:'contributor' as const}}};
@@ -27,7 +27,7 @@ test('community translations preserve original expressions and use per-field fal
   const english={body:'An English explanation.',sourceLocale:'en' as const,translations:{de:{body:'Eine deutsche Erklärung.',origin:'contributor' as const}}};assert.equal(localizedTexts(english,'de').body,'Eine deutsche Erklärung.');assert.equal(localizedTexts(english,'en'),english);
 });
 test('translations require contributor review and cannot inject provenance or orphan fields',()=>{
-  const base={kind:'word',phrase:'saudade',language:'pt',meaning:'Eine bestimmte Form der Sehnsucht.',translation:{meaning:'A kind of longing.',origin:'curated'}};
+  const base={literal:'Test translation',kind:'word',phrase:'saudade',language:'pt',meaning:'Eine bestimmte Form der Sehnsucht.',translation:{meaning:'A kind of longing.',origin:'curated'}};
   assert.ok(!entryInput.safeParse(base).success);
   const parsed=entryInput.parse({...base,translationReviewed:true});assert.ok(!('origin' in parsed.translation!));
   const stored=storedTranslation({meaning:'Meaning.'},{meaning:'Bedeutung.',example:'Orphan example.'});assert.deepEqual(stored,{meaning:'Bedeutung.',origin:'contributor'});

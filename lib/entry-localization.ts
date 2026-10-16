@@ -50,9 +50,9 @@ const culturalNotes = [
   'A similar image is also used in German.',
 ];
 function localizeCuratedEntry(entry: Entry, locale: Locale): Entry {
-  if (locale === 'en' && entry.status === 'curated' && extraEnglish[entry.id]) return {...entry,...extraEnglish[entry.id]};
-  if (locale === 'en' && entry.status === 'curated' && englishWordMeanings[entry.id]) return {...entry,meaning:englishWordMeanings[entry.id]};
-  if (locale !== 'en' || entry.status !== 'curated' || !entry.id.startsWith('10000000-0000-4000-8000-')) return entry;
+  if (locale === 'en' && !entry.updatedAt && entry.status === 'curated' && extraEnglish[entry.id]) return {...entry,...extraEnglish[entry.id]};
+  if (locale === 'en' && !entry.updatedAt && entry.status === 'curated' && englishWordMeanings[entry.id]) return {...entry,meaning:englishWordMeanings[entry.id]};
+  if (locale !== 'en' || entry.updatedAt || entry.status !== 'curated' || !entry.id.startsWith('10000000-0000-4000-8000-')) return entry;
   const index=Number(entry.id.slice(-12))-1;
   if(!meanings[index])return entry;
   return {...entry, meaning:meanings[index],literal:literals[index],culturalNote:culturalNotes[index]};

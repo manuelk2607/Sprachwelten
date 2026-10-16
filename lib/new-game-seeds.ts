@@ -1,9 +1,9 @@
-import {entryInput,type Entry,type ContentKind} from './content';
+import {storedEntryInput,type Entry,type ContentKind} from './content';
 import type {Challenge} from './challenges';
 const bi=(de:string,en:string)=>({de,en});
 const entries:Entry[]=[];
 function add(kind:ContentKind,phrase:string,language:string,challenge:Challenge,meaning:{de:string;en:string},sourceUrl='',note=bi('Eigener Spieltext. Die Erklärung gilt für diesen Kontext.','Original game scenario. The explanation applies to this context.')){
- const input=entryInput.parse({kind,phrase,language,challenge,meaning:meaning.de,culturalNote:note.de,sourceUrl,sourceLocale:'de'});
+ const input=storedEntryInput.parse({kind,phrase,language,challenge,meaning:meaning.de,culturalNote:note.de,sourceUrl,sourceLocale:'de'});
  entries.push({...input,id:`50000000-0000-4000-8000-${String(entries.length+1).padStart(12,'0')}`,status:'curated',authorName:'Redaktion',createdAt:new Date(Date.parse('2026-10-15T18:00:00Z')+((entries.length%8)*8+Math.floor(entries.length/8))*1000).toISOString(),translations:{en:{meaning:meaning.en,literal:'',example:'',culturalNote:note.en,origin:'contributor'}}});
 }
 const missions:[string,number[],number,string,string][]=[

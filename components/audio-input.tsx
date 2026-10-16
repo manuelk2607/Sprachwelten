@@ -4,8 +4,8 @@ import { Mic, Square, Trash2, Upload } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { audioSampleRate, encodeAudioWave, maxAudioSeconds } from '@/lib/audio-format';
 type UploadedAudio={id:string;durationMs:number};
-export function AudioInput({onChange,onBusy,disabled=false,required=false}:{onChange:(audio:UploadedAudio|null)=>void;onBusy:(busy:boolean)=>void;disabled?:boolean;required?:boolean}){
-  const {t}=useI18n();const [available,setAvailable]=useState<boolean|null>(null);const [recording,setRecording]=useState(false);const [seconds,setSeconds]=useState(0);const [busy,setBusy]=useState(false);const [preview,setPreview]=useState('');const [error,setError]=useState('');
+export function AudioInput({onChange,onBusy,disabled=false,required=false,initialId}:{initialId?:string;onChange:(audio:UploadedAudio|null)=>void;onBusy:(busy:boolean)=>void;disabled?:boolean;required?:boolean}){
+  const {t}=useI18n();const [available,setAvailable]=useState<boolean|null>(null);const [recording,setRecording]=useState(false);const [seconds,setSeconds]=useState(0);const [busy,setBusy]=useState(false);const [preview,setPreview]=useState(initialId?'/api/audio/'+initialId:'');const [error,setError]=useState('');
   const recorder=useRef<MediaRecorder|null>(null);const stream=useRef<MediaStream|null>(null);const timer=useRef<ReturnType<typeof setInterval>|null>(null);const audioId=useRef<string|null>(null);const previewRef=useRef('');const disposed=useRef(false);const uploadController=useRef<AbortController|null>(null);
   const removeStored=(id:string)=>void fetch('/api/audio/'+id,{method:'DELETE',keepalive:true}).catch(()=>{});
   useEffect(()=>{

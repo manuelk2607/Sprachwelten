@@ -21,12 +21,12 @@ try{
  assert.equal((await call('/api/languages?code=bar&locale=en')).data.languages[0].code,'bar');assert.equal((await call('/api/languages?code=fake')).data.languages.length,0);
  assert.equal((await upload(wave,'')).status,401);
  const signup=await call('/api/auth/sign-up/email',{email:`qa-community-${stamp}@sprachwelten.invalid`,password:crypto.randomUUID()+'!aA1',name:'QA Community'});assert.equal(signup.status,200,JSON.stringify(signup.data));const owner=signup.data.user.id;firstCookies=cookieHeader();
- assert.equal((await call('/api/entries',{kind:'word',phrase:'fake-'+stamp,language:'not-a-language'})).status,422);
+ assert.equal((await call('/api/entries',{literal:'Test translation',kind:'word',phrase:'fake-'+stamp,language:'not-a-language'})).status,422);
  assert.equal((await upload(wave,cookieHeader(),'https://wrong.invalid')).status,403);
  assert.equal((await upload(new Uint8Array(44))).status,422);assert.equal((await upload(new Uint8Array(maxAudioBytes+1))).status,413);
  const uploaded=await upload(wave);assert.equal(uploaded.status,201,await uploaded.clone().text());const audio=(await uploaded.json() as any).audio;audioIds.push(audio.id);assert.equal(audio.durationMs,1000);
  assert.equal((await fetch(base+'/api/audio/'+audio.id)).status,404);
- const added=await call('/api/entries',{kind:'word',phrase:`안녕-QA-${stamp}`,language:'ko',creditName:'QA Oma',audioId:audio.id,authorId:'forged-id',authorName:'Forged author'});assert.equal(added.status,201,JSON.stringify(added.data));entries.push(added.data.entry.id);assert.equal(added.data.entry.creditName,'QA Oma');assert.equal(added.data.entry.authorName,'QA Community');assert.ok(added.data.entry.languageNames.en);
+ const added=await call('/api/entries',{literal:'Test translation',kind:'word',phrase:`안녕-QA-${stamp}`,language:'ko',creditName:'QA Oma',audioId:audio.id,authorId:'forged-id',authorName:'Forged author'});assert.equal(added.status,201,JSON.stringify(added.data));entries.push(added.data.entry.id);assert.equal(added.data.entry.creditName,'QA Oma');assert.equal(added.data.entry.authorName,'');assert.ok(added.data.entry.languageNames.en);
  const stored=await sql`SELECT author_id FROM content_entries WHERE id=${added.data.entry.id}`;assert.equal(stored[0].author_id,owner);
  const publicAudio=await fetch(base+'/api/audio/'+audio.id);assert.equal(publicAudio.status,200);assert.equal((await publicAudio.arrayBuffer()).byteLength,wave.byteLength);assert.ok(!publicAudio.headers.get('content-disposition')!.includes('ko'));
  const range=await fetch(base+'/api/audio/'+audio.id,{headers:{Range:'bytes=10-19'}});assert.equal(range.status,206);assert.equal((await range.arrayBuffer()).byteLength,10);assert.equal(range.headers.get('content-range'),`bytes 10-19/${wave.byteLength}`);
@@ -34,7 +34,7 @@ try{
  assert.equal((await (await removeAudio(audio.id)).json() as any).removed,false);
  const temporary=await upload(wave);assert.equal(temporary.status,201);const temporaryId=(await temporary.json() as any).audio.id;audioIds.push(temporaryId);assert.equal((await (await removeAudio(temporaryId)).json() as any).removed,true);
  cookies.clear();const other=await call('/api/auth/sign-up/email',{email:`qa-other-${stamp}@sprachwelten.invalid`,password:crypto.randomUUID()+'!aA1',name:'QA Other'});assert.equal(other.status,200);
- assert.equal((await call('/api/entries',{kind:'word',phrase:'Foreign-audio-'+stamp,language:'de',audioId:audio.id})).status,422);await call('/api/auth/sign-out',{});
+ assert.equal((await call('/api/entries',{literal:'Test translation',kind:'word',phrase:'Foreign-audio-'+stamp,language:'de',audioId:audio.id})).status,422);await call('/api/auth/sign-out',{});
  const host=await call('/api/rooms',{name:'QA Host',mode:'language-quiz',locale:'en'});assert.equal(host.status,201);const code=host.data.room.code;rooms.push(code);const tokens=[host.data.token];
  for(const name of ['QA First','QA Second']){const joined=await call(`/api/rooms/${code}/join`,{name});assert.equal(joined.status,201);tokens.push(joined.data.token);}
  assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:7},tokens[0])).status,422);assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:6},tokens[0])).status,200);await call(`/api/rooms/${code}`,{action:'configure',rounds:1},tokens[0]);

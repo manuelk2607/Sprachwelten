@@ -17,10 +17,11 @@ test('tongue twister ratings reject self-rating and out-of-range scores',()=>{
   const rating={speakerId:'10000000-0000-4000-8000-000000000001',raterId:'10000000-0000-4000-8000-000000000002',clarity:3,accuracy:4,rhythm:5};
   assert.ok(pronunciationRating.safeParse(rating).success);assert.ok(!pronunciationRating.safeParse({...rating,raterId:rating.speakerId}).success);assert.ok(!pronunciationRating.safeParse({...rating,accuracy:6}).success);
 });
-test('words and tongue twisters need text and language; idioms still need a meaning',()=>{
-  assert.equal(entryInput.parse({kind:'word',phrase:'a',language:'en'}).meaning,'');
-  assert.ok(entryInput.safeParse({kind:'tongue_twister',phrase:'She sells seashells by the seashore.',language:'en'}).success);
-  assert.ok(!entryInput.safeParse({kind:'idiom',phrase:'Spill the beans',language:'en'}).success);
+test('all contributions need a translation while explanations are optional',()=>{
+  assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'a',language:'en'}).meaning,'');
+  assert.ok(entryInput.safeParse({literal:'Test translation',kind:'tongue_twister',phrase:'She sells seashells by the seashore.',language:'en'}).success);
+  assert.ok(entryInput.safeParse({literal:'Kopf',kind:'idiom',phrase:'Spill the beans',language:'en'}).success);
+  assert.ok(!entryInput.safeParse({kind:'word',phrase:'head',language:'en'}).success);
 });
 test('all twenty starter definitions are translated; community submissions remain unchanged',()=>{
   for(const entry of seedEntries){assert.notEqual(localizeEntry(entry,'en').meaning,entry.meaning);assert.equal(localizeEntry(entry,'de'),entry);}

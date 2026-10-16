@@ -13,15 +13,15 @@ const clip=crypto.randomUUID();
 const player=(n:number)=>({id:crypto.randomUUID(),name:'Media '+n,tokenHash:'hash-'+n,score:0});
 const samples=[...seedEntries,...extraSeeds,...wordSeeds,...newGameEntries];
 test('text, audio and combined input validate independently; legacy submissions keep their behavior',()=>{
- assert.equal(entryInput.parse({kind:'word',phrase:'word',language:'en'}).presentation,'text');
- assert.equal(entryInput.parse({kind:'word',phrase:'word',language:'en',audioId:clip}).presentation,'both');
- assert.equal(entryInput.parse({kind:'word',language:'en',presentation:'audio',audioId:clip}).phrase,'');
- assert.equal(entryInput.parse({kind:'word',phrase:'discarded hidden text',language:'en',presentation:'audio',audioId:clip}).phrase,'');
- for(const input of [{kind:'word',language:'en',presentation:'text'},{kind:'word',phrase:'word',language:'en',presentation:'both'},{kind:'word',language:'en',presentation:'audio'},{kind:'word',phrase:'word',language:'en',presentation:'text',audioId:clip},{kind:'word',phrase:'word',language:'en',presentation:'unknown'}])assert.equal(entryInput.safeParse(input).success,false,JSON.stringify(input));
+ assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en'}).presentation,'text');
+ assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en',audioId:clip}).presentation,'both');
+ assert.equal(entryInput.parse({literal:'Test translation',kind:'word',language:'en',presentation:'audio',audioId:clip}).phrase,'');
+ assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'discarded hidden text',language:'en',presentation:'audio',audioId:clip}).phrase,'');
+ for(const input of [{literal:'Test translation',kind:'word',language:'en',presentation:'text'},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'both'},{literal:'Test translation',kind:'word',language:'en',presentation:'audio'},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'text',audioId:clip},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'unknown'}])assert.equal(entryInput.safeParse(input).success,false,JSON.stringify(input));
 });
 test('each contribution kind accepts audio without an original text while retaining its required solution metadata',()=>{
- for(const kind of contentKinds){const sample=samples.find(e=>e.kind===kind);assert.ok(sample,kind);const input=entryInput.parse({...sample,presentation:'audio',phrase:'',audioId:clip});assert.equal(input.phrase,'');assert.equal(input.presentation,'audio');if(sample.challenge)assert.deepEqual(input.challenge,sample.challenge);}
- assert.equal(entryInput.safeParse({kind:'idiom',language:'de',presentation:'audio',audioId:clip}).success,false,'A bluff still needs the real meaning.');
+ for(const kind of contentKinds){const sample=samples.find(e=>e.kind===kind);assert.ok(sample,kind);const input=entryInput.parse({...sample,literal:sample.literal||'Test translation',presentation:'audio',phrase:'',audioId:clip});assert.equal(input.phrase,'');assert.equal(input.presentation,'audio');if(sample.challenge)assert.deepEqual(input.challenge,sample.challenge);}
+ assert.equal(entryInput.safeParse({kind:'idiom',language:'de',presentation:'audio',audioId:clip}).success,false,'A contribution still needs a literal translation.');
 });
 test('saved legacy rounds infer their original presentation without losing recordings',()=>{
  assert.equal(presentationOf({}),'text');assert.equal(presentationOf({audioId:clip}),'both');assert.equal(hasText({presentation:'audio',audioId:clip}),false);assert.equal(hasAudio({presentation:'text',audioId:clip}),false);

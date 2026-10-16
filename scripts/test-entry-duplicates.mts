@@ -14,15 +14,15 @@ try{
   const fixtures=[['  SAUDADE\u00a0 !  ','saudade'],['cafe\u0301','café'],['Ｄａｎｋｅ','danke'],['In\n\tbocca   al lupo!','in bocca al lupo']];
   for(const [input,expected] of fixtures){const rows=await sql`SELECT content_phrase_key(${input}) AS key`;assert.equal(rows[0].key,expected);}
   const distinct=await sql`SELECT content_phrase_key('Maße')<>content_phrase_key('Masse') AND content_phrase_key('C++')<>content_phrase_key('C') AS different`;assert.equal(distinct[0].different,true);
-  const phrase=`QA duplicate ${stamp}`;const original=await create({kind:'word',phrase,language:'de',meaning:'Eine ursprüngliche Erklärung.'});
-  await assert.rejects(create({kind:'word',phrase:`  ${phrase.toUpperCase().replaceAll(' ','  ')}! `,language:'de',sourceLocale:'en',meaning:'A different explanation.'},'qa-duplicate-b'),error=>error instanceof DuplicateEntryError&&error.duplicate?.id===original.id);
+  const phrase=`QA duplicate ${stamp}`;const original=await create({literal:'Test translation',kind:'word',phrase,language:'de',meaning:'Eine ursprüngliche Erklärung.'});
+  await assert.rejects(create({literal:'Test translation',kind:'word',phrase:`  ${phrase.toUpperCase().replaceAll(' ','  ')}! `,language:'de',sourceLocale:'en',meaning:'A different explanation.'},'qa-duplicate-b'),error=>error instanceof DuplicateEntryError&&error.duplicate?.id===original.id);
   assert.equal((await findDuplicateEntry({kind:'word',phrase:phrase+'!',language:'de'}))?.id,original.id);
-  await create({kind:'word',phrase,language:'en'});
-  await create({kind:'idiom',phrase,language:'de',meaning:'Ein anderer Inhaltstyp ist erlaubt.'});
-  for(const regionId of ['at','de-bavaria'])await create({kind:'dialect',phrase,language:'de',meaning:'Eine regionale Bedeutung.',regionId});
-  for(const contextId of ['thanks','agreement'])await create({kind:'situation',phrase,language:'de',meaning:'Eine Bedeutung in diesem Kontext.',contextId});
+  await create({literal:'Test translation',kind:'word',phrase,language:'en'});
+  await create({literal:'Test translation',kind:'idiom',phrase,language:'de',meaning:'Ein anderer Inhaltstyp ist erlaubt.'});
+  for(const regionId of ['at','de-bavaria'])await create({literal:'Test translation',kind:'dialect',phrase,language:'de',meaning:'Eine regionale Bedeutung.',regionId});
+  for(const contextId of ['thanks','agreement'])await create({literal:'Test translation',kind:'situation',phrase,language:'de',meaning:'Eine Bedeutung in diesem Kontext.',contextId});
   await assert.rejects(sql`INSERT INTO content_entries(kind,phrase,language,meaning,author_name) VALUES ('word',${phrase.toLowerCase()+'? '},'de','Bypassing the application.','QA duplicate check')`,error=>typeof error==='object'&&error!==null&&'code' in error&&error.code==='23505');
-  const concurrent=await Promise.allSettled([create({kind:'word',phrase:`Race ${stamp}`,language:'en'}),create({kind:'word',phrase:`RACE  ${stamp}!`,language:'en'},'qa-duplicate-b')]);
+  const concurrent=await Promise.allSettled([create({literal:'Test translation',kind:'word',phrase:`Race ${stamp}`,language:'en'}),create({literal:'Test translation',kind:'word',phrase:`RACE  ${stamp}!`,language:'en'},'qa-duplicate-b')]);
   assert.equal(concurrent.filter(result=>result.status==='fulfilled').length,1);
   assert.ok(concurrent.some(result=>result.status==='rejected'&&result.reason instanceof DuplicateEntryError));
   console.log('PASS: Unicode/case/whitespace/punctuation duplicates, cross-author protection, distinct languages/regions/contexts, direct SQL constraint and concurrent writes.');

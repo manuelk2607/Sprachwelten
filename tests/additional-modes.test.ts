@@ -43,7 +43,7 @@ for(const mode of ['dialect-detective','everyday-language'] as const) {
   });
 }
 test('dialect and context entries need their target; untrusted author and ratings fields are stripped',()=>{
-  const base={phrase:'A useful expression',language:'de',meaning:'An explanation of the expression.'};
+  const base={literal:'Test translation',phrase:'A useful expression',language:'de',meaning:'An explanation of the expression.'};
   assert.ok(!entryInput.safeParse({...base,kind:'dialect'}).success);
   assert.ok(!entryInput.safeParse({...base,kind:'situation'}).success);
   assert.ok(entryInput.safeParse({...base,kind:'dialect',region:'Berlin'}).success);
@@ -96,6 +96,6 @@ test('all mode instructions and new seed explanations have English translations'
   for(const mode of gameModes)for(const key of ['title','description','headline','intro','details','rule','promptLabel','question','hint','revealTitle','scoreLabel'] as const) {
     if(mode[key])assert.notEqual(translate(mode[key],'en'),mode[key],`${mode.id}: ${key}`);
   }
-  for(const entry of extraSeeds){assert.ok(entryInput.safeParse(entry).success);assert.notEqual(localizeEntry(entry,'en').meaning,entry.meaning);}
+  for(const entry of extraSeeds){assert.ok(entryInput.safeParse({...entry,literal:entry.literal||'Test translation'}).success);assert.notEqual(localizeEntry(entry,'en').meaning,entry.meaning);}
   const community={...extraSeeds[0],status:'community' as const};assert.equal(localizeEntry(community,'en').meaning,community.meaning);assert.equal(localizeEntry(community,'en').region,'Northern Germany');
 });

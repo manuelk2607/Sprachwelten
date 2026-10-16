@@ -164,7 +164,7 @@ export function GameRoom({code}:{code:string}) {
                 {room.revelation?.example&&<blockquote>{room.revelation.example}</blockquote>}
                 <p>{room.revelation?.culturalNote}</p>
                 {room.revelation?.status==='community'&&<TranslationNotice status={room.revelation.translationStatus} sourceLocale={room.revelation.sourceLocale}/>}
-                {room.revelation?.status==='community'&&<p className="muted">{t('Community-Beitrag')} · {room.revelation.authorName}</p>}
+                {room.revelation?.status==='community'&&<p className="muted">{t('Community-Beitrag')}{room.revelation.authorName?' · '+room.revelation.authorName:''}</p>}
                 {room.revelation?.sourceUrl&&<a className="text-link" href={room.revelation.sourceUrl} target="_blank" rel="noreferrer">{t('Quelle ansehen')}<ArrowRight size={14}/></a>}
               </div></div>
               {room.team&&<TeamResults room={room}/>}

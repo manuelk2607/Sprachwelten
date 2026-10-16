@@ -5,7 +5,7 @@ import { GameError } from '@/lib/game';
 import { audioBucket } from '@/lib/audio-storage';
 type Context={params:Promise<{id:string}>};
 export const GET=(request:Request,ctx:Context)=>safe(async()=>{
-  const id=z.uuid().parse((await ctx.params).id);const rows=await database()`SELECT storage_key,byte_size FROM pronunciation_audio a WHERE id=${id} AND EXISTS(SELECT 1 FROM content_entries e WHERE e.audio_id=a.id)`;
+  const id=z.uuid().parse((await ctx.params).id);const rows=await database()`SELECT storage_key,byte_size FROM pronunciation_audio a WHERE id=${id} AND EXISTS(SELECT 1 FROM content_entries e WHERE e.audio_id=a.id AND e.deleted_at IS NULL)`;
   if(!rows[0])throw new GameError('Die Aufnahme wurde nicht gefunden.',404);
   const bucket=await audioBucket();if(!bucket)throw new GameError('Audio ist momentan nicht verfügbar.',503);
   const size=Number(rows[0].byte_size);const requested=request.headers.get('range');let range:{offset:number;length:number}|undefined;

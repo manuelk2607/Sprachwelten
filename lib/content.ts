@@ -6,16 +6,17 @@ import type { LanguageNames } from './language-label';
 import { categoryId, categoryLabel } from './quiz-categories';
 import { translationFields, type ContentTranslations } from './content-translations';
 
-export const contentKinds = ['idiom', 'dialect', 'situation', 'word', 'tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order'] as const;
+export const contentKinds = ['idiom', 'dialect', 'situation', 'word', 'tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order','joke'] as const;
 export type ContentKind = typeof contentKinds[number];
-export const kindLabels: Record<ContentKind, string> = { idiom: 'Redewendung', dialect: 'Dialekt', situation: 'Alltagssituation', word: 'Wort', tongue_twister: 'Zungenknoten',gaming_mission:'Gaming-Mission',youth_chat:'Jugendchat',academic:'Akademisch & alltäglich',sound_pair:'Klangfallen',attribution:'Zitat oder Liedstelle',false_friend:'False Friends?',word_order:'Satzbaukasten' };
+export const kindLabels: Record<ContentKind, string> = { idiom: 'Redewendung', dialect: 'Dialekt', situation: 'Alltagssituation', word: 'Wort', tongue_twister: 'Zungenknoten',gaming_mission:'Gaming-Mission',youth_chat:'Jugendchat',academic:'Akademisch & alltäglich',sound_pair:'Klangfallen',attribution:'Zitat oder Liedstelle',false_friend:'False Friends?',word_order:'Satzbaukasten',joke:'Witz & Pointe' };
 export const languages: Record<string, string> = { de: 'Deutsch', en: 'Englisch', fr: 'Französisch', es: 'Spanisch', it: 'Italienisch', sv: 'Schwedisch', nl: 'Niederländisch', pt: 'Portugiesisch', ja: 'Japanisch' };
 const text = (max: number) => z.string().trim().max(max).default('');
 const entryFields = z.object({
   challenge:challengeSchema.optional(),
   kind: z.enum(contentKinds).default('idiom'),
   presentation:z.enum(presentations).optional(),
-  phrase:z.string().trim().max(180).default(''),
+  sense:text(160),
+  phrase:z.string().trim().max(1500).default(''),
   language:z.string().trim().max(30).refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.'),
   literal:text(300),
   meaning: z.string().trim().max(1500).default(''),
@@ -29,16 +30,17 @@ const entryFields = z.object({
   translationReviewed:z.boolean().optional(),
 });
 function contentSchema(requireLiteral:boolean){return entryFields.superRefine((input, ctx) => {
+  if(input.kind!=='joke'&&input.phrase.length>180)ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck darf höchstens 180 Zeichen haben.'});
   if(requireLiteral&&!input.literal)ctx.addIssue({code:'custom',path:['literal'],message:'Bitte eine wörtliche Übersetzung ergänzen.'});
   const presentation=input.presentation??(input.audioId?'both':'text');
   if(presentation!=='audio'&&input.phrase.length<(input.kind==='word'||input.kind==='false_friend'?1:3))ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck ist zu kurz.'});
   if(presentation!=='text'&&!input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Bitte eine Aufnahme oder Audiodatei hinzufügen.'});
   if(presentation==='text'&&input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Wähle Audio aus, um eine Aufnahme zu verwenden.'});
   const expected=challengeTypes[input.kind as keyof typeof challengeTypes];
-  if(expected&&input.challenge?.type!==expected)ctx.addIssue({code:'custom',path:['challenge'],message:'Bitte die Spielaufgabe vollständig ausfüllen.'});
+  if(expected&&(input.kind==='gaming_mission'?!['mission','relay'].includes(input.challenge?.type??''):input.challenge?.type!==expected))ctx.addIssue({code:'custom',path:['challenge'],message:'Bitte die Spielaufgabe vollständig ausfüllen.'});
   if(!expected&&input.challenge)ctx.addIssue({code:'custom',path:['challenge'],message:'Diese Beitragsart benötigt keine Zusatzaufgabe.'});
   if(input.challenge?.type==='friends'&&input.challenge.otherLanguage===input.language)ctx.addIssue({code:'custom',path:['challenge'],message:'Bitte zwei verschiedene Sprachen wählen.'});
-  if(input.challenge?.type==='relay'||input.challenge?.type==='academic')for(const locale of ['de','en'] as const){const values=input.challenge.choices.map(v=>(v[locale]||v[locale==='de'?'en':'de']).trim().toLocaleLowerCase());if(new Set(values).size!==4)ctx.addIssue({code:'custom',path:['challenge'],message:'Antworten müssen verschieden sein.'});}
+  if(input.challenge?.type==='relay'||input.challenge?.type==='academic'||input.challenge?.type==='joke')for(const locale of ['de','en'] as const){const values=input.challenge.choices.map(v=>(v[locale]||v[locale==='de'?'en':'de']).trim().toLocaleLowerCase());if(new Set(values).size!==4)ctx.addIssue({code:'custom',path:['challenge'],message:'Antworten müssen verschieden sein.'});}
   if(input.translation&&Object.values(input.translation).some(value=>value.trim())&&!input.translationReviewed)ctx.addIssue({code:'custom',path:['translationReviewed'],message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
   if (input.kind === 'dialect' && !categoryId('region',input.regionId??input.region)) ctx.addIssue({code:'custom',path:['regionId'],message:'Bitte eine Region aus der Liste wählen.'});
   if (input.kind === 'situation' && !categoryId('context',input.contextId??input.context)) ctx.addIssue({code:'custom',path:['contextId'],message:'Bitte einen Gesprächskontext aus der Liste wählen.'});
@@ -52,7 +54,7 @@ export const entryInput=contentSchema(true);
 // Stored starter cards and saved rounds predate the required translation.
 export const storedEntryInput=contentSchema(false);
 export type EntryInput = z.infer<typeof entryInput>;
-export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'> & {presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames };
+export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'> & {sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
 export const explanationInput = z.object({ creditName:text(80),body: z.string().trim().min(10).max(1500),sourceLocale:z.enum(['de','en']).optional(),translation:translationFields.optional(),translationReviewed:z.boolean().optional() }).refine(input=>!input.translation?.body||input.translationReviewed,{message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);

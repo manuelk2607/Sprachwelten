@@ -1,0 +1,12 @@
+ALTER TABLE content_entries ADD COLUMN sense text NOT NULL DEFAULT '' CHECK(length(sense)<=160);
+ALTER TABLE content_entries DROP CONSTRAINT content_entries_kind_check;
+ALTER TABLE content_entries ADD CONSTRAINT content_entries_kind_check CHECK (kind IN ('idiom','dialect','situation','word','tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order','joke'));
+ALTER TABLE content_entries DROP CONSTRAINT content_entries_phrase_check;
+ALTER TABLE content_entries ADD CONSTRAINT content_entries_phrase_check CHECK (length(phrase)<=CASE WHEN kind='joke' THEN 1500 ELSE 180 END AND ((presentation='audio' AND phrase='' AND audio_id IS NOT NULL AND audio_hash IS NOT NULL) OR (presentation IN ('text','both') AND length(phrase)>=1)));
+DROP INDEX content_entries_identity;
+DROP INDEX content_entries_audio_identity;
+CREATE UNIQUE INDEX content_entries_identity ON content_entries (kind,lower(language),content_phrase_key(phrase),content_phrase_key(sense),(CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') ELSE '' END)) WHERE presentation<>'audio' AND deleted_at IS NULL;
+CREATE UNIQUE INDEX content_entries_audio_identity ON content_entries (kind,lower(language),audio_hash,content_phrase_key(sense),(CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') ELSE '' END)) WHERE audio_hash IS NOT NULL AND deleted_at IS NULL;
+ALTER TABLE moderation_events DROP CONSTRAINT moderation_events_action_check;
+ALTER TABLE moderation_events ADD CONSTRAINT moderation_events_action_check CHECK(action IN ('edit','remove','restore','edit-own','remove-own','bulk'));
+CREATE TABLE content_regions(id text PRIMARY KEY,de text NOT NULL CHECK(length(de) BETWEEN 2 AND 80),en text NOT NULL CHECK(length(en) BETWEEN 2 AND 80),name_key text NOT NULL UNIQUE,submitted_by text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());

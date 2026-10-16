@@ -35,6 +35,8 @@ function newRound(game:Game) {
   } else if(game.mode==='word-builder'&&entry.challenge?.type==='order'){game.round.orders={};game.round.tiles=shuffled(entry.challenge.tiles.map(tile=>({id:crypto.randomUUID(),text:tile.text,sourceId:tile.id})));game.phase='ordering';
   } else if(game.mode==='tongue-twisters') {
     game.round.pronunciation={speakerIndex:0,ratings:{}};game.phase='speaking';
+  } else if(game.mode==='joke-quiz'&&entry.challenge?.type==='joke'){
+    const c=entry.challenge;game.round.options=shuffled(c.choices.map((choice,i)=>({id:crypto.randomUUID(),text:challengeText(choice,game.locale),authorId:null,solution:i===c.correctIndex})));game.phase='voting';
   } else if(game.mode==='who-said-it'&&entry.challenge?.type==='attribution'){
     const c=entry.challenge;game.round.options=shuffled([c.answer+(c.category==='song'&&c.artist?' — '+c.artist:''),...c.alternatives].map((text,i)=>({id:crypto.randomUUID(),text,authorId:null,solution:i===0})));game.phase='voting';
   } else if(game.mode==='false-friends'&&entry.challenge?.type==='friends'){
@@ -45,7 +47,7 @@ function newRound(game:Game) {
     const choices=game.mode==='language-quiz'
       ?(entry.phrase?prepareLanguageQuiz(entry.phrase,entry.language,Object.keys(languages)).options:prepareChoices(entry.language,Object.keys(languages)))
       :prepareChoices(target??'',categoryKind==='region'?regionIds:contextIds);
-    game.round.options=choices.map(value=>({id:crypto.randomUUID(),text:game.mode==='language-quiz'?registeredLanguageNames(value)[game.locale]:categoryLabel(categoryKind,value,game.locale),authorId:null,...(game.mode==='language-quiz'?{language:value}:{categoryId:value,categoryKind})}));
+    game.round.options=choices.map(value=>({id:crypto.randomUUID(),text:game.mode==='language-quiz'?registeredLanguageNames(value)[game.locale]:(value.startsWith('custom-')?(entry.regionNames?.[game.locale]??entry.region):categoryLabel(categoryKind,value,game.locale)),authorId:null,...(game.mode==='language-quiz'?{language:value}:{categoryId:value,categoryKind})}));
     game.phase='voting';
   }
 }

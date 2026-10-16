@@ -10,27 +10,32 @@ import { localizedTexts, textsOf, translationStatus, type TranslationTexts } fro
 import { languageLabel } from '@/lib/language-label';
 import { PronunciationAudio } from './pronunciation-audio';
 import { Dialog } from './dialog';
+import {ContributeDialog} from './contribute-dialog';
 import { TranslationEditor } from './translation-editor';
 import { TranslationNotice } from './translation-notice';
 export function EntryDialog({entry:original,close,login,signedIn}:{entry:Entry;close:()=>void;login:()=>void;signedIn:boolean}) {
-  const {t,locale}=useI18n();const entry=localizeEntry(original,locale);
+  const {t,locale}=useI18n();
   const [explanations,setExplanations]=useState<Explanation[]>([]);const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [refresh,setRefresh]=useState(0);
-  const [creditName,setCreditName]=useState('');
+  const [creditName,setCreditName]=useState('');const [permissions,setPermissions]=useState({canEdit:false,canSuggest:false});const [editing,setEditing]=useState(false);const [current,setCurrent]=useState(original);const [notice,setNotice]=useState('');
+  const entry=localizeEntry(current,locale);
   const [sourceLocale,setSourceLocale]=useState<Locale>(locale);const [text,setText]=useState('');const [translation,setTranslation]=useState<Partial<TranslationTexts>>({});const [reviewed,setReviewed]=useState(false);const [revision,setRevision]=useState(0);
-  useEffect(()=>{const controller=new AbortController();fetch(`/api/entries/${entry.id}`,{signal:controller.signal}).then(async response=>{const result=await response.json() as {explanations:Explanation[];error:string};if(!response.ok)throw new Error(result.error);return result;}).then(result=>{setExplanations(result.explanations);setError('');}).catch(error=>{if(error.name!=='AbortError')setError(t(error.message));});return()=>controller.abort();},[entry.id,refresh]);
+  useEffect(()=>{const controller=new AbortController();fetch(`/api/entries/${entry.id}`,{signal:controller.signal}).then(async response=>{const result=await response.json() as {explanations:Explanation[];error:string;entry:Entry;canEdit:boolean;canSuggest:boolean};if(!response.ok)throw new Error(result.error);return result;}).then(result=>{setExplanations(result.explanations);setCurrent(result.entry);setPermissions({canEdit:result.canEdit,canSuggest:result.canSuggest});setError('');}).catch(error=>{if(error.name!=='AbortError')setError(t(error.message));});return()=>controller.abort();},[entry.id,refresh,signedIn]);
   async function add(event:React.FormEvent<HTMLFormElement>) {
     event.preventDefault();setBusy(true);setError('');
     try {const response=await fetch(`/api/entries/${entry.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({body:text,creditName,sourceLocale,translation,translationReviewed:reviewed})});const result=await response.json() as {error:string};if(!response.ok)throw new Error(result.error);setText('');setCreditName('');setTranslation({});setReviewed(false);setRefresh(value=>value+1);}
     catch(error){setError(t((error as Error).message));}finally{setBusy(false);}
   }
+  if(editing)return <ContributeDialog initialEntry={current} editTarget={permissions.canEdit?'own':'suggest'} close={()=>setEditing(false)} saved={()=>{setRefresh(v=>v+1);setNotice(t(permissions.canEdit?'Änderungen gespeichert.':'Dein Vorschlag wartet auf Prüfung.'));}} openExisting={async()=>{}}/>;
   return <Dialog title={entry.phrase||t('Audiobeitrag')} close={close} wide>
     <div className="detail-meta"><span className="kind-pill">{t(kindLabels[entry.kind])}</span><span>{languageLabel(entry.language,locale,entry.languageNames)}{entry.region&&' · '+t(entry.region)}</span></div>
+    {entry.sense&&<p className="form-note">{t('Bedeutungsvariante')}: {entry.sense}</p>}
     <PronunciationAudio id={hasAudio(entry)?entry.audioId:undefined}/>{entry.status==='community'&&<TranslationNotice status={translationStatus(original,locale)} sourceLocale={original.sourceLocale??'de'}/>}
     {entry.literal&&<p className="literal">{t('Wörtlich: „')}{entry.literal}{locale==='en'?'”':'“'}</p>}
     {entry.meaning&&<div className="meaning-block"><Lightbulb size={24}/><div><span className="eyebrow">{t('DAS STECKT DAHINTER')}</span><p>{entry.meaning}</p></div></div>}
     <ChallengeDetails challenge={entry.challenge}/>
     {entry.example&&<blockquote>{entry.example}</blockquote>}{entry.culturalNote&&<p className="cultural-note"><BookOpen size={19}/>{entry.culturalNote}</p>}{entry.context&&<p>{t('Gesprächskontext:')} {entry.context}</p>}
     <div className="detail-source"><span>{entry.creditName?<>{t('Von')} {entry.creditName} · </>:null}{t(entry.status==='curated'?'Startsammlung':'Community-Beitrag')}</span>{entry.sourceUrl&&<a href={entry.sourceUrl} target="_blank" rel="noreferrer">{t('Quelle ansehen')} <ExternalLink size={13}/></a>}</div>
+    {signedIn&&(permissions.canEdit||permissions.canSuggest)&&<button className="button outline" onClick={()=>setEditing(true)}>{t(permissions.canEdit?'Eigenen Beitrag bearbeiten':'Verbesserung vorschlagen')}</button>}{notice&&<p role="status">{notice}</p>}
     <section className="explanations"><h3>{t('Weitere Erklärungen & Perspektiven')}</h3>
       {explanations.length?explanations.map(explanation=><div className="explanation" key={explanation.id}><p>{localizedTexts(explanation,locale).body}</p><TranslationNotice status={translationStatus(explanation,locale)} sourceLocale={explanation.sourceLocale??'de'}/>{explanation.creditName&&<span>{explanation.creditName}</span>}</div>):<p className="muted">{t('Kennst du eine andere Verwendung oder eine regionale Besonderheit?')}</p>}
       {signedIn?<form className="form-stack" onSubmit={add}>

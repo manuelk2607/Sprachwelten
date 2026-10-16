@@ -73,7 +73,7 @@ test('translation cache separates language direction and content',async()=>{
   assert.notEqual(key,await translationCacheKey(source,'de'));assert.notEqual(key,await translationCacheKey(textsOf({meaning:'A different meaning.'}),'en'));
 });
 test('every mode has a complete, bilingual guide',()=>{
-  assert.equal(Object.keys(modeGuides).length,11);
+  assert.equal(Object.keys(modeGuides).length,12);
   for(const guide of Object.values(modeGuides)){
     assert.equal(guide.steps.length,3);
     for(const text of [guide.category,guide.scoring,guide.tip,...guide.steps.flatMap(step=>[step.title,step.text])])assert.notEqual(translate(text,'en'),text,`Missing English: ${text}`);

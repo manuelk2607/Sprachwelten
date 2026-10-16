@@ -6,6 +6,7 @@ import { Dialog } from './dialog';
 export function AuthDialog({close, initial = 'signin', email = '', resetToken = ''}: {close:()=>void; initial?:'signin'|'verify'|'reset';email?:string;resetToken?:string}) {
   const { t, locale } = useI18n();
   const [mode,setMode]=useState<'signin'|'signup'|'forgot'|'verify'|'reset'>(initial);
+  const [cooldown,setCooldown]=useState(false);
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [message,setMessage]=useState('');
   const change=(next:typeof mode)=>{setMode(next);setError('');setMessage('');};
   const title={signin:t("Willkommen zurück."),signup:t("Deine Worte zählen."),forgot:t("Passwort vergessen?"),verify:t("E-Mail bestätigen"),reset:t("Neues Passwort")}[mode];
@@ -30,8 +31,10 @@ export function AuthDialog({close, initial = 'signin', email = '', resetToken = 
       }
     } catch(err) {setError(err instanceof Error?t(err.message):t("Das hat gerade nicht geklappt."));} finally {setBusy(false);}
   }
+  async function sendCode(){setBusy(true);setError('');try{const {error}=await (await getAuthClient()).emailOtp.sendVerificationOtp({email,type:'email-verification'});if(error)throw new Error(error.message);setMessage(t('Bestätigungscode gesendet. Bitte prüfe auch deinen Spam-Ordner.'));setCooldown(true);setTimeout(()=>setCooldown(false),60000);}catch(e){setError(t((e as Error).message));}finally{setBusy(false);}}
   return <Dialog title={title} close={close}>
     <p className="muted">{mode==='signup'?t("Entdecke mit anderen neue Sprachwelten und teile deine eigenen Ausdrücke."):mode==='signin'?t("Melde dich an, um Redewendungen und Erklärungen beizutragen."):mode==='verify'?t("Gib den Bestätigungscode aus deiner E-Mail ein."):t("Wir helfen dir, wieder Zugang zu deinem Konto zu bekommen.")}</p>
+    {mode==='verify'&&<button className="button outline" disabled={busy||cooldown} onClick={()=>void sendCode()}>{t('Bestätigungscode anfordern')}</button>}
     <form className="form-stack" onSubmit={submit}>
       {mode==='signup'&&<label>{t("Dein Anzeigename")}<input name="name" autoComplete="nickname" required minLength={2} maxLength={60} placeholder={t("Wie sollen wir dich nennen?")}/></label>}
       {mode!=='reset'&&<label>{t("E-Mail")}<input name="email" type="email" autoComplete="email" defaultValue={email} required maxLength={254} placeholder="du@beispiel.de" readOnly={mode==='verify'}/></label>}

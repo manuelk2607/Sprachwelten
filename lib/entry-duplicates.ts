@@ -4,10 +4,11 @@ import { contentKinds, type EntryInput } from './content';
 import { categoryId } from './quiz-categories';
 
 export type ExistingEntry={id:string;phrase:string};
-export type EntryIdentity=Pick<EntryInput,'kind'|'phrase'|'language'>&Partial<Pick<EntryInput,'regionId'|'contextId'>>&{audioHash?:string;attributionCategory?:'person'|'song';targetLanguage?:string;otherLanguage?:string;otherWord?:string};
+export type EntryIdentity=Pick<EntryInput,'kind'|'phrase'|'language'>&Partial<Pick<EntryInput,'regionId'|'contextId'>>&{sense?:string;audioHash?:string;attributionCategory?:'person'|'song';targetLanguage?:string;otherLanguage?:string;otherWord?:string};
 export const duplicateLookupInput=z.object({
+  sense:z.string().trim().max(160).default(''),
   kind:z.enum(contentKinds),
-  phrase:z.string().trim().min(1).max(180),
+  phrase:z.string().trim().min(1).max(1500),
   language:z.string().max(30).refine(isRegisteredLanguage),
   regionId:z.string().max(40).optional(),
   contextId:z.string().max(40).optional(),

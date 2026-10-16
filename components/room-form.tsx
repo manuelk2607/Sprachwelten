@@ -1,4 +1,6 @@
 'use client';
+import {useAuthSession} from '@/lib/auth/provider';
+import {familyFor,gameFamilies} from '@/lib/game-families';
 import {Select} from './select';
 import { useState, type FormEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
@@ -7,7 +9,7 @@ import { gameModes, modeInfo, type PlayableGameMode } from '@/lib/modes';
 import { Dialog } from './dialog';
 
 export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false}:{close:()=>void;code?:string;initialMode?:PlayableGameMode;joinOnly?:boolean}) {
-  const { t, locale } = useI18n();
+  const { t, locale } = useI18n();const session=useAuthSession();
   const [join,setJoin]=useState(!!code||joinOnly);
   const [mode,setMode]=useState<PlayableGameMode>(initialMode);
   const [busy,setBusy]=useState(false);
@@ -37,10 +39,12 @@ export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false
       <button className={join?'selected':''} onClick={()=>{setJoin(true);setError('');}}>{t('Raum beitreten')}</button>
     </div>}
     <form className="form-stack" onSubmit={submit}>
-      {!join&&<label>{t('Spielmodus')}<Select value={mode} onValueChange={value=>setMode(value as PlayableGameMode)}>{gameModes.filter(m=>m.status==='playable').map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</Select></label>}
+      {!join&&<label>{t('Spielmodus')}<Select value={familyFor(mode).id} onValueChange={value=>setMode(value as PlayableGameMode)}>{gameFamilies.map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</Select></label>}
+      {!join&&familyFor(mode).modes.length>1&&<label>{t('Kategorie')}<Select value={mode} onValueChange={v=>setMode(v as PlayableGameMode)}>{familyFor(mode).modes.map(id=><option key={id} value={id}>{t(modeInfo(id).title)}</option>)}</Select></label>}
       {!join&&mode==='tongue-twisters'&&<label>{t('Kategorie')}<Select name="pronunciationCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="twister">{t('Zungenknoten')}</option><option value="sound">{t('Klangfallen')}</option></Select></label>}
       {!join&&mode==='who-said-it'&&<label>{t('Kategorie')}<Select name="attributionCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="person">{t('Personenzitat')}</option><option value="song">{t('Liedstelle')}</option></Select></label>}
-      <label>{t('Dein Spielname')}<input name="name" required minLength={2} maxLength={24} autoComplete="nickname" placeholder={t('Dein Name in dieser Runde')}/></label>
+      <label>{t('Dein Spielname')}<input name="name" required={!session?.user} minLength={2} maxLength={24} autoComplete="nickname" placeholder={session?.user?.name??t('Dein Name in dieser Runde')}/></label>
+      {session?.user&&<p className="form-note">{t('Ohne Spielnamen verwenden wir deinen Anzeigenamen.')}</p>}
       {!join&&<label>{t('Spielsprache')}<Select name="locale" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
       {!join&&<p className="form-note">{t(info.details)}<br/>{t(info.rule)}</p>}
       {join&&<label>{t('Raumcode')}<input name="code" className="code-input" required pattern="[A-Za-z0-9]{6}" minLength={6} maxLength={6} defaultValue={code} placeholder="ABC123" autoComplete="off"/></label>}

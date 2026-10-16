@@ -1,4 +1,6 @@
 import {publicEntry,publicExplanation} from '@/lib/content-public';
+import {getAuth} from '@/lib/auth/server';
+import {ownsEntry} from '@/db/community-repository';
 import { z } from 'zod';
 import { explanationInput } from '@/lib/content';
 import { account, body, respond, safe } from '@/lib/http';
@@ -8,7 +10,8 @@ type Context = { params: Promise<{id: string}> };
 export const GET = (_request: Request, ctx: Context) => safe(async () => {
   const id=z.string().uuid().parse((await ctx.params).id); const entry=await getEntry(id);
   if(!entry) throw new GameError('Dieser Beitrag wurde nicht gefunden.',404);
-  return respond({entry:publicEntry(entry), explanations:(await listExplanations(id)).map(publicExplanation)});
+  const {data}=await getAuth().getSession();const canEdit=!!data?.user&&await ownsEntry(id,data.user.id);
+  return respond({canEdit,canSuggest:!!data?.user&&!canEdit,entry:publicEntry(entry), explanations:(await listExplanations(id)).map(publicExplanation)});
 });
 export const POST = (request: Request, ctx: Context) => safe(async () => {
   const user=await account(); const id=z.string().uuid().parse((await ctx.params).id); const input=await body(request,explanationInput);

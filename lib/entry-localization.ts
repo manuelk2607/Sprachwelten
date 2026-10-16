@@ -62,5 +62,5 @@ export function localizeEntry(entry:Entry,locale:Locale):Entry {
   const regionId=entry.regionId??categoryId('region',entry.region);
   const contextId=entry.contextId??categoryId('context',entry.context);
   if(!regionId&&!contextId)return result;
-  return {...result,...(regionId?{regionId,region:categoryLabel('region',regionId,locale)}:{}),...(contextId?{contextId,context:categoryLabel('context',contextId,locale)}:{})};
+  return {...result,...(regionId?{regionId,region:entry.regionNames?.[locale]??categoryLabel('region',regionId,locale)}:{}),...(contextId?{contextId,context:categoryLabel('context',contextId,locale)}:{})};
 }

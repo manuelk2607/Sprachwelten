@@ -1,3 +1,4 @@
+import {validateRegion} from './regions';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
 import { registeredLanguageNames } from '@/lib/language-registry';
@@ -14,7 +15,7 @@ export const database = () => {
   return neon(process.env.DATABASE_URL);
 };
 export const withLanguageNames=(entry:Entry):Entry=>({...entry,challenge:entry.challenge??undefined,languageNames:registeredLanguageNames(entry.language)});
-export const fields = `id, revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
+export const fields = `id, sense, (SELECT jsonb_build_object('de',r.de,'en',r.en) FROM content_regions r WHERE r.id=region_id) as "regionNames", revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
 export async function listEntries(kind = '', language = '', search = '', offset = 0) {
   const sql = database();
   return (await sql.query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 6 OFFSET $4`, [kind, language, search, offset]) as Entry[]).map(withLanguageNames);
@@ -24,11 +25,12 @@ export async function getEntry(id: string) {
 }
 export async function findDuplicateEntry(input:EntryIdentity):Promise<ExistingEntry|undefined> {
   const scope=input.kind==='dialect'?input.regionId??'':input.kind==='situation'?input.contextId??'':input.kind==='attribution'?input.attributionCategory??'':input.kind==='word_order'?input.targetLanguage??'':input.kind==='false_friend'?(input.otherLanguage??'')+':'+(input.otherWord??''):'';
-  const rows=await database()`SELECT id,phrase FROM content_entries WHERE deleted_at IS NULL AND kind=${input.kind} AND lower(language)=lower(${input.language}) AND ((${input.audioHash??''}<>'' AND audio_hash=${input.audioHash??''}) OR (${input.phrase}<>'' AND presentation<>'audio' AND content_phrase_key(phrase)=content_phrase_key(${input.phrase}))) AND (CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) ELSE '' END)=(CASE WHEN ${input.kind}='false_friend' THEN ${input.otherLanguage??''} || ':' || content_phrase_key(${input.otherWord??''}) ELSE ${scope} END) LIMIT 1`;
+  const rows=await database()`SELECT id,phrase FROM content_entries WHERE deleted_at IS NULL AND kind=${input.kind} AND lower(language)=lower(${input.language}) AND content_phrase_key(sense)=content_phrase_key(${input.sense??''}) AND ((${input.audioHash??''}<>'' AND audio_hash=${input.audioHash??''}) OR (${input.phrase}<>'' AND presentation<>'audio' AND content_phrase_key(phrase)=content_phrase_key(${input.phrase}))) AND (CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) ELSE '' END)=(CASE WHEN ${input.kind}='false_friend' THEN ${input.otherLanguage??''} || ':' || content_phrase_key(${input.otherWord??''}) ELSE ${scope} END) LIMIT 1`;
   return rows[0] as ExistingEntry|undefined;
 }
 export async function addEntry(input: EntryInput, authorId: string, authorName: string) {
   const sql = database();
+  await validateRegion(input);
   let audioHash:string|null=null;
   if(input.audioId){
     const [audio]=await sql`SELECT storage_key,content_hash FROM pronunciation_audio WHERE id=${input.audioId} AND owner_id=${authorId}`;
@@ -43,8 +45,8 @@ export async function addEntry(input: EntryInput, authorId: string, authorName: 
   }
   const sourceLocale=input.sourceLocale??'de';const translation=storedTranslation(input,input.translation);
   const translations=translation?{[otherLocale(sourceLocale)]:translation}:{};
-  const rows = await sql.query(`INSERT INTO content_entries (kind,phrase,language,literal,meaning,example,region,cultural_note,context,source_url,author_id,author_name,source_locale,translations,region_id,context_id,credit_name,audio_id,challenge,presentation,audio_hash) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15,$16,$17,$18,$19::jsonb,$20,$21) ON CONFLICT DO NOTHING RETURNING ${fields}`,
-    [input.kind,input.phrase,input.language,input.literal,input.meaning,input.example,input.region,input.culturalNote,input.context,input.sourceUrl,authorId,authorName,sourceLocale,JSON.stringify(translations),input.regionId??null,input.contextId??null,input.creditName,input.audioId??null,input.challenge?JSON.stringify(input.challenge):null,input.presentation,audioHash]);
+  const rows = await sql.query(`INSERT INTO content_entries (kind,phrase,language,literal,meaning,example,region,cultural_note,context,source_url,author_id,author_name,source_locale,translations,region_id,context_id,credit_name,audio_id,challenge,presentation,audio_hash,sense) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15,$16,$17,$18,$19::jsonb,$20,$21,$22) ON CONFLICT DO NOTHING RETURNING ${fields}`,
+    [input.kind,input.phrase,input.language,input.literal,input.meaning,input.example,input.region,input.culturalNote,input.context,input.sourceUrl,authorId,authorName,sourceLocale,JSON.stringify(translations),input.regionId??null,input.contextId??null,input.creditName,input.audioId??null,input.challenge?JSON.stringify(input.challenge):null,input.presentation,audioHash,input.sense]);
   if(!rows.length)throw new DuplicateEntryError(await findDuplicateEntry({...input,audioHash:audioHash??undefined,...(input.challenge?.type==='attribution'?{attributionCategory:input.challenge.category}:{}),...(input.challenge?.type==='order'?{targetLanguage:input.challenge.targetLanguage}:{}),...(input.challenge?.type==='friends'?{otherLanguage:input.challenge.otherLanguage,otherWord:input.challenge.otherWord}:{})}));
   return withLanguageNames(rows[0] as Entry);
 }
@@ -57,8 +59,8 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
-  const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order'} as const;
-  if(mode in newKinds){const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 ORDER BY random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds]]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):entries;}
+  const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order','joke-quiz':'joke'} as const;
+  if(mode in newKinds){const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 ORDER BY random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds]]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
   const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region_id'}, 'everyday-language': {kind:'situation',field:'context_id'} } as const;
   if (mode in quiz) {
     // Column names are a fixed server allowlist; values remain parameterized.

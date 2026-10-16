@@ -10,5 +10,5 @@ export function ChallengeDetails({challenge:c}:{challenge?:Challenge}){const {t,
  {c.type==='friends'&&<><p><strong>{c.otherWord}</strong> · {languageLabel(c.otherLanguage,locale)}</p><p>{challengeText(c.context,locale)}</p><p><strong>{t(c.sameMeaning?'Gleiche Bedeutung':'False Friend')}</strong></p><dl><dt>{t('Bedeutung des ersten Wortes')}</dt><dd>{challengeText(c.firstMeaning,locale)}</dd><dt>{t('Bedeutung des zweiten Wortes')}</dt><dd>{challengeText(c.secondMeaning,locale)}</dd></dl></>}
  {c.type==='order'&&<><p>{c.source[locale]} → {languageLabel(c.targetLanguage,locale)}</p><ul>{c.accepted.map((a,i)=><li key={i}>{a.map(id=>c.tiles.find(t=>t.id===id)?.text).join(' ')}</li>)}</ul></>}
  {c.type==='mission'&&<p>{t('Ziele')}: {c.checkpoints.map(n=>missionTiles[n][locale]).join(' → ')}</p>}
- {(c.type==='relay'||c.type==='academic')&&<p><strong>{t('Passende Reaktion')}:</strong> {challengeText(c.choices[c.correctIndex],locale)}</p>}
+ {(c.type==='relay'||c.type==='academic'||c.type==='joke')&&<p><strong>{t('Passende Reaktion')}:</strong> {challengeText(c.choices[c.correctIndex],locale)}</p>}
  </div>;}

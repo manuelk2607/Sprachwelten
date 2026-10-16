@@ -4,6 +4,7 @@ import {entryInput,contentKinds,type Entry} from '../lib/content';
 import {hasAudio,hasText,presentationOf} from '../lib/content-media';
 import {createGame,joinGame,act,viewGame} from '../lib/game';
 import {gameModes} from '../lib/modes';
+import {communityGameEntries} from '../lib/community-game-seeds';
 import {newGameEntries} from '../lib/new-game-seeds';
 import {seedEntries} from '../lib/seeds';
 import {extraSeeds} from '../lib/extra-seeds';
@@ -11,7 +12,7 @@ import {wordSeeds} from '../lib/word-seeds';
 import {prepareAttributionEntries} from '../lib/attribution';
 const clip=crypto.randomUUID();
 const player=(n:number)=>({id:crypto.randomUUID(),name:'Media '+n,tokenHash:'hash-'+n,score:0});
-const samples=[...seedEntries,...extraSeeds,...wordSeeds,...newGameEntries];
+const samples=[...seedEntries,...extraSeeds,...wordSeeds,...newGameEntries,...communityGameEntries];
 test('text, audio and combined input validate independently; legacy submissions keep their behavior',()=>{
  assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en'}).presentation,'text');
  assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en',audioId:clip}).presentation,'both');

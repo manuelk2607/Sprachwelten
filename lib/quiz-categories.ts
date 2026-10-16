@@ -28,6 +28,7 @@ export const regionIds = Object.keys(regions) as RegionId[];
 export const contextIds = Object.keys(contexts) as ContextId[];
 export type CategoryKind = 'region'|'context';
 export function categoryId(kind:CategoryKind,value:string):string|undefined {
+  if(kind==='region'&&/^custom-[a-z0-9]{16}$/.test(value))return value;
   const normalized=value.trim().toLocaleLowerCase();
   const categories=kind==='region'?regions:contexts;
   return Object.entries(categories).find(([id,labels])=>[id,labels.de,labels.en].some(label=>label.toLocaleLowerCase()===normalized))?.[0];

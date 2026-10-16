@@ -1,0 +1,3 @@
+-- Keep the unique index bounded for long joke texts and multibyte scripts.
+DROP INDEX content_entries_identity;
+CREATE UNIQUE INDEX content_entries_identity ON content_entries (kind,lower(language),md5(content_phrase_key(phrase)),content_phrase_key(sense),(CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') ELSE '' END)) WHERE presentation<>'audio' AND deleted_at IS NULL;

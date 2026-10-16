@@ -1,3 +1,4 @@
+import {resolvePlayerName} from '@/lib/player-name';
 import { z } from 'zod';
 import { playerName } from '@/lib/content';
 import { body, hashToken, randomToken, respond, safe } from '@/lib/http';
@@ -5,7 +6,8 @@ import { createGame, GameError, viewGame } from '@/lib/game';
 import { insertRoom, rateLimit } from '@/db/repository';
 import { playableModeIds } from '@/lib/modes';
 export const POST = (request: Request) => safe(async () => {
-  const {name,locale,mode,pronunciationCategory,attributionCategory}=await body(request,z.object({name:playerName,locale:z.enum(['de','en']).default('de'),mode:z.enum(playableModeIds).default('idiom-bluff'),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional()}));
+  const {name:givenName,locale,mode,pronunciationCategory,attributionCategory}=await body(request,z.object({name:z.string().trim().max(24).optional(),locale:z.enum(['de','en']).default('de'),mode:z.enum(playableModeIds).default('idiom-bluff'),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional()}));
+  const name=await resolvePlayerName(givenName);
   const ip=request.headers.get('cf-connecting-ip')??'local'; await rateLimit(`room:${await hashToken(ip)}`,30);
   const token=randomToken(); const player={id:crypto.randomUUID(),name,tokenHash:await hashToken(token),score:0};
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

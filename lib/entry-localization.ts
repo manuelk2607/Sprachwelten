@@ -1,5 +1,8 @@
 import type { Entry } from './content';
 import type { Locale } from './translations';
+import {seedEntries} from './seeds';
+import {wordSeeds} from './word-seeds';
+import {extraSeeds} from './extra-seeds';
 import { englishWordMeanings } from './word-seeds';
 import { extraEnglish } from './extra-seeds';
 import { localizedTexts } from './content-translations';
@@ -49,16 +52,21 @@ const culturalNotes = [
   'Expresses mistrust of a suspicious situation.',
   'A similar image is also used in German.',
 ];
-function localizeCuratedEntry(entry: Entry, locale: Locale): Entry {
-  if (locale === 'en' && !entry.updatedAt && entry.status === 'curated' && extraEnglish[entry.id]) return {...entry,...extraEnglish[entry.id]};
-  if (locale === 'en' && !entry.updatedAt && entry.status === 'curated' && englishWordMeanings[entry.id]) return {...entry,meaning:englishWordMeanings[entry.id]};
-  if (locale !== 'en' || entry.updatedAt || entry.status !== 'curated' || !entry.id.startsWith('10000000-0000-4000-8000-')) return entry;
+const originals=new Map([...seedEntries,...wordSeeds,...extraSeeds].map(entry=>[entry.id,entry]));
+function localizeCuratedEntry(entry:Entry,locale:Locale):Entry {
+  const localized=localizedTexts(entry,locale),original=originals.get(entry.id);
+  if(locale!=='en'||entry.status!=='curated'||!original||(entry.sourceLocale??'de')!=='de')return localized;
   const index=Number(entry.id.slice(-12))-1;
-  if(!meanings[index])return entry;
-  return {...entry, meaning:meanings[index],literal:literals[index],culturalNote:culturalNotes[index]};
+  const fallback:Partial<Entry>=extraEnglish[entry.id]??(englishWordMeanings[entry.id]?{meaning:englishWordMeanings[entry.id]}:entry.id.startsWith('10000000-0000-4000-8000-')?{meaning:meanings[index],literal:literals[index],culturalNote:culturalNotes[index]}:{});
+  const result={...localized};
+  // Metadata edits do not invalidate a translation. A changed source field does.
+  for(const key of ['meaning','literal','example','culturalNote'] as const){
+    if(fallback[key]!==undefined&&entry[key]===original[key]&&!entry.translations?.en?.[key]?.trim())result[key]=fallback[key]!;
+  }
+  return result;
 }
 export function localizeEntry(entry:Entry,locale:Locale):Entry {
-  const result=entry.status==='curated'?localizeCuratedEntry(localizedTexts(entry,locale),locale):localizedTexts(entry,locale);
+  const result=localizeCuratedEntry(entry,locale);
   const regionId=entry.regionId??categoryId('region',entry.region);
   const contextId=entry.contextId??categoryId('context',entry.context);
   if(!regionId&&!contextId)return result;

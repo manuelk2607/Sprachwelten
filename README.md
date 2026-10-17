@@ -181,3 +181,21 @@ The home page starts games centrally and groups the twelve game variants into ei
 Email verification is optional through the existing Managed Neon Auth email OTP flow in `/me`. Requesting a code uses Neon's shared mail provider; successful verification updates the managed `emailVerified` value. No app mailer or separate paid service is required. Real inbox delivery must be checked by the account holder.
 
 QA coverage for these changes: `TEST_ADMIN_APPROVED=1 node --env-file=.env.admin-qa.local --import tsx scripts/test-contribution-review.mts`. This script refuses production database hosts and requires the user's explicit authorization for temporary QA admin rights; it revokes them and cleans up its own fixtures in `finally`.
+
+### Review status, recording retention and browser checks
+
+`/me` includes the contributor's own pending, accepted and rejected improvement
+suggestions. Administrators can supply public review feedback separately from
+private internal notes. The server filters this list by the managed account ID.
+
+Migration 015 protects pending audio references with a foreign key and adds a
+persistent R2 deletion queue. The direct Cloudflare deployment runs bounded audio
+maintenance daily at 03:17 UTC. Unattached recordings have a seven-day grace
+period. All entry references (including recoverable removals), pending suggestions
+and unexpired room snapshots are retained. Failed object deletions remain queued.
+Active room audio uses an HttpOnly, room-scoped credential, so a soft-deleted
+contribution does not break a round that already selected it.
+
+Run `npm run test:browser` after `npx playwright install chromium`. GitHub Actions
+also runs the production build and desktop/mobile Chromium checks without
+production secrets. See [the measured performance changes](docs/performance-2026-10-17.md).

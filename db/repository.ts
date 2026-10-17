@@ -4,6 +4,7 @@ import {prepareAttributionEntries} from '@/lib/attribution';
 import { registeredLanguageNames } from '@/lib/language-registry';
 import { neon } from '@neondatabase/serverless';
 import type { Entry, EntryInput, Explanation } from '@/lib/content';
+import type {EntryPreview} from '@/lib/content-public';
 import type { Game } from '@/lib/game';
 import { GameError } from '@/lib/game';
 import type { PlayableGameMode } from '@/lib/modes';
@@ -18,7 +19,7 @@ export const withLanguageNames=(entry:Entry):Entry=>({...entry,challenge:entry.c
 export const fields = `id, sense, (SELECT jsonb_build_object('de',r.de,'en',r.en) FROM content_regions r WHERE r.id=region_id) as "regionNames", revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
 export async function listEntries(kind = '', language = '', search = '', offset = 0) {
   const sql = database();
-  return (await sql.query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 6 OFFSET $4`, [kind, language, search, offset]) as Entry[]).map(withLanguageNames);
+  return (await sql.query(`SELECT id,kind,phrase,presentation,status,created_at AS "createdAt" FROM content_entries WHERE deleted_at IS NULL AND ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 6 OFFSET $4`, [kind, language, search, offset]) as EntryPreview[]);
 }
 export async function getEntry(id: string) {
   const sql = database(); const rows = await sql.query(`SELECT ${fields} FROM content_entries WHERE id=$1 AND deleted_at IS NULL`, [id]); return rows[0]?withLanguageNames(rows[0] as Entry):undefined;
@@ -82,6 +83,12 @@ export async function readRoom(code: string) {
   const rows = await database()`SELECT state - 'prompts' as state FROM game_rooms WHERE code=${code} AND expires_at > now()`;
   if (!rows[0]) throw new GameError('Dieser Raum existiert nicht oder ist abgelaufen.', 404);
   return rows[0].state as Omit<Game, 'prompts'>;
+}
+export async function readRoomConditional(code:string,tokenHash:string,knownVersion:number){
+  const [row]=await database()`SELECT version,EXISTS(SELECT 1 FROM jsonb_array_elements(state->'players') p WHERE p->>'tokenHash'=${tokenHash}) AS authorized,CASE WHEN version<>${knownVersion} THEN state-'prompts' ELSE NULL END AS state FROM game_rooms WHERE code=${code} AND expires_at>now()`;
+  if(!row)throw new GameError('Dieser Raum existiert nicht oder ist abgelaufen.',404);
+  if(!row.authorized)throw new GameError('Du bist nicht Teil dieses Raums.',403);
+  return row as {version:number;state:Omit<Game,'prompts'>|null;authorized:boolean};
 }
 export async function mutateRoom(code: string, mutate: (game: Game) => void,includePrompts=true) {
   for (let i = 0; i < 8; i++) {

@@ -2,6 +2,21 @@ import {communityTranslations} from './community-translations';
 import {newGameTranslations} from './new-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  "Ausgewählte Region":"Selected region",
+  "Die Regionen konnten nicht geladen werden.":"Regions could not be loaded.",
+  "Die Regionen konnten nicht geladen werden. Die Standardregionen bleiben verfügbar.":"Regions could not be loaded. The default regions are still available.",
+  "Meine Verbesserungsvorschläge":"My improvement suggestions",
+  "Meine Inhalte":"My content",
+  "Beiträge":"Contributions",
+  "In Prüfung":"Under review",
+  "Übernommen":"Accepted",
+  "Abgelehnt":"Rejected",
+  "Eingereicht":"Submitted",
+  "Geprüft":"Reviewed",
+  "Rückmeldung":"Feedback",
+  "Rückmeldung an beitragende Person":"Feedback for the contributor",
+  "Hier siehst du den Prüfstatus deiner Vorschläge und die Rückmeldung der Administration.":"See the review status of your suggestions and feedback from the administrators here.",
+  "Du hast noch keine Verbesserungsvorschläge eingereicht.":"You have not submitted any improvement suggestions yet.",
   "Andere Sprache suchen …":"Find another language …",
   "Audio ist momentan nicht verfügbar.":"Audio is currently unavailable.",
   "Audiodatei auswählen":"Choose audio file",

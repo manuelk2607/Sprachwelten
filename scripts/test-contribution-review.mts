@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {neon} from '@neondatabase/serverless';
+import {createGame,act,viewGame} from '../lib/game';
+import {hashToken} from '../lib/http';
+import {getEntry,insertRoom} from '../db/repository';
 import {addEntry} from '../db/repository';
 import {entryInput} from '../lib/content';
 import {encodeAudioWave} from '../lib/audio-format';
@@ -12,7 +15,7 @@ const clean=(entry:any)=>entryInput.parse({...entry,audioId:entry.audioId??undef
 async function create(phrase:string,kind='idiom'){const r=await request('/api/entries','POST',{kind,phrase,language:'de',literal:'QA Übersetzung'},jars[1]);assert.equal(r.status,201,JSON.stringify(r.data));ids.push(r.data.entry.id);return r.data.entry;}
 try{
  const probe=await addEntry(entryInput.parse({kind:'word',phrase:'QA-review-probe-'+stamp,language:'en',literal:'Testprobe'}),'qa-probe','QA Review Test');ids.push(probe.id);assert.equal((await request('/api/entries/'+probe.id)).status,200,'The server must use the isolated database.');
- for(const path of ['/api/me/entries','/api/admin/suggestions','/api/admin/inbox'])assert.equal((await request(path)).status,401);
+ for(const path of ['/api/me/entries','/api/me/suggestions','/api/admin/suggestions','/api/admin/inbox'])assert.equal((await request(path)).status,401);
  for(let i=0;i<2;i++){const r=await request('/api/auth/sign-up/email','POST',{email:`qa-review-${stamp}-${i}@sprachwelten.invalid`,password:crypto.randomUUID()+'!Aa1',name:'QA Review '+i},jars[i]);assert.equal(r.status,200,JSON.stringify(r.data));if(i===0)adminId=r.data.user.id;}
  const entry=await create('QA-review-'+stamp),id=entry.id,input=clean(entry),edit={...input,literal:'Eigene Bearbeitung',revision:0,authorId:adminId};
  assert.equal((await request('/api/me/entries/'+id,'PATCH',edit)).status,403);
@@ -32,14 +35,15 @@ try{
  assert.equal((await request('/api/admin/suggestions/'+suggested.data.id,'PATCH',{action:'accept',revision:0})).status,403);
  await sql`INSERT INTO app_admins(user_id) VALUES (${adminId})`;grants.push(adminId);
  const pending=await request('/api/admin/suggestions');assert.equal(pending.status,200);assert.ok(pending.data.suggestions.some((s:any)=>s.id===suggested.data.id&&s.note==='Bitte korrigieren.'));
- const approve=await request('/api/admin/suggestions/'+suggested.data.id,'PATCH',{action:'accept',revision:0,input:{...input,literal:'Vom Admin angepasst'},note:'Geprüft'});assert.equal(approve.status,200,JSON.stringify(approve.data));
+ const approve=await request('/api/admin/suggestions/'+suggested.data.id,'PATCH',{action:'accept',revision:0,input:{...input,literal:'Vom Admin angepasst'},note:'Private interne Notiz',feedback:'Danke, übernommen.'});assert.equal(approve.status,200,JSON.stringify(approve.data));
  assert.equal((await request('/api/entries/'+id)).data.entry.literal,'Vom Admin angepasst');assert.equal((await request('/api/entries/'+id)).data.entry.authorName,'');
  assert.equal((await request('/api/admin/suggestions/'+suggested.data.id,'PATCH',{action:'accept',revision:0})).status,409);
- const [accepted]=await sql`SELECT status,admin_note FROM entry_suggestions WHERE id=${suggested.data.id}`;assert.equal(accepted.status,'accepted');assert.equal(accepted.admin_note,'Geprüft');
+ const [accepted]=await sql`SELECT status,admin_note FROM entry_suggestions WHERE id=${suggested.data.id}`;assert.equal(accepted.status,'accepted');assert.equal(accepted.admin_note,'Private interne Notiz');
+ const own=(await request('/api/me/suggestions')).data.suggestions.find((s:any)=>s.id===suggested.data.id);assert.equal(own.status,'accepted');assert.equal(own.feedback,'Danke, übernommen.');assert.ok(!JSON.stringify(own).includes('Private interne Notiz'));assert.ok(!(await request('/api/me/suggestions','GET',undefined,jars[1])).data.suggestions.some((s:any)=>s.id===suggested.data.id));
  const stale=await request('/api/entries/'+id+'/suggestions','POST',{...input,literal:'Alt',revision:2});assert.equal(stale.status,201);
  assert.equal((await request('/api/me/entries/'+id,'PATCH',{...input,literal:'Neu',revision:2},jars[1])).status,200);
  assert.equal((await request('/api/admin/suggestions/'+stale.data.id,'PATCH',{action:'accept',revision:0})).status,409);
- assert.equal((await request('/api/admin/suggestions/'+stale.data.id,'PATCH',{action:'reject',revision:0,note:'Veraltet'})).status,200);
+ assert.equal((await request('/api/admin/suggestions/'+stale.data.id,'PATCH',{action:'reject',revision:0,note:'Interne Ablehnungsnotiz',feedback:'Bitte auf der aktuellen Fassung aufbauen.'})).status,200);
  assert.equal((await request('/api/entries/'+id)).data.entry.literal,'Neu');
  const a=await create('QA-bulk-a-'+stamp),b=await create('QA-bulk-b-'+stamp),selection=[a,b].map(e=>({id:e.id,revision:0}));
  assert.equal((await request('/api/admin/bulk','POST',{entries:selection,kind:'dialect',regionId:'ch'},jars[1])).status,403);
@@ -60,6 +64,19 @@ try{
  const [audioOwner]=await sql`SELECT owner_id FROM pronunciation_audio WHERE id=${audio}`;assert.equal(audioOwner.owner_id,adminId);
  assert.equal((await request('/api/admin/suggestions/'+audioSuggestion.data.id,'PATCH',{action:'accept',revision:0})).status,200);
  assert.equal((await fetch(base+'/api/audio/'+audio)).status,200);
+ // A room snapshot retains audio even after contribution removal. Future IDs
+ // and unrelated visitors cannot use the room-scoped media credential.
+ const roomToken='b'.repeat(64),snapshot=createGame('Q'+String(stamp).slice(-5),{id:crypto.randomUUID(),name:'Audio QA',score:0,tokenHash:await hashToken(roomToken)},'de','idiom-bluff');
+ for(const name of ['Second','Third'])snapshot.players.push({id:crypto.randomUUID(),name,score:0,tokenHash:crypto.randomUUID()});
+ act(snapshot,snapshot.hostId,{action:'configure',rounds:1});act(snapshot,snapshot.hostId,{action:'start'},[(await getEntry(id))!]);await insertRoom(snapshot);rooms.push(snapshot.code);
+ const roomRead=await fetch(base+'/api/rooms/'+snapshot.code,{headers:{Authorization:'Bearer '+roomToken}});assert.equal(roomRead.status,200);const mediaCookie=roomRead.headers.getSetCookie().map(c=>c.split(';')[0]).join('; '),mediaUrl=base+'/api/rooms/'+snapshot.code+'/audio/'+audio;
+ assert.equal((await fetch(mediaUrl)).status,401);assert.equal((await fetch(mediaUrl,{headers:{Cookie:mediaCookie}})).status,200);
+ assert.equal((await request('/api/me/entries/'+id,'DELETE',{revision:4},jars[1])).status,200);assert.equal((await fetch(base+'/api/audio/'+audio)).status,404);
+ const playable=await fetch(mediaUrl,{headers:{Cookie:mediaCookie,Range:'bytes=0-43'}});assert.equal(playable.status,206);assert.equal((await playable.arrayBuffer()).byteLength,44);
+ assert.equal((await fetch(base+'/api/rooms/'+snapshot.code+'/audio/'+crypto.randomUUID(),{headers:{Cookie:mediaCookie}})).status,404);
+ assert.equal((await request('/api/admin/entries/'+id,'DELETE',{revision:5,restore:true})).status,200);
+ const leave=await fetch(base+'/api/rooms/'+snapshot.code,{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Authorization:'Bearer '+roomToken},body:JSON.stringify({action:'leave'})});assert.equal(leave.status,200);assert.ok(leave.headers.get('Set-Cookie')?.includes('Max-Age=0'));assert.equal((await fetch(mediaUrl,{headers:{Cookie:mediaCookie}})).status,404);
+ const rejectedOwn=(await request('/api/me/suggestions')).data.suggestions.find((s:any)=>s.id===stale.data.id);assert.equal(rejectedOwn.status,'rejected');assert.equal(rejectedOwn.feedback,'Bitte auf der aktuellen Fassung aufbauen.');assert.ok(!JSON.stringify(rejectedOwn).includes('Interne Ablehnungsnotiz'));
  // Custom regions, multiple meanings, display-name fallback and owner deletion.
  const newRegion=await request('/api/regions','POST',{de:'QA Region '+stamp,en:'QA region '+stamp});assert.equal(newRegion.status,201);regionIds.push(newRegion.data.id);
  assert.equal((await request('/api/regions','POST',{de:'QA Region '+stamp})).data.id,newRegion.data.id);

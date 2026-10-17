@@ -30,41 +30,50 @@ export function GameRoom({code}:{code:string}) {
   const [copied,setCopied]=useState<'link'|'code'|null>(null);const [leaving,setLeaving]=useState(false);const [leaveDestination,setLeaveDestination]=useState('/');const [restartRounds,setRestartRounds]=useState<number|null>(null);const [pendingMessage,setPendingMessage]=useState('');const busyRef=useRef(false);const leaveConfirmed=useRef(false);
   const previousRound=useRef(0);
   const mutationVersion=useRef(0);
+  const roomEtag=useRef<string|null>(null);
   useEffect(()=>{
     const stored=localStorage.getItem(`sprachwelten-room:${code}`);
     setToken(stored);setJoining(!stored);
   },[code]);
   useEffect(()=>{
     if(!token)return;
-    let disposed=false;
+    let disposed=false,inFlight=false,failures=0,phase:GameView['phase']|undefined;
+    roomEtag.current=null;
     let timer:ReturnType<typeof setTimeout>;
     const controller=new AbortController();
     async function poll() {
-      if(disposed)return;
+      if(disposed||inFlight)return;
       if(document.hidden){timer=setTimeout(poll,5000);return;}
+      inFlight=true;
       try {
         const version=mutationVersion.current;
-        const response=await fetch(`/api/rooms/${code}`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal});
-        const json=await response.json() as {room:GameView;error:string};
-        if(!response.ok){
-          if(response.status===401||response.status===403){localStorage.removeItem(`sprachwelten-room:${code}`);setJoining(true);setToken(null);}
-          throw new Error(json.error);
-        }
-        if(!disposed&&version===mutationVersion.current&&version%2===0){setRoom(json.room);setError('');}
+        const response=await fetch(`/api/rooms/${code}`,{headers:{Authorization:`Bearer ${token}`,...(roomEtag.current?{'If-None-Match':roomEtag.current}:{})},signal:controller.signal});
+        if(response.status!==304){
+          const json=await response.json() as {room:GameView;error:string};
+          if(!response.ok){
+            if(response.status===401||response.status===403){localStorage.removeItem(`sprachwelten-room:${code}`);setJoining(true);setToken(null);}
+            throw new Error(json.error);
+          }
+          if(!disposed&&version===mutationVersion.current&&version%2===0){setRoom(json.room);phase=json.room.phase;roomEtag.current=response.headers.get('ETag');setError('');}
+        }else if(!disposed&&version===mutationVersion.current)setError('');
+        failures=0;
       } catch(error) {
+        failures++;
         if(!disposed&&(error as Error).name!=='AbortError')setError(t((error as Error).message));
-      }
-      if(!disposed)timer=setTimeout(poll,document.hidden?5000:1200);
+      }finally{inFlight=false;}
+      if(!disposed)timer=setTimeout(poll,document.hidden?5000:failures?Math.min(15000,1200*2**failures):phase==='finished'?4000:phase==='lobby'||phase==='reveal'?2000:1200);
     }
+    const resume=()=>{if(!document.hidden){clearTimeout(timer);void poll();}};
+    document.addEventListener('visibilitychange',resume);window.addEventListener('online',resume);
     void poll();
-    return()=>{disposed=true;clearTimeout(timer);controller.abort();};
+    return()=>{disposed=true;clearTimeout(timer);controller.abort();document.removeEventListener('visibilitychange',resume);window.removeEventListener('online',resume);};
   },[code,token]);
   useEffect(()=>{
     if(!token)return;
     let disposed=false;
     const heartbeat=async()=>{
       if(busyRef.current)return;const version=mutationVersion.current;
-      try{const response=await fetch(`/api/rooms/${code}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'heartbeat'})});const data=await response.json() as {room?:GameView};if(!disposed&&response.ok&&data.room&&version===mutationVersion.current)setRoom(data.room);}catch{}
+      try{const response=await fetch(`/api/rooms/${code}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({action:'heartbeat'})});const data=await response.json() as {room?:GameView};if(!disposed&&response.ok&&data.room&&version===mutationVersion.current){roomEtag.current=null;setRoom(data.room);}}catch{}
     };
     const timer=setInterval(()=>void heartbeat(),20000);return()=>{disposed=true;clearInterval(timer);};
   },[code,token]);
@@ -82,7 +91,7 @@ export function GameRoom({code}:{code:string}) {
   },[room?.roundNumber,room?.matchId]);
   async function action(data:RoomAction) {
     if(!token||busyRef.current)return;
-    busyRef.current=true;mutationVersion.current++;setBusy(true);setError('');
+    busyRef.current=true;roomEtag.current=null;mutationVersion.current++;setBusy(true);setError('');
     const previous=room;
     setPendingMessage(({answer:'Dein Bluff wird gesendet …',performed:'Vortrag wird bestätigt …',rate:'Bewertung wird gesendet …',vote:'Deine Antwort wird gesendet …'} as Partial<Record<RoomAction['action'],string>>)[data.action]??'Einen Moment …');
     if(room&&(data.action==='answer'||data.action==='vote'||data.action==='rate'||data.action==='performed'))setRoom({...room,...(data.action==='vote'?{selectedOptionId:data.optionId}:{}),...(data.action==='performed'?{phase:'rating' as const}:{}),...(data.action==='rate'&&room.pronunciation?{pronunciation:{...room.pronunciation,hasRated:true}}:{}),players:room.players.map(player=>player.id===room.playerId?{...player,...(data.action==='answer'?{answered:true}:data.action==='vote'?{voted:true}:{})}:player)});
@@ -92,7 +101,7 @@ export function GameRoom({code}:{code:string}) {
       const json=await response.json() as {room:GameView;error:string};
       if(!response.ok)throw new Error(json.error);
       if(data.action==='leave'){leaveConfirmed.current=true;localStorage.removeItem(`sprachwelten-room:${code}`);setToken(null);window.location.assign(leaveDestination);return;}
-      setRoom(json.room);if(data.action==='restart')setRestartRounds(null);
+      roomEtag.current=null;setRoom(json.room);if(data.action==='restart')setRestartRounds(null);
     } catch(error){setRoom(previous);setError(t((error as Error).message));} finally{mutationVersion.current++;busyRef.current=false;setBusy(false);setPendingMessage('');}
 
   }
@@ -142,7 +151,7 @@ export function GameRoom({code}:{code:string}) {
             {room.soundWords&&<div className="sound-words">{room.soundWords.map(w=><div key={w.word}><strong>{w.word}</strong><span>{w.pronunciation}</span><p>{w.meaning}</p></div>)}</div>}
             {room.team&&room.phase!=='reveal'&&<TeamRound key={room.matchId+':'+room.roundNumber+':'+room.team.callerId} room={room} busy={busy} action={action}/>}
             {room.phase==='ordering'&&room.wordOrder&&<WordOrderRound key={room.matchId+':'+room.roundNumber} room={room} busy={busy} action={action}/>}
-            <PronunciationAudio id={room.prompt?.audioId}/>{room.phase==='writing'&&(me?.answered?<div className="waiting"><CheckCircle2 size={28}/><h3>{t('Dein Bluff ist im Spiel.')}</h3><p>{t('Warte, bis alle ihre Erklärung abgegeben haben.')}</p></div>:<form className="form-stack answer-form" onSubmit={e=>{e.preventDefault();void action({action:'answer',text:answer});}}>
+            <PronunciationAudio roomCode={code} id={room.prompt?.audioId}/>{room.phase==='writing'&&(me?.answered?<div className="waiting"><CheckCircle2 size={28}/><h3>{t('Dein Bluff ist im Spiel.')}</h3><p>{t('Warte, bis alle ihre Erklärung abgegeben haben.')}</p></div>:<form className="form-stack answer-form" onSubmit={e=>{e.preventDefault();void action({action:'answer',text:answer});}}>
               <h2>{t('Was könnte das bedeuten?')}</h2><p className="muted">{t('Erfinde eine Erklärung, die überzeugend klingt. Je mehr darauf hereinfallen, desto besser.')}</p>
               <label>{t('Deine erfundene Erklärung')}<textarea value={answer} onChange={e=>setAnswer(e.target.value)} required minLength={3} maxLength={300} rows={3} placeholder={t('Dieser Ausdruck bedeutet …')}/></label>
               <div className="answer-footer"><span>{answer.length}/300</span><button disabled={busy} className="button primary">{t('Bluff abgeben')}<ArrowRight size={17}/></button></div>

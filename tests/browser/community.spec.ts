@@ -6,7 +6,8 @@ async function mockSession(page:Page){
  await page.route('**/api/entries/duplicates?*',route=>route.fulfill({json:{duplicate:null}}));
 }
 test('half the game cards, expandable explanations, language and mobile login',async({page})=>{
- await page.goto('/');await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
+ await page.route('**/api/auth/get-session**',route=>route.fulfill({json:null}));
+ const ready=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));await page.goto('/');await ready;await expect(page.getByRole('button',{name:'Anmelden',exact:true})).toBeVisible();
  await expect(page.locator('.mode-card')).toHaveCount(4);await page.locator('.show-more-modes').click();await expect(page.locator('.mode-card')).toHaveCount(8);
  await page.getByRole('button',{name:'EN',exact:true}).click();await expect(page.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Start game',exact:true})).toBeVisible();

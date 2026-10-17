@@ -5,14 +5,14 @@ const host=process.env.TEST_DATABASE_HOST;assert.ok(host&&new URL(process.env.DA
 const sql=neon(process.env.DATABASE_URL_UNPOOLED!),ids:string[]=[],keys:string[]=[],entryId=crypto.randomUUID(),suggestions:string[]=[],code='Q'+crypto.randomUUID().replace(/-/g,'').slice(0,5).toUpperCase();
 async function clip(old=true){const id=crypto.randomUUID(),key='qa-retention/'+id+'.wav';ids.push(id);keys.push(key);await sql`INSERT INTO pronunciation_audio(id,owner_id,storage_key,byte_size,duration_ms,created_at) VALUES (${id},'qa-retention',${key},32044,1000,now()-${old?8:0}*interval '1 day')`;return id;}
 try{
- const recent=await clip(false),orphan=await clip(),deleted=await clip(),pending=await clip(),rejected=await clip(),future=await clip();
- await sql`INSERT INTO audio_upload_budget(key,clips) VALUES ('global',6) ON CONFLICT(key) DO UPDATE SET clips=audio_upload_budget.clips+6`;
+ const recent=await clip(false),orphan=await clip(),deleted=await clip(),pending=await clip(),rejected=await clip(),future=await clip(),legacy=await clip();
+ await sql`INSERT INTO audio_upload_budget(key,clips) VALUES ('global',7) ON CONFLICT(key) DO UPDATE SET clips=audio_upload_budget.clips+7`;
  await sql`INSERT INTO content_entries(id,kind,phrase,language,literal,meaning,author_name,audio_id,presentation,deleted_at) VALUES (${entryId},'word',${'QA retention '+entryId},'en','Test','Test','QA',${deleted},'both',now())`;
- for(const [audio,status] of [[pending,'pending'],[rejected,'rejected']] as const){const id=crypto.randomUUID();suggestions.push(id);await sql`INSERT INTO entry_suggestions(id,entry_id,author_id,author_name,base_revision,payload,status,audio_id) VALUES (${id},${entryId},'qa-retention','QA',0,${JSON.stringify({audioId:audio})}::jsonb,${status},${status==='pending'?audio:null})`;}
+ for(const [audio,status] of [[pending,'pending'],[rejected,'rejected'],[legacy,'pending']] as const){const id=crypto.randomUUID();suggestions.push(id);await sql`INSERT INTO entry_suggestions(id,entry_id,author_id,author_name,base_revision,payload,status,audio_id) VALUES (${id},${entryId},${audio},'QA',0,${JSON.stringify({audioId:audio})}::jsonb,${status},${status==='pending'&&audio!==legacy?audio:null})`;}
  await sql`INSERT INTO game_rooms(code,state) VALUES (${code},${JSON.stringify({players:[],prompts:[{audioId:future}],round:null})}::jsonb)`;
  await queueUnusedAudio(sql);
  const remaining=(await sql`SELECT id FROM pronunciation_audio WHERE id=ANY(${ids}::uuid[])`).map(r=>r.id);
- for(const id of [recent,deleted,pending,future])assert.ok(remaining.includes(id),'Referenced or recent clip retained: '+id);
+ for(const id of [recent,deleted,pending,future,legacy])assert.ok(remaining.includes(id),'Referenced or recent clip retained: '+id);
  for(const id of [orphan,rejected])assert.ok(!remaining.includes(id),'Old unreferenced clip queued: '+id);
  const key=keys[ids.indexOf(orphan)];assert.ok((await sql`SELECT storage_key FROM audio_deletion_queue WHERE storage_key=${key}`).length);
  const failed=await drainAudioQueue(sql,{delete:async()=>{throw new Error('simulated R2 outage');}});assert.ok(failed.retry>=2);assert.ok((await sql`SELECT storage_key FROM audio_deletion_queue WHERE storage_key=${key}`).length,'Retry queue survives storage failure');

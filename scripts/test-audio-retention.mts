@@ -17,7 +17,7 @@ try{
  const key=keys[ids.indexOf(orphan)];assert.ok((await sql`SELECT storage_key FROM audio_deletion_queue WHERE storage_key=${key}`).length);
  const failed=await drainAudioQueue(sql,{delete:async()=>{throw new Error('simulated R2 outage');}});assert.ok(failed.retry>=2);assert.ok((await sql`SELECT storage_key FROM audio_deletion_queue WHERE storage_key=${key}`).length,'Retry queue survives storage failure');
  // Drain only our synthetic keys; never remove unrelated QA storage in this test.
- await drainAudioQueue(sql,{delete:async key=>{assert.equal(typeof key,'string');if(!keys.includes(key as string))throw new Error('Not a test object');}});
+ await drainAudioQueue(sql,{delete:async key=>{assert.ok(Array.isArray(key));if(!(key as string[]).every(k=>keys.includes(k)))throw new Error('Not a test object');}});
  await sql`UPDATE game_rooms SET expires_at=now()-interval '1 second' WHERE code=${code}`;await queueUnusedAudio(sql);assert.equal((await sql`SELECT id FROM pronunciation_audio WHERE id=${future}`).length,0,'Expired rooms release snapshots');
  console.log('PASS: 7-day grace, deleted-entry restore, pending/rejected suggestions, future cards, expired rooms and durable storage retries.');
 }finally{

@@ -17,8 +17,12 @@ export async function queueUnusedAudio(sql:NeonQueryFunction<false,false>,owner?
 }
 export async function drainAudioQueue(sql:NeonQueryFunction<false,false>,bucket:Pick<R2Bucket,'delete'>){
  const queued=await sql`SELECT storage_key FROM audio_deletion_queue ORDER BY queued_at LIMIT 50`;
- const results=await Promise.allSettled(queued.map(async row=>{await bucket.delete(row.storage_key as string);await sql`DELETE FROM audio_deletion_queue WHERE storage_key=${row.storage_key}`;}));
- return {deleted:results.filter(r=>r.status==='fulfilled').length,retry:results.filter(r=>r.status==='rejected').length};
+ if(!queued.length)return {deleted:0,retry:0};
+ // A single R2 batch and SQL acknowledgement keep daily maintenance within
+ // the free Worker's subrequest budget. Both operations are safe to retry.
+ const keys=queued.map(row=>row.storage_key as string);
+ try{await bucket.delete(keys);await sql`DELETE FROM audio_deletion_queue WHERE storage_key=ANY(${keys}::text[])`;return {deleted:keys.length,retry:0};}
+ catch{return {deleted:0,retry:keys.length};}
 }
 export async function maintainAudio(databaseUrl:string,bucket:R2Bucket){
  const sql=neon(databaseUrl);await queueUnusedAudio(sql);return drainAudioQueue(sql,bucket);

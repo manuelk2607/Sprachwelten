@@ -9,6 +9,8 @@ import { translationFields, type ContentTranslations } from './content-translati
 export const contentKinds = ['idiom', 'dialect', 'situation', 'word', 'tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order','joke'] as const;
 export type ContentKind = typeof contentKinds[number];
 export const kindLabels: Record<ContentKind, string> = { idiom: 'Redewendung', dialect: 'Dialekt', situation: 'Alltagssituation', word: 'Wort', tongue_twister: 'Zungenknoten',gaming_mission:'Gaming-Mission',youth_chat:'Jugendchat',academic:'Akademisch & alltäglich',sound_pair:'Klangfallen',attribution:'Zitat oder Liedstelle',false_friend:'False Friends?',word_order:'Satzbaukasten',joke:'Witz & Pointe' };
+const literalKinds = new Set<ContentKind>(['idiom','dialect','situation','word']);
+export const needsLiteralTranslation=(kind:ContentKind)=>literalKinds.has(kind);
 export const languages: Record<string, string> = { de: 'Deutsch', en: 'Englisch', fr: 'Französisch', es: 'Spanisch', it: 'Italienisch', sv: 'Schwedisch', nl: 'Niederländisch', pt: 'Portugiesisch', ja: 'Japanisch' };
 const text = (max: number) => z.string().trim().max(max).default('');
 const entryFields = z.object({
@@ -31,9 +33,10 @@ const entryFields = z.object({
 });
 function contentSchema(requireLiteral:boolean){return entryFields.superRefine((input, ctx) => {
   if(input.kind!=='joke'&&input.phrase.length>180)ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck darf höchstens 180 Zeichen haben.'});
-  if(requireLiteral&&!input.literal)ctx.addIssue({code:'custom',path:['literal'],message:'Bitte eine wörtliche Übersetzung ergänzen.'});
+  if(requireLiteral&&needsLiteralTranslation(input.kind)&&!input.literal)ctx.addIssue({code:'custom',path:['literal'],message:'Bitte eine wörtliche Übersetzung ergänzen.'});
   const presentation=input.presentation??(input.audioId?'both':'text');
-  if(presentation!=='audio'&&input.phrase.length<(input.kind==='word'||input.kind==='false_friend'?1:3))ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck ist zu kurz.'});
+  const shortExpression=['word','false_friend','gaming_mission','youth_chat'].includes(input.kind);
+  if(presentation!=='audio'&&input.phrase.length<(shortExpression?1:3))ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck ist zu kurz.'});
   if(presentation!=='text'&&!input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Bitte eine Aufnahme oder Audiodatei hinzufügen.'});
   if(presentation==='text'&&input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Wähle Audio aus, um eine Aufnahme zu verwenden.'});
   const expected=challengeTypes[input.kind as keyof typeof challengeTypes];

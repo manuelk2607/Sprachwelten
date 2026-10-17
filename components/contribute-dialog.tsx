@@ -10,8 +10,8 @@ import {Select} from './select';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { Dialog } from './dialog';
-import { languages, kindLabels, type ContentKind } from '@/lib/content';
-import { contexts, regions } from '@/lib/quiz-categories';
+import { kindLabels, needsLiteralTranslation, type ContentKind } from '@/lib/content';
+import { contexts } from '@/lib/quiz-categories';
 import { textsOf, type TranslationTexts } from '@/lib/content-translations';
 import { TranslationEditor, type TranslationField } from './translation-editor';
 import { AudioInput } from './audio-input';
@@ -43,6 +43,7 @@ export function ContributeDialog({close,saved,openExisting,initialEntry,editTarg
     try{await openExisting(duplicate.id);}catch{setError(t('Der vorhandene Beitrag konnte gerade nicht geladen werden. Bitte versuche es erneut.'));}finally{setOpening(false);}
   };
   const [sourceLocale,setSourceLocale]=useState<Locale>(initialEntry?.sourceLocale??locale);const [translation,setTranslation]=useState<Partial<TranslationTexts>>(initialEntry?.translations?.[(initialEntry.sourceLocale??'de')==='de'?'en':'de']??{});const [revision,setRevision]=useState(0);const [reviewed,setReviewed]=useState(!!initialEntry);
+  const literalRequired=needsLiteralTranslation(kind);const answerDriven=challenge?.type==='relay'||challenge?.type==='academic'||challenge?.type==='joke';const senseRelevant=['idiom','dialect','situation','word','false_friend'].includes(kind);const freeRegionRelevant=['idiom','word'].includes(kind);
   const fields:TranslationField[]=[{key:'literal',label:'Wörtliche Übersetzung',max:300},{key:'meaning',label:'Bedeutung oder Erklärung',max:1500},{key:'example',label:'Beispielsatz',max:600},{key:'culturalNote',label:'Kultureller Hinweis',max:1000}];
   const sourceChanged=()=>{setRevision(value=>value+1);setTranslation({});setReviewed(false);};
   const getSource=()=>textsOf(Object.fromEntries(new FormData(formRef.current!).entries()));
@@ -55,24 +56,31 @@ export function ContributeDialog({close,saved,openExisting,initialEntry,editTarg
     <form ref={formRef} className="form-stack" onSubmit={submit} onInvalidCapture={validation.invalid}><FormErrors issues={validation.issues} form={formRef}/>
       <div className="form-row"><label>{t('Art des Beitrags')}<Select name="kind" disabled={busy} value={kind} onValueChange={value=>{setKind(value as ContentKind);setChallenge(initialChallenge(value as ContentKind));sourceChanged();}}>{Object.entries(kindLabels).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label><LanguagePicker label="Sprache des Originalausdrucks" name="language" value={language} onChange={setLanguage} disabled={busy}/></div>
       <div data-field="presentation"><MediaChoiceInput value={media} onChange={value=>{setMedia(value);setError('');}} disabled={busy||audioBusy}/></div>
-      {media.text&&<label>{t(kind==='word'||kind==='false_friend'?'Wort oder kurzer Ausdruck':kind==='tongue_twister'||kind==='sound_pair'?'Satz zum Nachsprechen':kind==='situation'?'Situation oder Formulierung':kind==='joke'?'Witz mit Pointe':'Originalausdruck')}<textarea name="phrase" disabled={busy} value={phrase} onChange={e=>setPhrase(e.target.value)} required minLength={kind==='word'||kind==='false_friend'?1:3} maxLength={kind==='joke'?1500:180} rows={kind==='joke'?4:2}/></label>}
-      <label>{t('Bedeutungsvariante')} <span>{t('(optional)')}</span><input name="sense" value={sense} onChange={e=>setSense(e.target.value)} maxLength={160} placeholder={t('z. B. Bank als Sitzmöbel')}/></label><p className="form-note">{t('Nur bei einer anderen Bedeutung desselben Ausdrucks ausfüllen. Für ergänzende Erklärungen nutze den vorhandenen Beitrag.')}</p>
+      {media.text&&<label>{t(kind==='word'||kind==='false_friend'?'Wort oder kurzer Ausdruck':kind==='tongue_twister'||kind==='sound_pair'?'Satz zum Nachsprechen':kind==='situation'?'Situation oder Formulierung':kind==='joke'?'Witz mit Pointe':'Originalausdruck')}<textarea name="phrase" disabled={busy} value={phrase} onChange={e=>setPhrase(e.target.value)} required minLength={['word','false_friend','gaming_mission','youth_chat'].includes(kind)?1:3} maxLength={kind==='joke'?1500:180} rows={kind==='joke'?4:2}/></label>}
+      {senseRelevant?<><label>{t('Bedeutungsvariante')} <span>{t('(optional)')}</span><input name="sense" value={sense} onChange={e=>setSense(e.target.value)} maxLength={160} placeholder={t('z. B. Bank als Sitzmöbel')}/></label><p className="form-note">{t('Nur bei einer anderen Bedeutung desselben Ausdrucks ausfüllen. Für ergänzende Erklärungen nutze den vorhandenen Beitrag.')}</p></>:<input type="hidden" name="sense" value={sense}/>}
       <div data-field="audioId" hidden={!media.audio}><AudioInput onChange={setAudio} onBusy={setAudioBusy} disabled={busy} required={media.audio} initialId={initialEntry?.audioId}/></div>
-      {kind==='dialect'?<RegionPicker name="regionId" disabled={busy} required value={regionId} onChange={setRegionId}/>:<label>{t('Region')} <span>{t('(optional)')}</span><input name="region" defaultValue={initialEntry?.region??''} maxLength={100} placeholder={t('z. B. Bayern, Québec, Stockholm')}/></label>}
+      {kind==='dialect'?<RegionPicker name="regionId" disabled={busy} required value={regionId} onChange={setRegionId}/>:freeRegionRelevant?<label>{t('Region')} <span>{t('(optional)')}</span><input name="region" defaultValue={initialEntry?.region??''} maxLength={100} placeholder={t('z. B. Bayern, Québec, Stockholm')}/></label>:<input type="hidden" name="region" value={initialEntry?.region??''}/>}
       {kind==='situation'&&<label>{t('Richtiger Gesprächskontext')}<Select name="contextId" disabled={busy} required value={contextId} onValueChange={value=>setContextId(value)}><option value="" disabled>{t('Bitte auswählen')}</option>{Object.entries(contexts).map(([id,labels])=><option key={id} value={id}>{labels[locale]}</option>)}</Select></label>}
       {media.audio&&!media.text&&kind==='false_friend'&&<p className="form-note">{t('Sprich beide Wörter in derselben Reihenfolge wie im Formular ein. Die Bedeutungen und das zweite Wort werden für die Auflösung gespeichert.')}</p>}
       {media.audio&&!media.text&&kind==='word_order'&&<p className="form-note">{t('Sprich den Ausgangssatz ein. Die Wortbausteine und gültigen Reihenfolgen ergänzt du weiterhin als Text.')}</p>}
       {challenge&&<ChallengeEditor value={challenge} onChange={setChallenge}/>}
       {duplicate&&<div className="duplicate-notice" role="status"><p>{t(duplicateEntryMessage)}</p><button type="button" className="button outline" disabled={opening} onClick={()=>void showExisting()}>{opening?t('Wird geladen …'):t('Vorhandenen Beitrag öffnen')}</button></div>}
       {['word','dialect','situation'].includes(kind)&&<p className="form-note">{t('Du wählst die richtige Antwort. Drei andere Möglichkeiten ergänzt die App automatisch und zeigt sie in der jeweiligen Oberflächensprache an.')}</p>}
-      <fieldset className="source-fields" onChange={sourceChanged}>
+      {literalRequired?<fieldset className="source-fields" onChange={sourceChanged}>
         <legend>{t('Deine Erklärung')} · {t(sourceLocale==='de'?'Deutsch':'Englisch')}</legend>
         <label>{t('Wörtliche Übersetzung')} <span>{t('(erforderlich)')}</span><input required minLength={1} name="literal" defaultValue={initialEntry?.literal??''} maxLength={300}/></label>
         <label>{t('Erklärung (optional)')}<textarea name="meaning" defaultValue={initialEntry?.meaning??''} maxLength={1500} rows={3}/></label>
         <label>{t('Beispielsatz')} <span>{t('(optional)')}</span><input name="example" defaultValue={initialEntry?.example??''} maxLength={600}/></label>
         <label>{t('Kultureller Hinweis')} <span>{t('(optional)')}</span><textarea name="culturalNote" defaultValue={initialEntry?.culturalNote??''} maxLength={1000} rows={2}/></label>
-      </fieldset>
-      <TranslationEditor sourceLocale={sourceLocale} setSourceLocale={value=>{setSourceLocale(value);sourceChanged();}} fields={fields} getSource={getSource} translation={translation} onChange={setTranslation} revision={revision} reviewed={reviewed} setReviewed={setReviewed}/>
+      </fieldset>:<details className="source-fields optional-source-fields" onChange={sourceChanged}>
+        <summary>{t('Optionale Zusatzinformationen')}</summary>
+        <p className="form-note">{t(answerDriven?'Die markierte richtige Antwort ist bereits die Lösung. Ergänze hier nur Hintergrundwissen, wenn es wirklich hilft.':kind==='tongue_twister'?'Für einen Zungenknoten genügt der Satz oder die Aufnahme. Eine Bedeutung ist nicht erforderlich.':'Die eigentliche Lösung steht bereits in der Spielaufgabe. Zusätzliche Hinweise sind freiwillig.')}</p>
+        <input type="hidden" name="literal" value={initialEntry?.literal??''}/>
+        <label>{t('Zusätzliche Erklärung')} <span>{t('(optional)')}</span><textarea name="meaning" defaultValue={initialEntry?.meaning??''} maxLength={1500} rows={3}/></label>
+        <label>{t('Beispiel oder Aussprachehilfe')} <span>{t('(optional)')}</span><input name="example" defaultValue={initialEntry?.example??''} maxLength={600}/></label>
+        <label>{t('Kultureller Hinweis')} <span>{t('(optional)')}</span><textarea name="culturalNote" defaultValue={initialEntry?.culturalNote??''} maxLength={1000} rows={2}/></label>
+      </details>}
+      {literalRequired&&<TranslationEditor sourceLocale={sourceLocale} setSourceLocale={value=>{setSourceLocale(value);sourceChanged();}} fields={fields} getSource={getSource} translation={translation} onChange={setTranslation} revision={revision} reviewed={reviewed} setReviewed={setReviewed}/>}
       <label>{t('Beitragende Person')} <span>{t('(optional)')}</span><input name="creditName" defaultValue={initialEntry?.creditName??''} maxLength={80} placeholder={t('z. B. deine Oma oder dein Anzeigename')}/></label><p className="form-note">{t('Nenne die Person, von der der Ausdruck stammt. Ohne Angabe wird kein Name angezeigt.')}</p>
       <label>{t('Quelle')} <span>{t('(optional)')}</span><input name="sourceUrl" defaultValue={initialEntry?.sourceUrl??''} type="url" maxLength={500} placeholder="https://…"/></label>
       {review&&<label>{t('Rückmeldung an beitragende Person')} <span>{t('(optional)')}</span><textarea name="feedback" maxLength={1000} rows={2}/></label>}{(editTarget==='suggest'||review)&&<label>{t(review?'Interne Notiz':'Hinweis zur Änderung')} <span>{t('(optional)')}</span><textarea name="note" maxLength={1000} rows={2}/></label>}

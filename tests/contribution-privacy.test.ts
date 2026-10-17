@@ -11,6 +11,17 @@ test('a short translation is sufficient for a dialect contribution and an explan
  assert.equal(entryInput.parse({...entry,meaning:'Kopf.'}).meaning,'Kopf.');
  assert.ok(storedEntryInput.safeParse({...seedEntries[0],literal:''}).success,'Existing cards remain compatible.');
 });
+test('specialized game cards use their structured solution without a duplicate literal translation',()=>{
+ const twister=entryInput.parse({kind:'tongue_twister',phrase:'Fischers Fritz fischt frische Fische.',language:'de'});assert.equal(twister.literal,'');
+ const choices=['Eine passende Lösung','Eine falsche Antwort','Noch eine falsche Antwort','Die letzte falsche Antwort'].map(de=>({de,en:de}));
+ for(const [kind,challenge] of [
+  ['gaming_mission',{type:'relay',term:'pushen',choices,correctIndex:0}],
+  ['youth_chat',{type:'relay',term:'sus',choices,correctIndex:0}],
+  ['academic',{type:'academic',direction:'plain',taboo:['Eins','Zwei','Drei'].map(de=>({de,en:de})),choices,correctIndex:0}],
+  ['joke',{type:'joke',choices,correctIndex:0}],
+ ] as const)assert.ok(entryInput.safeParse({kind,phrase:'Eine ausreichend lange Aufgabe',language:'de',challenge}).success,kind);
+ assert.ok(!entryInput.safeParse({kind:'word',phrase:'Wort',language:'de'}).success,'Ordinary language entries still need a literal translation.');
+});
 test('public credits are opt-in and the discovery preview never contains answers or account identity',()=>{
  const entry={...seedEntries[0],authorName:'Private account',creditName:''};const published=publicEntry(entry);assert.equal(published.authorName,'');assert.equal(published.creditName,'');assert.equal(publicEntry({...entry,creditName:'Oma'}).creditName,'Oma');
  const explanation=publicExplanation({id:crypto.randomUUID(),body:'An explanation.',authorName:'Private account',createdAt:new Date().toISOString(),creditName:''});assert.equal(explanation.authorName,'');

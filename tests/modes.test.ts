@@ -17,9 +17,9 @@ test('tongue twister ratings reject self-rating and out-of-range scores',()=>{
   const rating={speakerId:'10000000-0000-4000-8000-000000000001',raterId:'10000000-0000-4000-8000-000000000002',clarity:3,accuracy:4,rhythm:5};
   assert.ok(pronunciationRating.safeParse(rating).success);assert.ok(!pronunciationRating.safeParse({...rating,raterId:rating.speakerId}).success);assert.ok(!pronunciationRating.safeParse({...rating,accuracy:6}).success);
 });
-test('all contributions need a translation while explanations are optional',()=>{
+test('language entries need a translation while structured game cards use their own solution',()=>{
   assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'a',language:'en'}).meaning,'');
-  assert.ok(entryInput.safeParse({literal:'Test translation',kind:'tongue_twister',phrase:'She sells seashells by the seashore.',language:'en'}).success);
+  assert.ok(entryInput.safeParse({kind:'tongue_twister',phrase:'She sells seashells by the seashore.',language:'en'}).success);
   assert.ok(entryInput.safeParse({literal:'Kopf',kind:'idiom',phrase:'Spill the beans',language:'en'}).success);
   assert.ok(!entryInput.safeParse({kind:'word',phrase:'head',language:'en'}).success);
 });

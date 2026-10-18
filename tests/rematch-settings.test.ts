@@ -95,3 +95,25 @@ test('round validation caps at ten while sparse categories expose only their unp
   updateAvailability(game,entries);assert.equal(viewGame(game,game.hostId).maxRounds,8);
   act(game,game.hostId,{action:'configure',rounds:8});assert.throws(()=>act(game,game.hostId,{action:'configure',rounds:9}),/ungespielte/);
 });
+
+test('immediate rematches preserve settings and membership, reset scores and keep excluding played cards',()=>{
+  const game=createGame('FRESHX',player(),'en','meaning-quiz');game.meaningCategory='youth';game.totalRounds=2;
+  act(game,game.hostId,{action:'start'},entries);finishQuiz(game);
+  const matchId=game.matchId,history=game.playedPrompts!.map(prompt=>prompt.id),members=game.players.map(p=>p.id);
+  act(game,game.hostId,{action:'restart',immediate:true},entries);
+  assert.equal(game.phase,'voting');assert.notEqual(game.matchId,matchId);assert.equal(game.totalRounds,2);assert.equal(game.mode,'meaning-quiz');assert.equal(game.meaningCategory,'youth');assert.equal(game.locale,'en');
+  assert.deepEqual(game.players.map(p=>p.id),members);assert.ok(game.players.every(p=>p.score===0));assert.ok(game.prompts.every(prompt=>!history.includes(prompt.id)));
+  assert.ok(history.every(id=>game.playedPrompts!.some(prompt=>prompt.id===id)));
+  assert.throws(()=>act(game,game.hostId,{action:'restart',immediate:true},entries),/nicht beendet/);
+});
+
+test('an unavailable immediate rematch preserves the final result and still allows preparing a shorter match',()=>{
+  const source=communityGameEntries.filter(entry=>entry.kind==='loanword').slice(0,3);
+  const host=player(),guest=player(),game=createGame('FRESHX',host,'de','loanword-quiz');joinGame(game,guest);game.totalRounds=2;
+  act(game,host.id,{action:'start'},source);finishQuiz(game);game.players[0].score=2;
+  const matchId=game.matchId,round=game.round;
+  assert.throws(()=>act(game,guest.id,{action:'restart',immediate:true},source),/Gastgeber/);
+  assert.throws(()=>act(game,host.id,{action:'restart',immediate:true},source),/ungespielte/);
+  assert.equal(game.phase,'finished');assert.equal(game.matchId,matchId);assert.equal(game.round,round);assert.equal(game.players[0].score,2);
+  act(game,host.id,{action:'restart'},source);assert.equal(game.phase,'lobby');assert.equal(game.totalRounds,1);
+});

@@ -161,9 +161,11 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann eine neue Partie starten.',403);
     if(game.phase!=='finished')throw new GameError('Die Partie ist noch nicht beendet.');
     if(action.rounds!==undefined&&(!Number.isInteger(action.rounds)||action.rounds<1||action.rounds>10))throw new GameError('Bitte zwischen 1 und 10 Runden wählen.',422);
-    game.totalRounds=action.rounds??Math.min(game.totalRounds,10);game.phase='lobby';game.roundIndex=0;game.round=null;game.prompts=[];
-    game.matchId=crypto.randomUUID();game.notice=undefined;for(const member of game.players)member.score=0;
-    updateAvailability(game,prompts);return;
+    const rounds=action.rounds??Math.min(game.totalRounds,10);
+    const next:Game={...game,totalRounds:rounds,phase:'lobby',roundIndex:0,round:null,prompts:[],matchId:crypto.randomUUID(),notice:undefined,players:game.players.map(member=>({...member,score:0})),playedPrompts:[...(game.playedPrompts??[])]};
+    updateAvailability(next,prompts);
+    if(action.immediate){next.totalRounds=rounds;act(next,playerId,{action:'start'},prompts);}
+    Object.assign(game,next);return;
   }
   if(action.action==='start') {
     if(playerId!==game.hostId)throw new GameError('Nur die Gastgeberin oder der Gastgeber kann starten.',403);

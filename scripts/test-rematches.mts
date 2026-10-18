@@ -11,8 +11,8 @@ async function request(path:string,data?:unknown,token?:string){
   const response=await fetch(base+path,{method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json',Origin:base}:{}),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{})});
   return {status:response.status,data:await response.json() as Payload};
 }
-async function play(code:string,token:string,shown:Set<string>){
-  let current=await request(`/api/rooms/${code}`,{action:'start'},token);assert.equal(current.status,200,JSON.stringify(current.data));
+async function play(code:string,token:string,shown:Set<string>,started=false){
+  let current=await request(`/api/rooms/${code}`,started?undefined:{action:'start'},token);assert.equal(current.status,200,JSON.stringify(current.data));
   while(current.data.room.phase==='voting'){
     const view=current.data.room;assert.ok(!shown.has(view.prompt!.phrase));shown.add(view.prompt!.phrase);
     assert.equal(view.revelation,null);assert.ok(!('playedPrompts' in view)&&!('prompts' in view));assert.ok(view.options.every(option=>!('correct' in option)));
@@ -28,10 +28,10 @@ try{
   const code=host.data.room.code,token=host.data.token;codes.push(code);const seen=new Set<string>();
   assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:11},token)).status,422);
   assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:10},token)).status,200);
-  for(let match=0;match<2;match++){
-    const finished=await play(code,token,seen),lobby=await request(`/api/rooms/${code}`,{action:'restart'},token);
-    assert.equal(lobby.status,200);assert.equal(lobby.data.room.phase,'lobby');assert.notEqual(lobby.data.room.matchId,finished.matchId);assert.equal(lobby.data.room.players[0].score,0);
-  }
+  const first=await play(code,token,seen),direct=await request(`/api/rooms/${code}`,{action:'restart',immediate:true},token);
+  assert.equal(direct.status,200,JSON.stringify(direct.data));assert.equal(direct.data.room.phase,'voting');assert.notEqual(direct.data.room.matchId,first.matchId);assert.equal(direct.data.room.totalRounds,10);assert.equal(direct.data.room.meaningCategory,'gaming');assert.equal(direct.data.room.players[0].score,0);
+  const finished=await play(code,token,seen,true),lobby=await request(`/api/rooms/${code}`,{action:'restart'},token);
+  assert.equal(lobby.status,200);assert.equal(lobby.data.room.phase,'lobby');assert.notEqual(lobby.data.room.matchId,finished.matchId);assert.equal(lobby.data.room.players[0].score,0);
   assert.equal(seen.size,20);
   assert.equal((await request(`/api/rooms/${code}`,{action:'configure',meaningCategory:'youth',rounds:1},token)).status,200);
   await play(code,token,seen);await request(`/api/rooms/${code}`,{action:'restart'},token);

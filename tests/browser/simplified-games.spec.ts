@@ -23,6 +23,17 @@ for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] 
    await expect(page.locator('.options button.option')).toHaveCount(4);const right=game.round!.options.find(option=>option.solution)!;await page.locator('.options button.option').filter({has:page.getByText(right.text,{exact:true})}).click();
   }
   await expect(page.getByRole('button',{name:'Zum Ergebnis',exact:true})).toBeVisible();await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();await expect(page.getByRole('heading',{name:'Dein Sprachgefühl in Punkten',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'1 / 1 Punkte',exact:true})).toBeVisible();
+  if(mode==='loanword-quiz'){
+    if(page.viewportSize()!.width>600)await expect.poll(()=>page.locator('.finished-actions').evaluate(actions=>{
+      const [direct,prepare,leave]=Array.from(actions.querySelectorAll('button')).map(button=>button.getBoundingClientRect());
+      return direct.right<prepare.left&&prepare.right<leave.left&&prepare.width>direct.width&&prepare.width>leave.width;
+    })).toBe(true);
+    const first=game.round!.entry.id,matchId=game.matchId;
+    await page.getByRole('button',{name:'Direkt weiterspielen',exact:true}).click();await expect(page.locator('.options button.option')).toHaveCount(4);
+    expect(game.phase).toBe('voting');expect(game.mode).toBe(mode);expect(game.totalRounds).toBe(1);expect(game.matchId).not.toBe(matchId);expect(game.round!.entry.id).not.toBe(first);expect(game.players[0].score).toBe(0);
+    const right=game.round!.options.find(option=>option.solution)!;await page.locator('.options button.option').filter({has:page.getByText(right.text,{exact:true})}).click();await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Nächste Partie vorbereiten',exact:true})).toBeVisible();
+  }
   const previous=game.round!.entry.id;
   await page.getByRole('button',{name:'Nächste Partie vorbereiten',exact:true}).click();
   await expect(page.getByRole('button',{name:'Spiel starten',exact:true})).toBeVisible();

@@ -69,7 +69,7 @@ export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('start') }),
   z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
-  z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional() }),
+  z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional(),immediate:z.boolean().optional() }),
   z.object({ action:z.literal('leave') }),
   z.object({ action:z.literal('heartbeat') }),
   z.object({ action: z.literal('answer'), text: z.string().trim().min(3).max(300) }),

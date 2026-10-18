@@ -46,7 +46,8 @@ export function Home() {
     let frame=0;
     const update=()=>{
       frame=0;
-      const marker=(Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--site-header-height'))||0)+24;
+      const headerHeight=document.querySelector<HTMLElement>('.header')?.getBoundingClientRect().height??0;
+      const marker=headerHeight+64;
       const playTop=document.getElementById('spiel-starten')?.getBoundingClientRect().top??Number.POSITIVE_INFINITY;
       const discoverTop=document.getElementById('entdecken')?.getBoundingClientRect().top??Number.POSITIVE_INFINITY;
       const next=discoverTop<=marker?'discover':playTop<=marker?'play':'';

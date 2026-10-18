@@ -30,6 +30,7 @@ export function Home() {
   const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [toast,setToast]=useState('');const [refresh,setRefresh]=useState(0);const [selected,setSelected]=useState<Entry|null>(null);
   const [resetToken,setResetToken]=useState('');
   const [playMode,setPlayMode]=useState<PlayableGameMode>('meaning-quiz');const [joinCode,setJoinCode]=useState('');const [joinOnly,setJoinOnly]=useState(false);
+  const [activeSection,setActiveSection]=useState('');
   const openMode=(mode:PlayableGameMode)=>{setJoinOnly(false);setJoinCode('');setPlayMode(mode);setPlay(true);};
   useEffect(()=>{const url=new URL(window.location.href);if(url.searchParams.get('reset')&&url.searchParams.get('token')){setResetToken(url.searchParams.get('token')!);setAuth(true);window.history.replaceState(null,'','/');}},[]);
   useEffect(()=>{const timer=setTimeout(()=>setSearch(query),300);return()=>clearTimeout(timer);},[query]);
@@ -41,6 +42,20 @@ export function Home() {
     return()=>controller.abort();
   },[kind,language,search,offset,refresh,exploring]);
   useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),5000);return()=>clearTimeout(t);},[toast]);
+  useEffect(()=>{
+    let frame=0;
+    const update=()=>{
+      frame=0;
+      const marker=(Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--site-header-height'))||0)+24;
+      const playTop=document.getElementById('spiel-starten')?.getBoundingClientRect().top??Number.POSITIVE_INFINITY;
+      const discoverTop=document.getElementById('entdecken')?.getBoundingClientRect().top??Number.POSITIVE_INFINITY;
+      const next=discoverTop<=marker?'discover':playTop<=marker?'play':'';
+      setActiveSection(current=>current===next?current:next);
+    };
+    const schedule=()=>{if(!frame)frame=requestAnimationFrame(update);};
+    update();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
+    return()=>{window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);if(frame)cancelAnimationFrame(frame);};
+  },[]);
   const shownEntries=entries;
   const chooseGame=()=>document.getElementById('spiel-starten')?.scrollIntoView({behavior:'smooth'});
   const discover=()=>document.getElementById('entdecken')?.scrollIntoView({behavior:'smooth'});
@@ -50,7 +65,7 @@ export function Home() {
     setContribute(false);setSelected(data.entry);
   };
   const openContribute=()=>{if(session?.user)setContribute(true);else setAuth(true);};
-  return <><Header onDiscover={discover} onPlay={chooseGame} onContribute={openContribute} onLogin={()=>setAuth(true)}/>
+  return <><Header active={activeSection} onDiscover={discover} onPlay={chooseGame} onContribute={openContribute} onLogin={()=>setAuth(true)}/>
     <main><section className="hero"><div className="hero-copy"><div className="eyebrow"><span className="tiny-star">✳</span> {t("SPRACHE IST MEHR ALS VOKABELN")}</div>
       <h1>{t("Andere Worte.")}<br/><span>{t("Neue Welten.")}</span></h1><p>{t("Entdecke, wie Menschen anderswo sprechen.")}<br className="desktop-break"/> {t("Und wie viel Spaß es macht, sie falsch zu verstehen.")}</p>
       <div className="hero-buttons"><button className="button primary" onClick={chooseGame}><Users size={19}/>{t("Spiel auswählen")}<ArrowRight size={18}/></button><button className="button outline" onClick={discover}>{t("Auf Entdeckungsreise")}<ArrowDown size={18}/></button></div>

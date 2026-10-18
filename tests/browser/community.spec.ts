@@ -15,7 +15,7 @@ test('half the game cards, expandable explanations, language and mobile login',a
 });
 test('region failure retains defaults, retry restores registry and selection closes',async({page})=>{
  await mockSession(page);let attempts=0;await page.route('**/api/regions',route=>{attempts++;return route.fulfill(attempts===1?{status:503,json:{error:'Unavailable'}}:{json:{regions:{'custom-test':{de:'Testregion',en:'Test region'}}}});});
- await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.getByRole('button',{name:'Eigenen Ausdruck teilen',exact:true}).click();
+ await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();
  const dialog=page.getByRole('dialog');await dialog.getByRole('combobox').first().click();await page.getByRole('option',{name:'Dialekt',exact:true}).click();
  await expect(dialog.getByText('Die Regionen konnten nicht geladen werden. Die Standardregionen bleiben verfügbar.')).toBeVisible();
  await dialog.getByRole('combobox',{name:'Region',exact:true}).click();await page.getByRole('option',{name:'Österreich',exact:true}).click();await expect(page.getByRole('listbox')).toHaveCount(0);
@@ -24,12 +24,12 @@ test('region failure retains defaults, retry restores registry and selection clo
  await dialog.locator('[name="phrase"]').fill('Ein Testwort');await dialog.getByRole('button',{name:'Beitrag veröffentlichen',exact:true}).click();await expect(dialog.locator('[name="literal"]')).toBeFocused();
 });
 test('special game contributions avoid duplicate solution fields in both languages',async({page})=>{
- await mockSession(page);await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.getByRole('button',{name:'Eigenen Ausdruck teilen',exact:true}).click();
+ await mockSession(page);await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();
  const dialog=page.getByRole('dialog'),kind=dialog.getByRole('combobox').first();await kind.click();await page.getByRole('option',{name:'Zungenknoten',exact:true}).click();
  await expect(dialog.getByText('Optionale Zusatzinformationen',{exact:true})).toBeVisible();await expect(dialog.locator('[name="literal"]:visible')).toHaveCount(0);await expect(dialog.locator('[name="sense"]:visible')).toHaveCount(0);await expect(dialog.locator('[name="region"]:visible')).toHaveCount(0);await expect(dialog.getByText('Für einen Zungenknoten genügt der Satz oder die Aufnahme. Eine Bedeutung ist nicht erforderlich.')).toBeHidden();
  await dialog.getByText('Optionale Zusatzinformationen',{exact:true}).click();await expect(dialog.getByText('Für einen Zungenknoten genügt der Satz oder die Aufnahme. Eine Bedeutung ist nicht erforderlich.')).toBeVisible();
  await kind.click();await page.getByRole('option',{name:'Akademisch & alltäglich',exact:true}).click();await expect(dialog.getByText('Eine richtige Antwort und drei falsche Antworten. Im Spiel werden alle vier zufällig gemischt.')).toBeVisible();await expect(dialog.locator('input[type="radio"]')).toHaveCount(0);await expect(dialog.getByLabel('Richtige Antwort · DE',{exact:true})).toBeVisible();await expect(dialog.getByLabel('Falsche Antwort 3 · DE',{exact:true})).toBeVisible();await expect(dialog.locator('[name="literal"]:visible')).toHaveCount(0);await expect(dialog.getByText('Die richtige Antwort ist bereits die Lösung. Ergänze hier nur Hintergrundwissen, wenn es wirklich hilft.')).toBeVisible();
- await dialog.getByRole('button',{name:'Schließen',exact:true}).click();await page.getByRole('button',{name:'EN',exact:true}).click();await page.getByRole('button',{name:'Share an expression',exact:true}).click();
+ await dialog.getByRole('button',{name:'Schließen',exact:true}).click();await page.getByRole('button',{name:'EN',exact:true}).click();await page.locator('.header').getByRole('button',{name:'Contribute',exact:true}).click();
  const englishDialog=page.getByRole('dialog'),englishKind=englishDialog.getByRole('combobox').first();await englishKind.click();await page.getByRole('option',{name:'Academic & everyday language',exact:true}).click();await englishDialog.getByText('Optional additional information',{exact:true}).click();
  await expect(englishDialog.getByText('How would you like to share the expression?')).toBeVisible();await expect(englishDialog.getByText('The correct answer already provides the solution. Add background only when it is genuinely useful.')).toBeVisible();
 });

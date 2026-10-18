@@ -37,7 +37,7 @@ try{
  assert.equal((await call('/api/entries',{literal:'Test translation',kind:'word',phrase:'Foreign-audio-'+stamp,language:'de',audioId:audio.id})).status,422);await call('/api/auth/sign-out',{});
  const host=await call('/api/rooms',{name:'QA Host',mode:'language-quiz',locale:'en'});assert.equal(host.status,201);const code=host.data.room.code;rooms.push(code);const tokens=[host.data.token];
  for(const name of ['QA First','QA Second']){const joined=await call(`/api/rooms/${code}/join`,{name});assert.equal(joined.status,201);tokens.push(joined.data.token);}
- assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:7},tokens[0])).status,422);assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:6},tokens[0])).status,200);await call(`/api/rooms/${code}`,{action:'configure',rounds:1},tokens[0]);
+ assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:11},tokens[0])).status,422);assert.equal((await call(`/api/rooms/${code}`,{action:'configure',rounds:10},tokens[0])).status,200);await call(`/api/rooms/${code}`,{action:'configure',rounds:1},tokens[0]);
  let current=await call(`/api/rooms/${code}`,{action:'start'},tokens[0]);assert.equal(current.status,200);const match=current.data.room.matchId;
  // Restrict the synthetic room's current card to the newly uploaded entry, so projection is deterministic.
  const [fixture]=await sql`SELECT state FROM game_rooms WHERE code=${code}`;fixture.state.round.entry=added.data.entry;await sql`UPDATE game_rooms SET state=${JSON.stringify(fixture.state)}::jsonb,version=version+1 WHERE code=${code}`;
@@ -46,7 +46,7 @@ try{
  current=await call(`/api/rooms/${code}`,undefined,tokens[1]);assert.equal(current.data.room.hostId,current.data.room.playerId);assert.equal(current.data.room.players.length,2);
  const option=current.data.room.options[0].id;await Promise.all(tokens.slice(1).map(token=>call(`/api/rooms/${code}`,{action:'vote',optionId:option},token)));
  current=await call(`/api/rooms/${code}`,{action:'next'},tokens[1]);assert.equal(current.data.room.phase,'finished');assert.equal((await call(`/api/rooms/${code}`,{action:'restart',rounds:2},tokens[2])).status,403);
- current=await call(`/api/rooms/${code}`,{action:'restart',rounds:2},tokens[1]);assert.equal(current.status,200);assert.equal(current.data.room.phase,'voting');assert.notEqual(current.data.room.matchId,match);assert.equal(current.data.room.totalRounds,2);assert.ok(current.data.room.players.every((p:any)=>p.score===0));
+ current=await call(`/api/rooms/${code}`,{action:'restart',rounds:2},tokens[1]);assert.equal(current.status,200);assert.equal(current.data.room.phase,'lobby');assert.notEqual(current.data.room.matchId,match);assert.equal(current.data.room.totalRounds,2);assert.ok(current.data.room.players.every((p:any)=>p.score===0));current=await call(`/api/rooms/${code}`,{action:'start'},tokens[1]);assert.equal(current.data.room.phase,'voting');
  await call(`/api/rooms/${code}`,{action:'heartbeat'},tokens[2]);const prompts=await sql`SELECT jsonb_array_length(state->'prompts') AS count FROM game_rooms WHERE code=${code}`;assert.equal(prompts[0].count,2);
  await sql`UPDATE game_rooms SET state=jsonb_set(state,'{players,0,lastSeenAt}',to_jsonb(${Date.now()-121000}::bigint)),version=version+1 WHERE code=${code}`;
  current=await call(`/api/rooms/${code}`,{action:'heartbeat'},tokens[2]);assert.equal(current.status,200);assert.equal(current.data.room.players.length,1);assert.equal(current.data.room.hostId,current.data.room.playerId);

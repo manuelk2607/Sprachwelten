@@ -10,7 +10,8 @@ import { shuffled } from './random';
 import { categoryId, categoryLabel, contextIds, regionIds, type CategoryKind } from './quiz-categories';
 import { translationStatus } from './content-translations';
 import {type MeaningCategory} from './meaning-categories';
-import {maximumRounds,playablePrompts} from './game-pool';
+import {maximumRounds,promptIdentity,unseenPrompts,updateAvailability} from './game-pool';
+import {familyFor} from './game-families';
 import {chainChoices,edgeLetter,type ChainRound} from './word-chain';
 
 export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished'|'briefing'|'mission'|'ordering'|'linking';
@@ -18,7 +19,7 @@ export type Player={id:string;name:string;tokenHash:string;score:number;lastSeen
 export type Option={id:string;text:string;authorId:string|null;solution?:boolean;language?:string;categoryId?:string;categoryKind?:CategoryKind};
 export type PronunciationRound={speakerIndex:number;ratings:Record<string,Record<string,RatingScores>>};
 export type Round={entry:Entry;answers:Record<string,string>;votes:Record<string,string>;options:Option[];chain?:ChainRound;team?:TeamRound;orders?:Record<string,string[]>;tiles?:{id:string;text:string;sourceId:string}[];pronunciation?:PronunciationRound};
-export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number;availableRounds?:number;matchId?:string;notice?:string;meaningCategory?:MeaningCategory;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
+export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];playedPrompts?:{id:string;key:string}[];roundIndex:number;round:Round|null;totalRounds:number;availableRounds?:number;matchId?:string;notice?:string;meaningCategory?:MeaningCategory;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
 export class GameError extends Error {constructor(message:string,public status=409){super(message);}}
 export function createGame(code:string,player:Player,locale:Locale='de',mode:PlayableGameMode='idiom-bluff'):Game {
   player.lastSeenAt=Date.now();
@@ -30,9 +31,17 @@ export function joinGame(game:Game,player:Player) {
   if(game.players.some(p=>p.name.toLowerCase()===player.name.toLowerCase()))throw new GameError('Dieser Name ist im Raum schon vergeben.');
   player.lastSeenAt=Date.now();game.players.push(player);
 }
+function rememberPrompt(game:Game) {
+  const shown=[...game.prompts.slice(0,game.roundIndex+1),...(game.round?[game.round.entry]:[])];
+  if(!shown.length)return;
+  const history=game.playedPrompts??=[],ids=new Set(history.map(prompt=>prompt.id));
+  for(const entry of shown)if(!ids.has(entry.id)){history.push({id:entry.id,key:promptIdentity(entry)});ids.add(entry.id);}
+}
 function newRound(game:Game) {
   const entry=game.prompts[game.roundIndex];
   game.round={entry,answers:{},votes:{},options:[]};
+  rememberPrompt(game);
+  if(game.availableRounds!==undefined)game.availableRounds=Math.max(0,game.availableRounds-1);
   game.phase='writing';
   if(game.mode==='word-chain'){
     game.round.chain={queue:game.players.map((_,index)=>game.players[(game.roundIndex+index)%game.players.length].id),turn:0,words:[{text:entry.phrase}],choices:[],results:[]};chainChoices(game.round.chain,game.locale);game.phase='linking';
@@ -102,12 +111,13 @@ export function leaveGame(game:Game,playerId:string){
   const index=game.players.findIndex(player=>player.id===playerId);if(index<0)throw new GameError('Du bist nicht Teil dieses Raums.',403);
   const performance=game.round?.pronunciation;const speakerId=performance?game.players[performance.speakerIndex]?.id:undefined;
   const speakerIndex=performance?.speakerIndex??0;
+  rememberPrompt(game);
   game.players.splice(index,1);if(game.hostId===playerId)game.hostId=game.players[0]?.id??'';
   if(!game.players.length){game.phase='finished';game.round=null;game.prompts=[];return;}
-  if(game.phase==='lobby'){game.totalRounds=Math.min(game.totalRounds,game.players.length*2);return;}
+  if(game.phase==='lobby')return;
   if(game.phase==='finished')return;
   const minimum=isQuizMode(game.mode)||game.mode==='word-builder'||game.mode==='word-chain'?1:2;
-  if(game.players.length<minimum){game.phase='lobby';game.round=null;game.prompts=[];game.roundIndex=0;game.totalRounds=Math.min(game.totalRounds,game.players.length*2);game.notice='Zu wenige Personen zum Weiterspielen. Ihr könnt in der Lobby wieder starten.';return;}
+  if(game.players.length<minimum){game.phase='lobby';game.round=null;game.prompts=[];game.roundIndex=0;game.totalRounds=Math.max(1,Math.min(game.totalRounds,maximumRounds(game)));game.notice='Zu wenige Personen zum Weiterspielen. Ihr könnt in der Lobby wieder starten.';return;}
   const round=game.round;if(!round)return;
   if(round.chain){round.chain.queue=round.chain.queue.filter(id=>id!==playerId);round.chain.turn++;if(game.phase==='linking'){if(!round.chain.queue.length)game.phase='reveal';else chainChoices(round.chain,game.locale);}return;}
   delete round.answers[playerId];delete round.votes[playerId];if(round.orders)delete round.orders[playerId];
@@ -127,6 +137,7 @@ export function leaveGame(game:Game,playerId:string){
 export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=[]) {
   const player=game.players.find(player=>player.id===playerId);
   if(!player)throw new GameError('Du bist nicht Teil dieses Raums.',403);
+  rememberPrompt(game);
   const now=Date.now();player.lastSeenAt=now;
   for(const other of [...game.players])if(other.id!==playerId&&other.lastSeenAt&&now-other.lastSeenAt>120000)leaveGame(game,other.id);
   if(action.action==='heartbeat')return;
@@ -134,27 +145,36 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
   if(action.action==='configure'){
     if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann die Rundenzahl ändern.',403);
     if(game.phase!=='lobby')throw new GameError('Die Rundenzahl kann nur in der Lobby geändert werden.');
-    if(action.rounds!==undefined&&action.rounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
-    if(action.rounds!==undefined&&action.rounds>maximumRounds(game))throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.',422);
-    if(action.rounds!==undefined)game.totalRounds=action.rounds;
-    if(action.pronunciationCategory){if(game.mode!=='tongue-twisters')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.pronunciationCategory=action.pronunciationCategory;}
-    if(action.attributionCategory){if(game.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.attributionCategory=action.attributionCategory;}
-    if(action.meaningCategory){if(game.mode!=='meaning-quiz')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.meaningCategory=action.meaningCategory;}return;
+    const family=familyFor(game.mode??'idiom-bluff');
+    if(action.mode&&(!family.modes.includes(game.mode!)||!family.modes.includes(action.mode)))throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);
+    const next={...game,mode:action.mode??game.mode};
+    if(action.pronunciationCategory){if(next.mode!=='tongue-twisters')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);next.pronunciationCategory=action.pronunciationCategory;}
+    if(action.attributionCategory){if(next.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);next.attributionCategory=action.attributionCategory;}
+    if(action.meaningCategory){if(next.mode!=='meaning-quiz')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);next.meaningCategory=action.meaningCategory;}
+    if(prompts.length)updateAvailability(next,prompts);
+    if(action.rounds!==undefined){
+      if(!Number.isInteger(action.rounds)||action.rounds<1||action.rounds>10)throw new GameError('Bitte zwischen 1 und 10 Runden wählen.',422);
+      if(action.rounds>maximumRounds(next))throw new GameError('Für diese Rundenzahl sind noch nicht genügend ungespielte Beiträge vorhanden.',422);
+      next.totalRounds=action.rounds;
+    }
+    Object.assign(game,next);return;
   }
   if(action.action==='restart'){
     if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann eine neue Partie starten.',403);
     if(game.phase!=='finished')throw new GameError('Die Partie ist noch nicht beendet.');
-    game.totalRounds=action.rounds??Math.min(game.totalRounds,game.players.length*2);game.phase='lobby';game.roundIndex=0;game.round=null;game.prompts=[];
-    act(game,playerId,{action:'start'},prompts);return;
+    if(action.rounds!==undefined&&(!Number.isInteger(action.rounds)||action.rounds<1||action.rounds>10))throw new GameError('Bitte zwischen 1 und 10 Runden wählen.',422);
+    game.totalRounds=action.rounds??Math.min(game.totalRounds,10);game.phase='lobby';game.roundIndex=0;game.round=null;game.prompts=[];
+    game.matchId=crypto.randomUUID();game.notice=undefined;for(const member of game.players)member.score=0;
+    updateAvailability(game,prompts);return;
   }
   if(action.action==='start') {
     if(playerId!==game.hostId)throw new GameError('Nur die Gastgeberin oder der Gastgeber kann starten.',403);
     if(game.phase!=='lobby')throw new GameError('Das Spiel läuft bereits.');
     const info=modeInfo(game.mode);
     if(game.players.length<info.minPlayers)throw new GameError(info.minPlayers===2?'Zum Start braucht ihr mindestens 2 Personen.':'Zum Start braucht ihr mindestens 3 Personen.');
-    if(game.totalRounds<1||game.totalRounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
-    const unique=playablePrompts(game,prompts);game.availableRounds=unique.length;
-    if(unique.length<game.totalRounds)throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.');
+    if(!Number.isInteger(game.totalRounds)||game.totalRounds<1||game.totalRounds>10)throw new GameError('Bitte zwischen 1 und 10 Runden wählen.',422);
+    const unique=unseenPrompts(game,prompts);game.availableRounds=unique.length;
+    if(unique.length<game.totalRounds)throw new GameError('Für diese Rundenzahl sind noch nicht genügend ungespielte Beiträge vorhanden.');
     let ordered=shuffled(unique);if(game.mode==='plain-talk'){const plain=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='plain'),precise=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='precise');ordered=[];while(plain.length||precise.length){const a=plain.shift(),b=precise.shift();if(a)ordered.push(a);if(b)ordered.push(b);}}
     game.prompts=ordered.slice(0,game.totalRounds).map(entry=>localizeEntry(entry,game.locale??'de'));
     game.roundIndex=0;game.matchId=crypto.randomUUID();game.notice=undefined;for(const player of game.players)player.score=0;

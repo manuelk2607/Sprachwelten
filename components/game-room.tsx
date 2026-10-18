@@ -1,6 +1,5 @@
 'use client';
-import {Select} from './select';
-import {meaningCategories,type MeaningCategory} from '@/lib/meaning-categories';
+import {RoomSettings} from './room-settings';
 import {TeamRound,TeamResults} from './team-round';
 import {WordOrderRound} from './word-order-round';
 import { useI18n } from '@/lib/i18n';
@@ -28,7 +27,7 @@ export function GameRoom({code}:{code:string}) {
   const [error,setError]=useState('');
   const [busy,setBusy]=useState(false);
   const [answer,setAnswer]=useState('');
-  const [copied,setCopied]=useState<'link'|'code'|null>(null);const [leaving,setLeaving]=useState(false);const [leaveDestination,setLeaveDestination]=useState('/');const [restartRounds,setRestartRounds]=useState<number|null>(null);const [pendingMessage,setPendingMessage]=useState('');const busyRef=useRef(false);const leaveConfirmed=useRef(false);
+  const [copied,setCopied]=useState<'link'|'code'|null>(null);const [leaving,setLeaving]=useState(false);const [leaveDestination,setLeaveDestination]=useState('/');const [pendingMessage,setPendingMessage]=useState('');const busyRef=useRef(false);const leaveConfirmed=useRef(false);
   const previousRound=useRef(0);
   const mutationVersion=useRef(0);
   const roomEtag=useRef<string|null>(null);
@@ -102,7 +101,7 @@ export function GameRoom({code}:{code:string}) {
       const json=await response.json() as {room:GameView;error:string};
       if(!response.ok)throw new Error(json.error);
       if(data.action==='leave'){leaveConfirmed.current=true;localStorage.removeItem(`sprachwelten-room:${code}`);setToken(null);window.location.assign(leaveDestination);return;}
-      roomEtag.current=null;setRoom(json.room);if(data.action==='restart')setRestartRounds(null);
+      roomEtag.current=null;setRoom(json.room);
     } catch(error){setRoom(previous);setError(t((error as Error).message));} finally{mutationVersion.current++;busyRef.current=false;setBusy(false);setPendingMessage('');}
 
   }
@@ -133,11 +132,8 @@ export function GameRoom({code}:{code:string}) {
             <h1>{t(info.headline)}</h1>
             <p>{t(info.intro)}</p>
             <div className="invite-box"><strong>{code}</strong><div className="invite-actions"><button className="button dark" onClick={()=>void copyInvite('link')}>{copied==='link'?<Check size={17}/>:<Copy size={17}/>} {t(copied==='link'?'Kopiert':'Einladung mit Link und Code kopieren')}</button><button className="button outline" onClick={()=>void copyInvite('code')}>{copied==='code'?<Check size={17}/>:<Copy size={17}/>} {t(copied==='code'?'Kopiert':'Nur Raumcode kopieren')}</button></div></div>
-            <div className="round-settings"><label>{t('Rundenzahl')}<Select disabled={!host||busy||!room.maxRounds} value={Math.min(room.totalRounds,room.maxRounds)} onValueChange={value=>void action({action:'configure',rounds:Number(value)})}>{Array.from({length:room.maxRounds},(_,index)=>index+1).map(value=><option key={value} value={value}>{value}</option>)}</Select></label><p className="form-note">{t('Maximal zwei Runden pro Person. Die Grenze wächst, wenn weitere Personen beitreten.')}</p></div>
-            {room.mode==='tongue-twisters'&&<label>{t('Kategorie')}<Select disabled={!host||busy} value={room.pronunciationCategory} onValueChange={value=>void action({action:'configure',pronunciationCategory:value as 'both'|'twister'|'sound'})}><option value="both">{t('Beide Kategorien')}</option><option value="twister">{t('Zungenknoten')}</option><option value="sound">{t('Klangfallen')}</option></Select></label>}
-            {room.mode==='who-said-it'&&<label>{t('Kategorie')}<Select disabled={!host||busy} value={room.attributionCategory} onValueChange={value=>void action({action:'configure',attributionCategory:value as 'both'|'person'|'song'})}><option value="both">{t('Beide Kategorien')}</option><option value="person">{t('Personenzitat')}</option><option value="song">{t('Liedstelle')}</option></Select></label>}
-            {!room.maxRounds&&<p className="notice">{t('Keine spielbaren Beiträge in dieser Kategorie.')}</p>}<p className="muted">{t(info.details)}</p><p className="form-note">{t(info.rule)}</p>
-            {room.mode==='meaning-quiz'&&<label>{t('Kategorie')}<Select disabled={!host||busy} value={room.meaningCategory} onValueChange={meaningCategory=>void action({action:'configure',meaningCategory:meaningCategory as MeaningCategory})}>{Object.entries(meaningCategories).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label>}
+            <RoomSettings room={room} disabled={!host||busy} configure={configuration=>void action(configuration)}/>
+            <p className="muted">{t(info.details)}</p><p className="form-note">{t(info.rule)}</p>
             {host?<button className="button primary full" disabled={busy||room.players.length<minimum||!room.maxRounds} onClick={()=>action({action:'start'})}>{t('Spiel starten')}<ArrowRight size={18}/></button>:<p className="waiting">{t('Die Gastgeberin oder der Gastgeber startet gleich.')}</p>}
             {room.players.length<minimum&&<small>{t('Noch')} {minimum-room.players.length} {t(minimum-room.players.length===1?'Person fehlt':'Personen fehlen')} {t('zum Start.')}</small>}
           </div>:room.phase==='finished'?<div className="finished-card">
@@ -145,7 +141,8 @@ export function GameRoom({code}:{code:string}) {
             <h1>{room.players.length===1?t('Dein Sprachgefühl in Punkten'):winners.map(p=>p.name).join(' & ')+' '+t(winners.length>1?'gewinnen!':'gewinnt!')}</h1>
             {room.players.length===1&&<h2>{me?.score} / {room.totalRounds} {t('Punkte')}</h2>}
             <p>{t('Und ihr alle wisst jetzt ein bisschen mehr über die Welt.')}</p>
-            {host?<><label className="rematch-rounds">{t('Runden in der nächsten Partie')}<Select value={restartRounds??Math.min(room.totalRounds,room.maxRounds)} onValueChange={value=>setRestartRounds(Number(value))}>{Array.from({length:room.maxRounds},(_,index)=>index+1).map(value=><option key={value} value={value}>{value}</option>)}</Select></label><button className="button primary" disabled={busy||room.players.length<minimum||!room.maxRounds} onClick={()=>void action({action:'restart',rounds:restartRounds??Math.min(room.totalRounds,room.maxRounds)})}>{t('Noch eine Partie im selben Raum')}<ArrowRight size={18}/></button></>:<p className="muted">{t('Der Gastgeber kann die nächste Partie starten.')}</p>}<button className="button outline" onClick={requestLeave}>{t('Spiel verlassen')}</button>
+            <p className="form-note">{t('Vor der nächsten Partie könnt ihr Kategorie und Rundenzahl in der Lobby ändern.')}</p>
+            {host?<button className="button primary" disabled={busy} onClick={()=>void action({action:'restart'})}>{t('Nächste Partie vorbereiten')}<ArrowRight size={18}/></button>:<p className="muted">{t('Der Gastgeber kann die nächste Partie vorbereiten.')}</p>}<button className="button outline" onClick={requestLeave}>{t('Spiel verlassen')}</button>
           </div>:<>
             <div className="round-header"><span className="eyebrow">{t(info.title)} · {t('RUNDE')} {room.roundNumber} {t('VON')} {room.totalRounds}</span><span className="phase-label">{t({writing:'✎ Erfinden',voting:'◉ Erraten',speaking:'◉ Vorlesen',rating:'✦ Bewerten',briefing:'◉ Erklären',mission:'◉ Route planen',ordering:'◉ Satz bauen',linking:'◉ Wörter verbinden',reveal:'✦ Entdecken'}[room.phase])}</span></div>
             {!room.chain&&(!room.team||room.phase==='reveal')&&<div className="prompt-card"><span className="mini-label">{room.attributionType?t(room.attributionType==='person'?'Personenzitat':'Liedstelle'):room.mode==='tongue-twisters'?t(room.pronunciationType==='sound'?'Klangfallen':'Zungenknoten')+' · '+languageLabel(room.prompt?.language??'',locale,room.prompt?.languageNames):info.promptLabel?t(info.promptLabel):languageLabel(room.prompt?.language??'',locale,room.prompt?.languageNames)}{room.mode==='everyday-language'&&room.prompt?.language?' · '+languageLabel(room.prompt.language,locale,room.prompt.languageNames):''}</span><h1>{room.prompt?.phrase||t(room.prompt?.audioId?'Hör dir die Aufnahme an.':'Die geheime Aufgabe kennt die ansagende Person.')}</h1>{room.friends&&<>{room.friends.otherWord&&<h2>{room.friends.otherWord}</h2>}<p>{languageLabel(room.prompt?.language??'',locale)} ↔ {languageLabel(room.friends.otherLanguage,locale)}</p><p>{room.friends.context}</p></>}{room.prompt?.literal&&<p>{t('Wörtlich: „')}{room.prompt.literal}{locale==='en'?'”':'“'}</p>}</div>}

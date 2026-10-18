@@ -36,7 +36,7 @@ test('odd-word and loanword quizzes hide explanations, use one correct option an
    const view=viewGame(game,game.hostId);assert.equal(game.phase,'voting');assert.equal(view.options.length,4);assert.equal(view.revelation,null);assert.ok(!JSON.stringify(view).includes('originLanguage'));assert.ok(!view.outsider||!('explanation' in view.outsider));assert.equal(game.round!.options.filter(option=>option.solution).length,1);
    act(game,game.hostId,{action:'vote',optionId:game.round!.options.find(option=>option.solution)!.id});assert.equal(game.phase,'reveal');assert.ok(viewGame(game,game.hostId).revelation?.meaning);act(game,game.hostId,{action:'next'});
   }
-  assert.equal(game.phase,'finished');assert.equal(game.players[0].score,2);const match=game.matchId;act(game,game.hostId,{action:'restart'},entries);assert.notEqual(game.matchId,match);assert.equal(game.phase,'voting');
+  assert.equal(game.phase,'finished');assert.equal(game.players[0].score,2);const match=game.matchId;act(game,game.hostId,{action:'restart'},entries);assert.notEqual(game.matchId,match);assert.equal(game.phase,'lobby');act(game,game.hostId,{action:'start'},entries);assert.equal(game.phase,'voting');
  }
 });
 test('word chains enforce active turns, reject stale actions, preserve unique words and complete with ten players',()=>{

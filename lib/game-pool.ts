@@ -34,10 +34,17 @@ export function playablePrompts(game: PoolSettings, prompts: Entry[]) {
   return [...new Map(eligible.map(entry => [promptIdentity(entry), entry])).values()];
 }
 
+export type RoomPoolSettings = PoolSettings & Pick<Game, 'playedPrompts'> & Partial<Pick<Game, 'round'>>;
+export function unseenPrompts(game: RoomPoolSettings, prompts: Entry[]) {
+  const played=[...(game.playedPrompts??[]),...(game.round?[{id:game.round.entry.id,key:promptIdentity(game.round.entry)}]:[])];
+  const ids=new Set(played.map(prompt=>prompt.id)),keys=new Set(played.map(prompt=>prompt.key));
+  return playablePrompts(game,prompts).filter(entry=>!ids.has(entry.id)&&!keys.has(promptIdentity(entry)));
+}
+
 export function updateAvailability(game: Game, prompts: Entry[]) {
-  game.availableRounds = playablePrompts(game, prompts).length;
+  game.availableRounds = unseenPrompts(game, prompts).length;
   game.totalRounds = Math.max(1, Math.min(game.totalRounds, maximumRounds(game)));
 }
 
-export const maximumRounds = (game: Pick<Game, 'players' | 'availableRounds'>) =>
-  Math.min(game.players.length * 2, game.availableRounds ?? Infinity);
+export const maximumRounds = (game: Pick<Game, 'availableRounds'>) =>
+  Math.min(10, game.availableRounds ?? Infinity);

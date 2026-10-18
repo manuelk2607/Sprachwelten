@@ -68,8 +68,8 @@ export const ratingScores=z.object({clarity:z.number().int().min(1).max(5),accur
 export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('start') }),
-  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(20).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
-  z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(20).optional() }),
+  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['language-quiz','dialect-detective','everyday-language','loanword-quiz','word-outsider','word-chain']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
+  z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional() }),
   z.object({ action:z.literal('leave') }),
   z.object({ action:z.literal('heartbeat') }),
   z.object({ action: z.literal('answer'), text: z.string().trim().min(3).max(300) }),

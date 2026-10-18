@@ -34,6 +34,7 @@ test('pronunciation actions cannot be replayed across same-room rematches',()=>{
     act(game,speaker===host?guest.id:host.id,{action:'rate',...target,clarity:5,accuracy:5,rhythm:5});
   }
   act(game,host.id,{action:'next'});act(game,host.id,{action:'restart',rounds:1},extraSeeds);
+  act(game,host.id,{action:'start'},extraSeeds);
   assert.throws(()=>act(game,host.id,{action:'performed',...old}),/aktuellen Vortrag/);
   act(game,host.id,{action:'performed',...old,matchId:game.matchId!});
   assert.throws(()=>act(game,guest.id,{action:'rate',...old,clarity:5,accuracy:5,rhythm:5}),/aktuellen Vortrag/);
@@ -52,7 +53,7 @@ test('available rounds constrain both the lobby choices and configuration',()=>{
   for(let index=0;index<9;index++)joinGame(game,player());
   const cards=communityGameEntries.filter(entry=>entry.kind==='loanword');updateAvailability(game,cards);
   assert.equal(cards.length,8);assert.equal(viewGame(game,host.id).maxRounds,8);
-  assert.throws(()=>act(game,host.id,{action:'configure',rounds:20}),/genügend/);
+  assert.throws(()=>act(game,host.id,{action:'configure',rounds:9}),/genügend/);
   act(game,host.id,{action:'configure',rounds:8});act(game,host.id,{action:'start'},cards);
   assert.equal(game.totalRounds,8);
   const empty=createGame('EMPTYX',player(),'de','loanword-quiz');updateAvailability(empty,[]);

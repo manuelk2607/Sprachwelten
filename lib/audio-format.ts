@@ -1,6 +1,11 @@
 export const audioSampleRate=16000;
 export const maxAudioSeconds=20;
 export const maxAudioBytes=44+audioSampleRate*2*maxAudioSeconds;
+export function audioSelection(duration:number,start:number,end:number){
+  if(![duration,start,end].every(Number.isFinite)||start<0||end>duration+0.001||end-start<0.05)throw new Error('Bitte einen gültigen Ausschnitt mit Anfang vor Ende wählen.');
+  if(end-start>maxAudioSeconds+0.001)throw new Error('Der Ausschnitt darf höchstens 20 Sekunden lang sein.');
+  return {start,duration:end-start,samples:Math.min(audioSampleRate*maxAudioSeconds,Math.round((end-start)*audioSampleRate))};
+}
 const text=(view:DataView,offset:number,length:number)=>Array.from({length},(_,index)=>String.fromCharCode(view.getUint8(offset+index))).join('');
 export function validateAudioWave(bytes:Uint8Array){
   if(bytes.byteLength<46||bytes.byteLength>maxAudioBytes)throw new Error('Die Aufnahme muss zwischen einem kurzen Laut und 20 Sekunden lang sein.');

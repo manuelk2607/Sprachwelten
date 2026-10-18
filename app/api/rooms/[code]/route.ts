@@ -4,7 +4,7 @@ import { body, playerToken, respond, safe } from '@/lib/http';
 import { act, GameError, viewGame } from '@/lib/game';
 import { gamePrompts, getRoom, readRoomConditional, mutateRoom } from '@/db/repository';
 import {heartbeatRoom} from '@/db/room-presence';
-import {playablePrompts,poolKey,updateAvailability,type PoolSettings} from '@/lib/game-pool';
+import {unseenPrompts,poolKey,updateAvailability,type RoomPoolSettings} from '@/lib/game-pool';
 import {roomVersion} from '@/lib/room-etag';
 type Context = {params:Promise<{code:string}>};
 export const GET = (request:Request,ctx:Context) => safe(async()=>{
@@ -23,7 +23,8 @@ export const POST = (request:Request,ctx:Context) => safe(async()=>{
   }
   let prompts: Awaited<ReturnType<typeof gamePrompts>> = [];
   let expectedPool:string|undefined;
-  const settings=(game:PoolSettings)=>({...game,...(action.action==='configure'?{
+  const settings=(game:RoomPoolSettings)=>({...game,...(action.action==='configure'?{
+    ...(action.mode?{mode:action.mode}:{}),
     ...(action.meaningCategory?{meaningCategory:action.meaningCategory}:{}),
     ...(action.pronunciationCategory?{pronunciationCategory:action.pronunciationCategory}:{}),
     ...(action.attributionCategory?{attributionCategory:action.attributionCategory}:{}),
@@ -33,7 +34,7 @@ export const POST = (request:Request,ctx:Context) => safe(async()=>{
     const player = state.players.find(p => p.tokenHash === token);
     if (!player || player.id !== state.hostId) throw new GameError('Nur die Gastgeberin oder der Gastgeber kann starten.',403);
     const requested=settings(state);expectedPool=poolKey(requested);
-    prompts = await gamePrompts(state.mode,requested);
+    prompts = await gamePrompts(requested.mode,requested);
   }
   let id='';
   const state=await mutateRoom(code,game=>{
@@ -41,7 +42,7 @@ export const POST = (request:Request,ctx:Context) => safe(async()=>{
     if(expectedPool){
       const requested=settings(game);
       if(poolKey(requested)!==expectedPool)throw new GameError('Die Auswahl wurde inzwischen geändert. Bitte lade die Liste neu.',409);
-      game.availableRounds=playablePrompts(requested,prompts).length;
+      game.availableRounds=unseenPrompts(requested,prompts).length;
     }
     act(game,id,action,prompts);
     if(action.action==='configure')updateAvailability(game,prompts);

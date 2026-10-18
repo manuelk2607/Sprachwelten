@@ -22,6 +22,9 @@ try{
   const signup=await request('/api/auth/sign-up/email',{email,password,name:'QA Sprachwelten'},undefined,true);assert.equal(signup.status,200,JSON.stringify(signup.data));accountId=signup.data.user?.id;
   const session=await request('/api/auth/get-session',undefined,undefined,true);assert.equal(session.status,200);assert.ok(session.data.user?.id);accountId=session.data.user!.id;
   const entry=await request('/api/entries',{literal:'Test translation',kind:'dialect',phrase:`QA-${stamp}`,language:'de',meaning:'Nur ein kurzlebiger Integrationstest.',regionId:'at',sourceLocale:'de',translation:{meaning:'Only a temporary integration test.'},translationReviewed:true},undefined,true);assert.equal(entry.status,201,JSON.stringify(entry.data));createdIds.push(entry.data.entry.id);assert.equal(entry.data.entry.status,'community');assert.equal(entry.data.entry.regionId,'at');assert.equal(entry.data.entry.translations.en.meaning,'Only a temporary integration test.');assert.equal(entry.data.entry.meaning,'Nur ein kurzlebiger Integrationstest.');
+  assert.equal((await request('/api/me/entries?q='+stamp)).status,401);
+  for(const query of [`qa-${stamp}`,'temporary integration']){const own=await request('/api/me/entries?q='+encodeURIComponent(query),undefined,undefined,true);assert.equal(own.status,200);assert.deepEqual(own.data.entries!.map(e=>e.id),[entry.data.entry.id]);}
+  for(const query of ['saudade','_%'])assert.equal((await request('/api/me/entries?q='+encodeURIComponent(query),undefined,undefined,true)).data.entries!.length,0);
   const duplicate=await request('/api/entries',{literal:'Test translation',kind:'dialect',phrase:`  qa-${stamp}!  `,language:'de',meaning:'Eine andere Erklärung macht keinen neuen Ausdruck.',regionId:'at'},undefined,true);assert.equal(duplicate.status,409);assert.equal(duplicate.data.duplicate?.id,entry.data.entry.id);
   const lookup=await request('/api/entries/duplicates?'+new URLSearchParams({literal:'Test translation',kind:'dialect',phrase:`QA-${stamp}?`,language:'de',regionId:'at'}));assert.equal(lookup.status,200);assert.equal(lookup.data.duplicate?.id,entry.data.entry.id);
   const curatedDuplicate=await request('/api/entries',{literal:'Test translation',kind:'word',phrase:'  SAUDADE!!! ',language:'pt'},undefined,true);assert.equal(curatedDuplicate.status,409);assert.ok(curatedDuplicate.data.duplicate?.id);
@@ -50,7 +53,7 @@ try{
   assert.equal((await request(`/api/rooms/${code}`)).status,401);
   for(const name of ['QA Bo','QA Cam']){const join=await request(`/api/rooms/${code}/join`,{name});assert.equal(join.status,201);tokens.push(join.data.token!);}
   assert.equal((await request(`/api/rooms/${code}`,{action:'start'},tokens[1])).status,403);
-  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:7},tokens[0])).status,422);
+  assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:11},tokens[0])).status,422);
   assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:5},tokens[1])).status,403);
   assert.equal((await request(`/api/rooms/${code}`,{action:'configure',rounds:5},tokens[0])).status,200);
   let current=await request(`/api/rooms/${code}`,{action:'start'},tokens[0]);assert.equal(current.status,200);assert.equal(current.data.room.phase,'writing');assert.equal(current.data.room.locale,'en');

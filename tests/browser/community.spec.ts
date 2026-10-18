@@ -1,5 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
 import {manuelGameEntries} from '../../lib/manuel-game-seeds';
+import {audioSampleRate,encodeAudioWave,validateAudioWave} from '../../lib/audio-format';
 async function mockSession(page:Page){
  await page.route('**/api/auth/get-session**',route=>route.fulfill({json:{session:{id:'browser-session',userId:'browser-user',expiresAt:'2099-01-01T00:00:00Z',token:'browser-test-only'},user:{id:'browser-user',name:'Browser QA',email:'qa@sprachwelten.invalid',emailVerified:false,createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'}}}));
  await page.route('**/api/admin/access',route=>route.fulfill({json:{isAdmin:false}}));
@@ -50,4 +51,26 @@ test('own suggestion statuses show feedback without exposing internal notes',asy
  await page.route('**/api/me/suggestions?*',route=>route.fulfill({json:{suggestions:[{id:'1',entryId:'entry',phrase:'Ein Ausdruck',status:'accepted',createdAt:'2026-10-17T12:00:00Z',reviewedAt:'2026-10-17T13:00:00Z',feedback:'Danke für die Korrektur.'}],more:false}}));
  await page.goto('/me');await page.getByRole('button',{name:'Verbesserungsvorschläge',exact:true}).click();await expect(page.getByText('Übernommen',{exact:true})).toBeVisible();await expect(page.getByText('Danke für die Korrektur.')).toBeVisible();
  await page.getByRole('button',{name:'EN',exact:true}).click();await expect(page.getByText('Accepted',{exact:true})).toBeVisible();
+});
+test('own contribution search reaches the server and resets pagination',async({page})=>{
+ await mockSession(page);const entry=manuelGameEntries[0],requests:{q:string;offset:string|null}[]=[];
+ await page.route('**/api/me/entries?*',route=>{const params=new URL(route.request().url()).searchParams,q=params.get('q')??'';requests.push({q,offset:params.get('offset')});return route.fulfill({json:{entries:q==='nichts'?[]:[entry],more:!q}});});
+ await page.goto('/me');await expect(page.getByRole('heading',{name:entry.phrase,exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Weiter',exact:true}).click();await expect.poll(()=>requests.at(-1)?.offset).toBe('30');
+ await page.getByRole('searchbox',{name:'Eigene Beiträge durchsuchen'}).fill('nichts');await expect(page.getByText('Keine eigenen Beiträge zu dieser Suche gefunden.')).toBeVisible();expect(requests.at(-1)).toEqual({q:'nichts',offset:'0'});
+ await page.getByRole('searchbox',{name:'Eigene Beiträge durchsuchen'}).fill('');await expect(page.getByRole('heading',{name:entry.phrase,exact:true})).toBeVisible();
+});
+test('audio is cropped before upload and an uploaded clip can be trimmed again',async({page})=>{
+ await mockSession(page);const durations:number[]=[],amplitudes:number[]=[];
+ await page.route('**/api/audio',async route=>{if(route.request().method()==='POST'){const bytes=route.request().postDataBuffer()!,meta=validateAudioWave(bytes);durations.push(meta.durationMs);amplitudes.push(bytes.readInt16LE(44+audioSampleRate/10*2)/32767);return route.fulfill({json:{audio:{id:crypto.randomUUID(),durationMs:meta.durationMs}}});}return route.fulfill({json:{available:true}});});
+ await page.route('**/api/audio/*',route=>route.fulfill({json:{removed:true}}));
+ await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();const dialog=page.getByRole('dialog');
+ await dialog.getByRole('checkbox',{name:'Audio',exact:true}).check();
+ const samples=Float32Array.from({length:audioSampleRate*3},(_,index)=>index<audioSampleRate?0.1:0.4);
+ await dialog.locator('input[type=file]').setInputFiles({name:'qa-trim.wav',mimeType:'audio/wav',buffer:Buffer.from(encodeAudioWave(samples))});
+ await expect(dialog.getByRole('spinbutton',{name:'Anfang (Sekunden)',exact:true})).toBeVisible();expect(durations).toEqual([]);
+ await dialog.getByRole('spinbutton',{name:'Anfang (Sekunden)',exact:true}).fill('1');await dialog.getByRole('spinbutton',{name:'Ende (Sekunden)',exact:true}).fill('2');
+ await dialog.getByRole('button',{name:'Ausschnitt übernehmen',exact:true}).click();await expect(dialog.getByRole('button',{name:'Audio zuschneiden',exact:true})).toBeVisible();expect(durations).toEqual([1000]);expect(amplitudes[0]).toBeCloseTo(0.4,2);
+ await dialog.getByRole('button',{name:'Audio zuschneiden',exact:true}).click();await expect(dialog.getByRole('spinbutton',{name:'Ende (Sekunden)',exact:true})).toHaveValue('1');
+ await dialog.getByRole('spinbutton',{name:'Ende (Sekunden)',exact:true}).fill('0.5');await dialog.getByRole('button',{name:'Ausschnitt übernehmen',exact:true}).click();await expect.poll(()=>durations).toEqual([1000,500]);
 });

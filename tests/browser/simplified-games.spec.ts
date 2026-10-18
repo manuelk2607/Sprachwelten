@@ -5,11 +5,14 @@ import {communityGameEntries} from '../../lib/community-game-seeds';
 import {seedEntries} from '../../lib/seeds';
 import {newGameEntries} from '../../lib/new-game-seeds';
 import {chainPrompts,edgeLetter} from '../../lib/word-chain';
+import {updateAvailability} from '../../lib/game-pool';
+import {wordSeeds} from '../../lib/word-seeds';
 
 for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] as const){
  test(`${mode} can be completed from the lobby through its actual UI`,async({page})=>{
   const host={id:crypto.randomUUID(),name:'Browser QA',tokenHash:'qa-only',score:0};const game=createGame('ABC234',host,'de',mode);game.totalRounds=1;
-  const prompts=mode==='word-chain'?chainPrompts():[...seedEntries,...newGameEntries,...communityGameEntries];
+  const prompts=mode==='word-chain'?chainPrompts():[...seedEntries,...wordSeeds,...newGameEntries,...communityGameEntries];
+  updateAvailability(game,prompts);
   await page.addInitScript(()=>localStorage.setItem('sprachwelten-room:ABC234','qa-only'));
   await page.route('**/api/auth/get-session**',route=>route.fulfill({json:null}));
   await page.route('**/api/rooms/ABC234',route=>{if(route.request().method()==='POST')act(game,host.id,route.request().postDataJSON() as RoomAction,prompts);return route.fulfill({json:{room:viewGame(game,host.id)}});});
@@ -20,5 +23,22 @@ for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] 
    await expect(page.locator('.options button.option')).toHaveCount(4);const right=game.round!.options.find(option=>option.solution)!;await page.locator('.options button.option').filter({has:page.getByText(right.text,{exact:true})}).click();
   }
   await expect(page.getByRole('button',{name:'Zum Ergebnis',exact:true})).toBeVisible();await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();await expect(page.getByRole('heading',{name:'Dein Sprachgefühl in Punkten',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'1 / 1 Punkte',exact:true})).toBeVisible();
+  const previous=game.round!.entry.id;
+  await page.getByRole('button',{name:'Nächste Partie vorbereiten',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Spiel starten',exact:true})).toBeVisible();
+    if(mode==='meaning-quiz'){
+      await page.getByRole('combobox',{name:'Kategorie',exact:true}).click();
+      await page.getByRole('option',{name:'Generationenchat',exact:true}).click();
+      await page.getByRole('combobox',{name:'Rundenzahl',exact:true}).click();
+      await expect(page.getByRole('option',{name:'10',exact:true})).toBeVisible();
+      await page.getByRole('option',{name:'1',exact:true}).click();
+    }else if(mode==='loanword-quiz'){
+      await page.getByRole('combobox',{name:'Kategorie',exact:true}).click();
+      await page.getByRole('option',{name:'Wortdetektiv',exact:true}).click();
+    }
+  await page.getByRole('button',{name:'Spiel starten',exact:true}).click();
+  await expect(page.locator('.round-header')).toBeVisible();expect(game.round!.entry.id).not.toBe(previous);
+  if(mode==='meaning-quiz')expect(game.round!.entry.kind).toBe('youth_chat');
+  if(mode==='loanword-quiz')expect(game.mode).toBe('language-quiz');
  });
 }

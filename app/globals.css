@@ -79,6 +79,9 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
   .header .theme-toggle{width:44px;height:44px}
   .discovery-contribute{display:none}
 }
+.room-settings{margin:24px 0}
+.own-entry-search{display:grid;gap:8px;margin:24px 0;font-size:13px;font-weight:600}.own-entry-search>div{display:flex;align-items:center;gap:10px}.own-entry-search svg{color:var(--muted)}
+.audio-trimmer{display:grid;gap:14px;padding:18px;border:1px solid var(--line);border-radius:12px;margin-top:16px;background:var(--white)}.audio-trimmer h4{margin:0;font-size:15px}.audio-trimmer audio{width:100%;min-width:0}.audio-trimmer input[type=range]{padding:0;min-height:30px;accent-color:var(--coral)}.audio-trimmer .dialog-actions{flex-wrap:wrap}.audio-trimmer .form-row{gap:12px}.audio-preview audio{min-width:0;flex:1}.audio-preview .icon-button{flex-shrink:0}
 @media(max-width:360px){
   .header .brand{font-size:23px}
   .header nav{gap:10px;font-size:11px}

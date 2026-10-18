@@ -7,9 +7,9 @@ import { wordSeeds } from '../lib/word-seeds';
 import type { PlayableGameMode } from '../lib/modes';
 const player=(id:string)=>({id,name:id,tokenHash:'secret-'+id,score:0});
 function lobby(mode:PlayableGameMode='idiom-bluff',count=3){const game=createGame('ABC234',player('host'),'de',mode);for(let i=1;i<count;i++)joinGame(game,player('guest'+i));return game;}
-test('round limits follow joined players and only the host can configure them',()=>{
- const game=lobby();assert.equal(game.totalRounds,2);act(game,'host',{action:'configure',rounds:6});assert.equal(game.totalRounds,6);assert.throws(()=>act(game,'host',{action:'configure',rounds:7}));assert.throws(()=>act(game,'guest1',{action:'configure',rounds:2}));leaveGame(game,'guest2');assert.equal(game.totalRounds,4);
- const solo=lobby('language-quiz',1);solo.totalRounds=3;assert.throws(()=>act(solo,'host',{action:'start'},wordSeeds));
+test('hosts choose up to ten rounds independently of player count',()=>{
+ const game=lobby();assert.equal(game.totalRounds,2);act(game,'host',{action:'configure',rounds:10});assert.equal(game.totalRounds,10);assert.throws(()=>act(game,'host',{action:'configure',rounds:11}));assert.throws(()=>act(game,'guest1',{action:'configure',rounds:2}));leaveGame(game,'guest2');assert.equal(game.totalRounds,10);
+ const solo=lobby('language-quiz',1);act(solo,'host',{action:'configure',rounds:10});act(solo,'host',{action:'start'},wordSeeds);assert.equal(solo.prompts.length,10);
 });
 test('the earliest remaining player becomes host and a pending bluff can progress',()=>{
  const game=lobby();act(game,'host',{action:'start'},seedEntries);act(game,'guest1',{action:'answer',text:'First bluff'});act(game,'guest2',{action:'answer',text:'Second bluff'});leaveGame(game,'host');assert.equal(game.hostId,'guest1');assert.equal(game.phase,'voting');assert.equal(game.players.length,2);assert.throws(()=>act(game,'host',{action:'vote',optionId:game.round!.options[0].id}));
@@ -24,7 +24,7 @@ test('too few speakers return to the lobby; empty rooms end cleanly',()=>{
  const game=lobby('tongue-twisters',2);act(game,'host',{action:'start'},extraSeeds);leaveGame(game,'host');assert.equal(game.phase,'lobby');assert.equal(game.hostId,'guest1');assert.equal(game.round,null);leaveGame(game,'guest1');assert.equal(game.phase,'finished');assert.equal(game.players.length,0);
 });
 test('rematches preserve room and player identities while clearing scores and changing match ID',()=>{
- const game=lobby('language-quiz',1);act(game,'host',{action:'configure',rounds:1});act(game,'host',{action:'start'},wordSeeds);const match=game.matchId;const right=game.round!.options.find(option=>option.language===game.round!.entry.language)!;act(game,'host',{action:'vote',optionId:right.id});act(game,'host',{action:'next'});assert.equal(game.phase,'finished');assert.equal(game.players[0].score,1);act(game,'host',{action:'restart',rounds:2},wordSeeds);assert.equal(game.phase,'voting');assert.equal(game.players[0].score,0);assert.equal(game.code,'ABC234');assert.equal(game.players[0].tokenHash,'secret-host');assert.notEqual(game.matchId,match);assert.equal(game.totalRounds,2);
+ const game=lobby('language-quiz',1);act(game,'host',{action:'configure',rounds:1});act(game,'host',{action:'start'},wordSeeds);const match=game.matchId;const right=game.round!.options.find(option=>option.language===game.round!.entry.language)!;act(game,'host',{action:'vote',optionId:right.id});act(game,'host',{action:'next'});assert.equal(game.phase,'finished');assert.equal(game.players[0].score,1);act(game,'host',{action:'restart',rounds:2},wordSeeds);assert.equal(game.phase,'lobby');assert.equal(game.round,null);assert.equal(game.players[0].score,0);assert.equal(game.code,'ABC234');assert.equal(game.players[0].tokenHash,'secret-host');assert.notEqual(game.matchId,match);assert.equal(game.totalRounds,2);act(game,'host',{action:'start'},wordSeeds);assert.equal(game.phase,'voting');
 });
 test('heartbeats transfer a stale host after the disconnect grace period',()=>{
  const game=lobby('language-quiz',3);game.players[0].lastSeenAt=Date.now()-121000;act(game,'guest1',{action:'heartbeat'});assert.equal(game.hostId,'guest1');assert.equal(game.players.length,2);assert.equal(viewGame(game,'guest1').players.some(p=>p.id==='host'),false);

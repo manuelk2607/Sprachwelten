@@ -5,11 +5,11 @@ import { act, GameError, viewGame } from '@/lib/game';
 import { gamePrompts, getRoom, readRoomConditional, mutateRoom } from '@/db/repository';
 import {heartbeatRoom} from '@/db/room-presence';
 import {playablePrompts,poolKey,updateAvailability,type PoolSettings} from '@/lib/game-pool';
+import {roomVersion} from '@/lib/room-etag';
 type Context = {params:Promise<{code:string}>};
 export const GET = (request:Request,ctx:Context) => safe(async()=>{
   const code=roomCode.parse((await ctx.params).code),token=await playerToken(request);
-  const match=/^"room-v(\d+)"$/.exec(request.headers.get('if-none-match')??''),known=match?Number(match[1]):-1;
-  const {state,version}=await readRoomConditional(code,token,Number.isSafeInteger(known)?known:-1);
+  const {state,version}=await readRoomConditional(code,token,roomVersion(request.headers.get('if-none-match')));
   const player=state?.players.find(p=>p.tokenHash===token);
   const response=state&&player?respond({room:viewGame(state,player.id)}):new Response(null,{status:304,headers:{'Cache-Control':'private, no-store'}});
   response.headers.set('ETag',`"room-v${version}"`);response.headers.set('Vary','Authorization');

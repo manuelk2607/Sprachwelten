@@ -19,6 +19,10 @@ Normal clients send every 20 seconds. Stale-player reconciliation still changes
 the game version and transfers the host when needed. Game mutations merge recent
 private attendance before checking disconnects.
 
+Live verification additionally found that Cloudflare's compression changes ETags
+to weak validators (`W/"room-v0"`). The room API accepts both forms; membership
+verification still runs before returning 304. This is covered by a regression test.
+
 Regression coverage includes match-ID replay protection, legacy saved rooms,
 available round limits, distinct senses and regions, valid-meaning exclusion from
 automatic distractors, preserved HTTP validators and bounded expiry cleanup.

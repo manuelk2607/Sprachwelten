@@ -8,8 +8,14 @@ import {communityGameEntries} from '../lib/community-game-seeds';
 import {seedEntries} from '../lib/seeds';
 import {roomAction,type Entry} from '../lib/content';
 import {securityHeaders} from '../lib/security-headers';
+import {roomVersion} from '../lib/room-etag';
 
 const player=()=>({id:crypto.randomUUID(),name:crypto.randomUUID().slice(0,8),tokenHash:crypto.randomUUID(),score:0});
+test('room cache validators accept Cloudflare weak ETags and reject invalid versions',()=>{
+  assert.equal(roomVersion('"room-v12"'),12);
+  assert.equal(roomVersion('W/"room-v12"'),12);
+  for(const value of [null,'*','room-v12','"room-v-1"','"room-v9999999999999999999999999999"'])assert.equal(roomVersion(value),-1);
+});
 test('security headers protect HTML without losing response bodies, cookies or status',async()=>{
   const original=new Response('Hello',{status:201,headers:{'Content-Type':'text/html','Set-Cookie':'test=1; HttpOnly'}});
   const response=securityHeaders(original);

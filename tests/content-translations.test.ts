@@ -8,6 +8,7 @@ import { extraSeeds } from '../lib/extra-seeds';
 import { act, createGame, viewGame } from '../lib/game';
 import { requestCloudflareTranslation, splitTranslationText, translationAvailable, translationCacheKey, translationModel, type TranslationAI } from '../lib/translation-service';
 import { modeGuides } from '../lib/mode-guides';
+import {gameModes} from '../lib/modes';
 import { translate } from '../lib/translations';
 
 test('category IDs normalize legacy labels and cannot be replaced by arbitrary answers',()=>{
@@ -73,7 +74,7 @@ test('translation cache separates language direction and content',async()=>{
   assert.notEqual(key,await translationCacheKey(source,'de'));assert.notEqual(key,await translationCacheKey(textsOf({meaning:'A different meaning.'}),'en'));
 });
 test('every mode has a complete, bilingual guide',()=>{
-  assert.equal(Object.keys(modeGuides).length,12);
+  assert.equal(Object.keys(modeGuides).length,gameModes.length);
   for(const guide of Object.values(modeGuides)){
     assert.equal(guide.steps.length,3);
     for(const text of [guide.category,guide.scoring,guide.tip,...guide.steps.flatMap(step=>[step.title,step.text])])assert.notEqual(translate(text,'en'),text,`Missing English: ${text}`);

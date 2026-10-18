@@ -21,7 +21,7 @@ test('legacy translations survive metadata edits, explicit translations win and 
  }
 });
 test('new quiz choices are unique, bilingual and individually written',()=>{
- const distractors=new Set<string>();for(const entry of communityGameEntries){const c=entry.challenge;assert.ok(c&&(c.type==='relay'||c.type==='joke'));assert.equal(c.choices.length,4);for(const lang of ['de','en'] as const){assert.equal(new Set(c.choices.map(x=>x[lang])).size,4);assert.ok(c.choices.every(x=>x[lang].length>10));}distractors.add(JSON.stringify(c.choices.slice(1)));}assert.equal(distractors.size,communityGameEntries.length);
+ const cards=communityGameEntries.filter(entry=>entry.challenge?.type==='relay'||entry.challenge?.type==='joke');const distractors=new Set<string>();for(const entry of cards){const c=entry.challenge;assert.ok(c&&(c.type==='relay'||c.type==='joke'));assert.equal(c.choices.length,4);for(const lang of ['de','en'] as const){assert.equal(new Set(c.choices.map(x=>x[lang])).size,4);assert.ok(c.choices.every(x=>x[lang].length>10));}distractors.add(JSON.stringify(c.choices.slice(1)));}assert.equal(distractors.size,cards.length);
 });
 test('audio credentials are HttpOnly, room-scoped, secure in production and revoked on leave',()=>{
  const request=new Request('https://example.test/api/rooms/ABC234'),hash='a'.repeat(64);const response=withRoomAudio(new Response(),request,'ABC234',hash);const cookie=response.headers.get('Set-Cookie')!;for(const part of ['HttpOnly','Secure','SameSite=Strict','Path=/api/rooms/ABC234'])assert.ok(cookie.includes(part));

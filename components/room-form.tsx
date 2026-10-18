@@ -7,8 +7,9 @@ import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { gameModes, modeInfo, type PlayableGameMode } from '@/lib/modes';
 import { Dialog } from './dialog';
+import {meaningCategories} from '@/lib/meaning-categories';
 
-export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false}:{close:()=>void;code?:string;initialMode?:PlayableGameMode;joinOnly?:boolean}) {
+export function RoomForm({close,code='',initialMode='meaning-quiz',joinOnly=false}:{close:()=>void;code?:string;initialMode?:PlayableGameMode;joinOnly?:boolean}) {
   const { t, locale } = useI18n();const session=useAuthSession();
   const [join,setJoin]=useState(!!code||joinOnly);
   const [mode,setMode]=useState<PlayableGameMode>(initialMode);
@@ -22,7 +23,7 @@ export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false
     try {
       const response=await fetch(join?`/api/rooms/${room}/join`:'/api/rooms',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({name:data.get('name'),locale:data.get('locale')??locale,mode,pronunciationCategory:data.get('pronunciationCategory')??undefined,attributionCategory:data.get('attributionCategory')??undefined}),
+        body:JSON.stringify({name:data.get('name'),locale:data.get('locale')??locale,mode,meaningCategory:data.get('meaningCategory')??undefined,pronunciationCategory:data.get('pronunciationCategory')??undefined,attributionCategory:data.get('attributionCategory')??undefined}),
       });
       const json=await response.json() as {token:string;room:{code:string};error:string};
       if(!response.ok)throw new Error(json.error);
@@ -41,6 +42,7 @@ export function RoomForm({close,code='',initialMode='idiom-bluff',joinOnly=false
     <form className="form-stack" onSubmit={submit}>
       {!join&&<label>{t('Spielmodus')}<Select value={familyFor(mode).id} onValueChange={value=>setMode(value as PlayableGameMode)}>{gameFamilies.map(m=><option key={m.id} value={m.id}>{t(m.title)}</option>)}</Select></label>}
       {!join&&familyFor(mode).modes.length>1&&<label>{t('Kategorie')}<Select value={mode} onValueChange={v=>setMode(v as PlayableGameMode)}>{familyFor(mode).modes.map(id=><option key={id} value={id}>{t(modeInfo(id).title)}</option>)}</Select></label>}
+      {!join&&mode==='meaning-quiz'&&<label>{t('Kategorie')}<Select name="meaningCategory" defaultValue="all">{Object.entries(meaningCategories).map(([id,title])=><option key={id} value={id}>{t(title)}</option>)}</Select></label>}
       {!join&&mode==='tongue-twisters'&&<label>{t('Kategorie')}<Select name="pronunciationCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="twister">{t('Zungenknoten')}</option><option value="sound">{t('Klangfallen')}</option></Select></label>}
       {!join&&mode==='who-said-it'&&<label>{t('Kategorie')}<Select name="attributionCategory" defaultValue="both"><option value="both">{t('Beide Kategorien')}</option><option value="person">{t('Personenzitat')}</option><option value="song">{t('Liedstelle')}</option></Select></label>}
       <label>{t('Dein Spielname')}<input name="name" required={!session?.user} minLength={2} maxLength={24} autoComplete="nickname" placeholder={session?.user?.name??t('Dein Name in dieser Runde')}/></label>

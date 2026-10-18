@@ -1,6 +1,7 @@
 import {validateRegion} from './regions';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
+import {chainPrompts} from '@/lib/word-chain';
 import { registeredLanguageNames } from '@/lib/language-registry';
 import { neon } from '@neondatabase/serverless';
 import type { Entry, EntryInput, Explanation } from '@/lib/content';
@@ -60,7 +61,9 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
-  const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order','joke-quiz':'joke'} as const;
+  if(mode==='word-chain')return chainPrompts();
+  if(mode==='meaning-quiz')return (await database().query(`SELECT ${fields} FROM (SELECT *,row_number() OVER (PARTITION BY kind ORDER BY random()) AS sample_rank FROM content_entries WHERE deleted_at IS NULL AND kind IN ('idiom','dialect','gaming_mission','youth_chat','academic')) sampled WHERE sample_rank<=50`,[]) as Entry[]).map(withLanguageNames);
+  const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order','joke-quiz':'joke','word-outsider':'word_group','loanword-quiz':'loanword'} as const;
   if(mode in newKinds){const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 ORDER BY random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds]]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
   const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region_id'}, 'everyday-language': {kind:'situation',field:'context_id'} } as const;
   if (mode in quiz) {

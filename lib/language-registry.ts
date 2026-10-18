@@ -1,4 +1,4 @@
-import data from './data/languages.json';
+import data from './data/languages.json' with {type:'json'};
 import type { LanguageNames } from './language-label';
 import type { Locale } from './translations';
 const entries=data.entries as [string,string,string,string,string][];

@@ -1,10 +1,14 @@
 # Sprachwelten
 
-Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Quellcode: Redewendungen entdecken, regionale Wörter und Gesprächskontexte erraten, Aussprache üben und mit Freunden bluffen.
+Andere Worte. Neue Welten. Ein eigenständiges Sprachprojekt mit öffentlichem Quellcode: Bedeutungen entdecken, regionale Wörter und Gesprächskontexte erraten, Aussprache üben und Wörter verbinden.
 
 ## Spielmodi und Funktionen
 
-- **Was soll das heißen?**: Online-Bluffspiel für 3–10 Personen, wählbare Rundenzahl, Einladungslink und gemeinsame Punktwertung. Alle erfinden eine plausible Bedeutung; anschließend wird die echte Erklärung zwischen den Bluffs gesucht.
+- **Was soll das heißen?**: Bedeutungsquiz für 1–10 Personen. Es vereint die bisherigen Spiele „Was soll das heißen?“ und „Sag’s verständlich“: Redewendungen/Dialekte, „Ping! Verstanden?“, Generationenchat und Hochschulsprache sind Kategorien. Alle sehen denselben Ausdruck und wählen unmittelbar seine Bedeutung aus vier gemischten Antworten. Jede richtige Antwort zählt einen Punkt. Vorhandene Bluff- und Teamräume behalten ihre ursprünglichen Abläufe.
+- **Spurensuche**: Gemeinsame Familie für Wortdetektiv, regionale Herkunft, Gesprächskontext und **Lehnwortreise**. Beim Lehnwortquiz wird die belegte unmittelbare Gebersprache gesucht; die Auflösung erklärt auch ältere Stationen mit einer Quelle.
+- **Wortverbindungen**: Neue Familie mit **Wortverwandtschaft** (unter vier Wörtern den Außenseiter zu einer ausdrücklich angegebenen Regel finden) und **Wortketten** (reihum eine geprüfte Wortkarte mit passendem Anfangsbuchstaben anhängen). Wortketten verwenden einen deutschen beziehungsweise englischen Kartenvorrat und lassen jedes Wort pro Runde nur einmal zu. Jede Person hat pro Runde einen Zug; eine gültige Verbindung zählt einen Punkt. Die Serverprüfung schützt Reihenfolge, fremde und veraltete Züge.
+- Die Oberfläche zeigt weiterhin **acht Hauptkacheln**, zunächst die Hälfte mit aufgerundeter Anzahl. Vier frühere Modus-IDs bleiben für gespeicherte Räume kompatibel, stehen im neuen Startmenü aber nicht mehr separat zur Auswahl.
+- Beiträge mit vier Antworten besitzen ein Feld **Richtige Antwort** und drei Felder **Falsche Antwort**. Ältere Karten mit einer anderen gespeicherten Lösungsposition werden korrekt umgeordnet angezeigt; die Spiele mischen die Antwortreihenfolge unabhängig davon für jede Runde neu.
 - **Wortdetektiv**: Ein Wort, vier Antwortsprachen und genau eine gesuchte Sprache. 1–10 Personen, wählbare Rundenzahl, ein Punkt je richtiger Antwort, gemeinsame Auflösung und Einladungslinks. Solo oder mit Freunden.
 - **Zungenbrecher**: 2–10 Personen, wählbare Textanzahl. Jede Person liest jeden Text im gemeinsamen Raum oder Sprachchat vor. Anschließend bewerten alle anderen Verständlichkeit, Genauigkeit und Rhythmus von 1 bis 5. Der Durchschnitt ergibt bis zu fünf Rundenpunkte; Die Oberfläche zeigt Durchschnittswerte pro Person und Kriterium. Bei zwei Personen entspricht der Durchschnitt der Bewertung durch die jeweils andere Person.
 - **So sagt man das bei uns**: Dialektquiz mit vier Regionen, Auflösung, Bedeutung und regionalen Hinweisen. 1–10 Personen und wählbare Rundenzahl. Gesucht ist die beim Beitrag hinterlegte Region; regionale Wörter sind nicht exklusiv auf eine Gegend begrenzt.

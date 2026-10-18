@@ -1,9 +1,9 @@
 import type {PlayableGameMode} from './modes';
 export const gameFamilies:{id:PlayableGameMode;title:string;description?:string;modes:PlayableGameMode[]}[]=[
- {id:'idiom-bluff',title:'Was soll das heißen?',modes:['idiom-bluff']},
- {id:'language-quiz',title:'Spurensuche',description:'Wörter, Regionen und Alltagssituationen: Ordnet Sprache und Herkunft zu.',modes:['language-quiz','dialect-detective','everyday-language']},
+ {id:'meaning-quiz',title:'Was soll das heißen?',modes:['meaning-quiz']},
+ {id:'language-quiz',title:'Spurensuche',description:'Wörter, Regionen, Alltagssituationen und Lehnwörter: Ordnet Sprache und Herkunft zu.',modes:['language-quiz','dialect-detective','everyday-language','loanword-quiz']},
  {id:'tongue-twisters',title:'Zungenbrecher',modes:['tongue-twisters']},
- {id:'plain-talk',title:'Sag’s verständlich',description:'Gaming, Jugendwörter oder Hochschulsprache: Erklärt euch über Sprachgrenzen hinweg.',modes:['plain-talk','gaming-call','generation-chat']},
+ {id:'word-outsider',title:'Wortverbindungen',description:'Sprachliche Außenseiter finden und gemeinsam Wortketten bauen.',modes:['word-outsider','word-chain']},
  {id:'who-said-it',title:'Wer hat das gesagt?',modes:['who-said-it']},
  {id:'false-friends',title:'False Friends?',modes:['false-friends']},
  {id:'word-builder',title:'Satzbaukasten',modes:['word-builder']},

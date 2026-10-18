@@ -7,6 +7,9 @@ export const normalizedAnswer=(s:string)=>s.normalize('NFKC').toLocaleLowerCase(
 const language=z.string().refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.');
 const cell=z.number().int().min(0).max(8);
 const choices=z.array(bilingual).length(4);
+const meaning=z.object({type:z.literal('meaning'),choices,correctIndex:z.number().int().min(0).max(3)});
+const outsider=z.object({type:z.literal('outsider'),rule:bilingual,choices,correctIndex:z.number().int().min(0).max(3),explanation:bilingual});
+const loan=z.object({type:z.literal('loan'),originLanguage:language});
 const mission=z.object({type:z.literal('mission'),start:cell,blocked:z.array(cell).max(3),checkpoints:z.array(cell).length(3)}).superRefine((v,c)=>{
  const all=[v.start,...v.blocked,...v.checkpoints];if(new Set(all).size!==all.length)c.addIssue({code:'custom',message:'Start, Ziele und Hindernisse müssen verschieden sein.'});
  const seen=new Set([v.start]),queue=[v.start];for(const n of queue)for(const next of neighbors(n))if(!v.blocked.includes(next)&&!seen.has(next)){seen.add(next);queue.push(next);}
@@ -27,9 +30,9 @@ const wordOrder=z.object({type:z.literal('order'),targetLanguage:language,source
  const ids=v.tiles.map(t=>t.id);if(new Set(ids).size!==ids.length)c.addIssue({code:'custom',message:'Jeder Baustein braucht eine eigene ID.'});
  for(const order of v.accepted)if(order.length!==ids.length||new Set(order).size!==ids.length||order.some(id=>!ids.includes(id)))c.addIssue({code:'custom',message:'Jede gültige Wortfolge muss alle Bausteine genau einmal verwenden.'});
 });
-export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,friends,wordOrder,joke]);
+export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,friends,wordOrder,joke,meaning,outsider,loan]);
 export type Challenge=z.infer<typeof challengeSchema>;
-export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke'} as const;
+export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke',word_group:'outsider',loanword:'loan'} as const;
 export type PronunciationCategory='both'|'twister'|'sound';
 export type AttributionCategory='both'|'person'|'song';
 export const missionTiles:Bilingual[]=[{de:'Beutekiste',en:'Loot crate'},{de:'Brücke',en:'Bridge'},{de:'Turm',en:'Tower'},{de:'Deckung',en:'Cover'},{de:'Basis',en:'Base'},{de:'Heilpunkt',en:'Healing point'},{de:'Lager',en:'Camp'},{de:'Sammelpunkt',en:'Rally point'},{de:'Ausgang',en:'Exit'}];

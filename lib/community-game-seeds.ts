@@ -1,5 +1,6 @@
 import {entryInput,type Entry} from './content';
 import {manuelGameEntries} from './manuel-game-seeds';
+import {wordConnectionEntries} from './word-connection-seeds';
 const bi=(de:string,en:string)=>({de,en});
 const jokes=[
  ['Warum ist mein Wörterbuch so gesellig? Es kennt unzählige Wörter, aber sagt nie Nein zu einem neuen Satz.','Das Wörterbuch wird wie eine gesellige Person beschrieben, die gerne neue Sätze kennenlernt.','The dictionary is personified as a sociable person who likes meeting new sentences.'],
@@ -41,4 +42,4 @@ export const communityGameEntries:Entry[]=[...jokes.map(([phrase,de,en],i)=>{
  const choices=[bi(de,en),...gamingDistractors[i]];
  const input=entryInput.parse({kind:'gaming_mission',phrase,language:'de',literal:de,meaning:de,sourceLocale:'de',challenge:{type:'relay',term,choices,correctIndex:0}});
  return {...input,id:`70000000-0000-4000-8000-${String(i+101).padStart(12,'0')}`,authorName:'Redaktion',status:'curated' as const,createdAt:'2026-10-16T18:00:00Z',translations:{en:{literal:en,meaning:en,example:'',culturalNote:'',origin:'contributor' as const}}};
-}),...manuelGameEntries];
+}),...manuelGameEntries,...wordConnectionEntries];

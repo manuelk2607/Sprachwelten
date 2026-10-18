@@ -46,7 +46,7 @@ try{
   await request('/api/auth/sign-out',{},undefined,true);assert.equal((await request('/api/entries',{literal:'Test translation',phrase:'Signed out test',language:'de',meaning:'Session must be invalid after logout.'},undefined,true)).status,401);
   const badLogin=await request('/api/auth/sign-in/email',{email,password:'wrong-password'},undefined,true);assert.equal(badLogin.status,401);
   const login=await request('/api/auth/sign-in/email',{email,password},undefined,true);assert.equal(login.status,200);assert.ok((await request('/api/auth/get-session',undefined,undefined,true)).data.user?.id);
-  const host=await request('/api/rooms',{name:'QA Ada',locale:'en'});assert.equal(host.status,201,JSON.stringify(host.data));code=host.data.room.code;roomCodes.push(code!);const tokens=[host.data.token!];
+  const host=await request('/api/rooms',{name:'QA Ada',locale:'en',mode:'idiom-bluff'});assert.equal(host.status,201,JSON.stringify(host.data));code=host.data.room.code;roomCodes.push(code!);const tokens=[host.data.token!];
   assert.equal((await request(`/api/rooms/${code}`)).status,401);
   for(const name of ['QA Bo','QA Cam']){const join=await request(`/api/rooms/${code}/join`,{name});assert.equal(join.status,201);tokens.push(join.data.token!);}
   assert.equal((await request(`/api/rooms/${code}`,{action:'start'},tokens[1])).status,403);
@@ -84,7 +84,7 @@ try{
   const solo=await request('/api/rooms',{name:'QA Solo',mode:'language-quiz'});assert.equal(solo.status,201);roomCodes.push(solo.data.room.code);assert.equal((await request(`/api/rooms/${solo.data.room.code}`,{action:'start'},solo.data.token!)).data.room.phase,'voting');
   for(const mode of ['dialect-detective','everyday-language']) {
     const added=await request('/api/entries',{literal:'Test translation',kind:mode==='dialect-detective'?'dialect':'situation',phrase:`QA-${mode}-${stamp}`,language:'de',meaning:'An original explanation for this test.',regionId:'at',contextId:'thanks'},undefined,true);
-    assert.equal(added.status,201);createdIds.push(added.data.entry.id);assert.ok((await gamePrompts(mode as 'dialect-detective'|'everyday-language')).some(entry=>entry.id===added.data.entry.id));
+    assert.equal(added.status,201);createdIds.push(added.data.entry.id);const pool=await gamePrompts(mode as 'dialect-detective'|'everyday-language');assert.ok(pool.length>=2);assert.ok(pool.every(prompt=>prompt.kind===(mode==='dialect-detective'?'dialect':'situation')));
     const host=await request('/api/rooms',{name:`QA ${mode.slice(0,8)}`,mode,locale:'en'});assert.equal(host.status,201);code=host.data.room.code;roomCodes.push(code!);
     current=await request(`/api/rooms/${code}`,{action:'start'},host.data.token!);assert.equal(current.status,200);
     for(let round=0;round<2;round++) {

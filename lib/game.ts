@@ -9,13 +9,15 @@ import { registeredLanguageNames } from './language-registry';
 import { shuffled } from './random';
 import { categoryId, categoryLabel, contextIds, regionIds, type CategoryKind } from './quiz-categories';
 import { translationStatus } from './content-translations';
+import {prepareMeaningEntries,type MeaningCategory} from './meaning-quiz';
+import {chainChoices,edgeLetter,type ChainRound} from './word-chain';
 
-export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished'|'briefing'|'mission'|'ordering';
+export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished'|'briefing'|'mission'|'ordering'|'linking';
 export type Player={id:string;name:string;tokenHash:string;score:number;lastSeenAt?:number};
 export type Option={id:string;text:string;authorId:string|null;solution?:boolean;language?:string;categoryId?:string;categoryKind?:CategoryKind};
 export type PronunciationRound={speakerIndex:number;ratings:Record<string,Record<string,RatingScores>>};
-export type Round={entry:Entry;answers:Record<string,string>;votes:Record<string,string>;options:Option[];team?:TeamRound;orders?:Record<string,string[]>;tiles?:{id:string;text:string;sourceId:string}[];pronunciation?:PronunciationRound};
-export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number;matchId?:string;notice?:string;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
+export type Round={entry:Entry;answers:Record<string,string>;votes:Record<string,string>;options:Option[];chain?:ChainRound;team?:TeamRound;orders?:Record<string,string[]>;tiles?:{id:string;text:string;sourceId:string}[];pronunciation?:PronunciationRound};
+export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number;matchId?:string;notice?:string;meaningCategory?:MeaningCategory;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
 export class GameError extends Error {constructor(message:string,public status=409){super(message);}}
 export function createGame(code:string,player:Player,locale:Locale='de',mode:PlayableGameMode='idiom-bluff'):Game {
   player.lastSeenAt=Date.now();
@@ -31,7 +33,13 @@ function newRound(game:Game) {
   const entry=game.prompts[game.roundIndex];
   game.round={entry,answers:{},votes:{},options:[]};
   game.phase='writing';
-  if(isTeamMode(game.mode)){initializeTeam(game,game.round);
+  if(game.mode==='word-chain'){
+    game.round.chain={queue:game.players.map((_,index)=>game.players[(game.roundIndex+index)%game.players.length].id),turn:0,words:[{text:entry.phrase}],choices:[],results:[]};chainChoices(game.round.chain,game.locale);game.phase='linking';
+  } else if((game.mode==='meaning-quiz'&&entry.challenge?.type==='meaning')||(game.mode==='word-outsider'&&entry.challenge?.type==='outsider')){
+    const c=entry.challenge;game.round.options=shuffled(c.choices.map((choice,index)=>({id:crypto.randomUUID(),text:challengeText(choice,game.locale),authorId:null,solution:index===c.correctIndex})));game.phase='voting';
+  } else if(game.mode==='loanword-quiz'&&entry.challenge?.type==='loan'){
+    const origin=entry.challenge.originLanguage;game.round.options=prepareChoices(origin,Object.keys(languages)).map(value=>({id:crypto.randomUUID(),text:registeredLanguageNames(value)[game.locale],language:value,authorId:null,solution:value===origin}));game.phase='voting';
+  } else if(isTeamMode(game.mode)){initializeTeam(game,game.round);
   } else if(game.mode==='word-builder'&&entry.challenge?.type==='order'){game.round.orders={};game.round.tiles=shuffled(entry.challenge.tiles.map(tile=>({id:crypto.randomUUID(),text:tile.text,sourceId:tile.id})));game.phase='ordering';
   } else if(game.mode==='tongue-twisters') {
     game.round.pronunciation={speakerIndex:0,ratings:{}};game.phase='speaking';
@@ -40,7 +48,7 @@ function newRound(game:Game) {
   } else if(game.mode==='who-said-it'&&entry.challenge?.type==='attribution'){
     const c=entry.challenge;game.round.options=shuffled([c.answer+(c.category==='song'&&c.artist?' — '+c.artist:''),...c.alternatives].map((text,i)=>({id:crypto.randomUUID(),text,authorId:null,solution:i===0})));game.phase='voting';
   } else if(game.mode==='false-friends'&&entry.challenge?.type==='friends'){
-    const same=entry.challenge.sameMeaning;game.round.options=[{id:crypto.randomUUID(),text:game.locale==='de'?'Gleiche Bedeutung':'Same meaning',authorId:null,solution:same},{id:crypto.randomUUID(),text:'False Friend',authorId:null,solution:!same}];game.phase='voting';
+    const same=entry.challenge.sameMeaning;game.round.options=shuffled([{id:crypto.randomUUID(),text:game.locale==='de'?'Gleiche Bedeutung':'Same meaning',authorId:null,solution:same},{id:crypto.randomUUID(),text:'False Friend',authorId:null,solution:!same}]);game.phase='voting';
   } else if(isQuizMode(game.mode)) {
     const categoryKind=game.mode==='dialect-detective'?'region':'context';
     const target=categoryKind==='region'?(entry.regionId??categoryId('region',entry.region)):(entry.contextId??categoryId('context',entry.context));
@@ -97,9 +105,10 @@ export function leaveGame(game:Game,playerId:string){
   if(!game.players.length){game.phase='finished';game.round=null;game.prompts=[];return;}
   if(game.phase==='lobby'){game.totalRounds=Math.min(game.totalRounds,game.players.length*2);return;}
   if(game.phase==='finished')return;
-  const minimum=isQuizMode(game.mode)||game.mode==='word-builder'?1:2;
+  const minimum=isQuizMode(game.mode)||game.mode==='word-builder'||game.mode==='word-chain'?1:2;
   if(game.players.length<minimum){game.phase='lobby';game.round=null;game.prompts=[];game.roundIndex=0;game.totalRounds=Math.min(game.totalRounds,game.players.length*2);game.notice='Zu wenige Personen zum Weiterspielen. Ihr könnt in der Lobby wieder starten.';return;}
   const round=game.round;if(!round)return;
+  if(round.chain){round.chain.queue=round.chain.queue.filter(id=>id!==playerId);round.chain.turn++;if(game.phase==='linking'){if(!round.chain.queue.length)game.phase='reveal';else chainChoices(round.chain,game.locale);}return;}
   delete round.answers[playerId];delete round.votes[playerId];if(round.orders)delete round.orders[playerId];
   if(game.phase!=='reveal'){
     round.options=round.options.filter(option=>option.authorId!==playerId);
@@ -127,7 +136,8 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(action.rounds!==undefined&&action.rounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
     if(action.rounds!==undefined)game.totalRounds=action.rounds;
     if(action.pronunciationCategory){if(game.mode!=='tongue-twisters')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.pronunciationCategory=action.pronunciationCategory;}
-    if(action.attributionCategory){if(game.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.attributionCategory=action.attributionCategory;}return;
+    if(action.attributionCategory){if(game.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.attributionCategory=action.attributionCategory;}
+    if(action.meaningCategory){if(game.mode!=='meaning-quiz')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.meaningCategory=action.meaningCategory;}return;
   }
   if(action.action==='restart'){
     if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann eine neue Partie starten.',403);
@@ -141,7 +151,8 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     const info=modeInfo(game.mode);
     if(game.players.length<info.minPlayers)throw new GameError(info.minPlayers===2?'Zum Start braucht ihr mindestens 2 Personen.':'Zum Start braucht ihr mindestens 3 Personen.');
     if(game.totalRounds<1||game.totalRounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
-    const eligible=prompts.filter(entry=>(game.mode==='tongue-twisters'?((entry.kind==='tongue_twister'&&game.pronunciationCategory!=='sound')||(entry.kind==='sound_pair'&&game.pronunciationCategory!=='twister')):entry.kind===info.kind)&&(game.mode!=='who-said-it'||!game.attributionCategory||game.attributionCategory==='both'||entry.challenge?.type==='attribution'&&entry.challenge.category===game.attributionCategory)&&(game.mode!=='dialect-detective'||categoryId('region',entry.regionId??entry.region))&&(game.mode!=='everyday-language'||categoryId('context',entry.contextId??entry.context)));
+    const candidates=game.mode==='meaning-quiz'?prepareMeaningEntries(prompts,game.locale,game.meaningCategory??'all'):prompts;
+    const eligible=candidates.filter(entry=>(game.mode==='meaning-quiz'?true:game.mode==='word-chain'?entry.language===game.locale:game.mode==='tongue-twisters'?((entry.kind==='tongue_twister'&&game.pronunciationCategory!=='sound')||(entry.kind==='sound_pair'&&game.pronunciationCategory!=='twister')):entry.kind===info.kind)&&(game.mode!=='who-said-it'||!game.attributionCategory||game.attributionCategory==='both'||entry.challenge?.type==='attribution'&&entry.challenge.category===game.attributionCategory)&&(game.mode!=='dialect-detective'||categoryId('region',entry.regionId??entry.region))&&(game.mode!=='everyday-language'||categoryId('context',entry.contextId??entry.context)));
     const unique=[...new Map(eligible.map(entry=>[entry.phrase?'text:'+entry.phrase.trim().toLocaleLowerCase():'audio:'+entry.audioId,entry])).values()];
     if(unique.length<game.totalRounds)throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.');
     let ordered=shuffled(unique);if(game.mode==='plain-talk'){const plain=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='plain'),precise=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='precise');ordered=[];while(plain.length||precise.length){const a=plain.shift(),b=precise.shift();if(a)ordered.push(a);if(b)ordered.push(b);}}
@@ -151,6 +162,16 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
   }
   const round=game.round;
   if(!round)throw new GameError('Das Spiel hat noch nicht begonnen.');
+  if(action.action==='chain'){
+    const chain=round.chain;if(game.mode!=='word-chain'||game.phase!=='linking'||!chain)throw new GameError('Hier wird gerade keine Wortkette gebaut.');
+    if(action.matchId!==game.matchId||action.roundNumber!==game.roundIndex+1||action.turn!==chain.turn)throw new GameError('Diese Eingabe gehört nicht zur aktuellen Runde.');
+    if(chain.queue[0]!==playerId)throw new GameError('Eine andere Person ist gerade dran.',403);
+    const word=chain.choices.find(word=>word.id===action.wordId);if(!word)throw new GameError('Bitte ein verfügbares Wort wählen.',422);
+    const correct=edgeLetter(word.text,'first')===edgeLetter(chain.words.at(-1)!.text,'last');
+    if(correct){chain.words.push({text:word.text,playerId});player.score++;}
+    chain.results.push({playerId,correct});chain.queue.shift();chain.turn++;
+    if(!chain.queue.length){chain.choices=[];game.phase='reveal';}else chainChoices(chain,game.locale);return;
+  }
   if(actTeam(game,playerId,action))return;
   if(action.action==='order'){
     const c=round.entry.challenge;if(game.mode!=='word-builder'||c?.type!=='order'||game.phase!=='ordering')throw new GameError('Hier werden gerade keine Wörter sortiert.');
@@ -207,6 +228,9 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
   const speaker=performance?game.players[performance.speakerIndex]:undefined;
   const activeRatings=speaker?performance?.ratings[speaker.id]??{}:{};
   return {
+    meaningCategory:game.meaningCategory??'all',
+    outsider:c?.type==='outsider'?{rule:challengeText(c.rule,game.locale),...(revealed?{explanation:challengeText(c.explanation,game.locale)}:{})}:null,
+    chain:round?.chain?{words:round.chain.words,turn:round.chain.turn,activePlayerId:round.chain.queue[0]??null,requiredLetter:edgeLetter(round.chain.words.at(-1)!.text,'last'),choices:game.phase==='linking'&&round.chain.queue[0]===playerId?round.chain.choices:[],results:round.chain.results}:null,
     team,pronunciationCategory:game.pronunciationCategory??'both',attributionCategory:game.attributionCategory??'both',
     challengeFallback:c?challengeHasFallback(c,game.locale):false,
     attributionType:c?.type==='attribution'?c.category:null,
@@ -225,7 +249,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
       ratingCount:Object.keys(activeRatings).length,requiredRatings:game.players.length-1,hasRated:!!activeRatings[playerId],
       results:revealed?pronunciationResults(game):[],
     }:null,
-    revelation:revealed&&round?{language:round.entry.language,languageNames:round.entry.languageNames,region:round.entry.region,regionId:round.entry.regionId,context:round.entry.context,contextId:round.entry.contextId,meaning:round.entry.meaning||round.entry.literal,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.creditName||'',sourceLocale:round.entry.sourceLocale??'de',translationStatus:round.entry.status==='curated'?'original' as const:translationStatus(round.entry,game.locale)}:null,
+    revelation:revealed&&round?{language:round.entry.language,languageNames:round.entry.languageNames,region:round.entry.region,regionId:round.entry.regionId,context:round.entry.context,contextId:round.entry.contextId,meaning:c?.type==='meaning'?challengeText(c.choices[c.correctIndex],game.locale):c?.type==='outsider'?challengeText(c.explanation,game.locale):round.entry.meaning||round.entry.literal,example:round.entry.example,culturalNote:round.entry.culturalNote,sourceUrl:round.entry.sourceUrl,status:round.entry.status,authorName:round.entry.creditName||'',sourceLocale:round.entry.sourceLocale??'de',translationStatus:round.entry.status==='curated'?'original' as const:translationStatus(round.entry,game.locale)}:null,
   };
 }
 export type GameView=ReturnType<typeof viewGame>;

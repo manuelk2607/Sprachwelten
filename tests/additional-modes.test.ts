@@ -16,7 +16,7 @@ function lobby(mode:PlayableGameMode,count=1) {
 function started(mode:PlayableGameMode,count=1){const game=lobby(mode,count);act(game,ids[0],{action:'start'},extraSeeds);return game;}
 function finishTurn(game:Game,scores={clarity:3,accuracy:4,rhythm:5}) {
   const speakerId=game.players[game.round!.pronunciation!.speakerIndex].id;
-  const target={speakerId,roundNumber:game.roundIndex+1};
+  const target={speakerId,roundNumber:game.roundIndex+1,matchId:game.matchId!};
   act(game,speakerId,{action:'performed',...target});
   for(const player of game.players.filter(p=>p.id!==speakerId))act(game,player.id,{action:'rate',...target,...scores});
 }
@@ -48,13 +48,13 @@ test('dialect and context entries need their target; untrusted author and rating
   assert.ok(!entryInput.safeParse({...base,kind:'situation'}).success);
   assert.ok(entryInput.safeParse({...base,kind:'dialect',region:'Berlin'}).success);
   assert.ok(entryInput.safeParse({...base,kind:'situation',context:'Dank'}).success);
-  const action=roomAction.parse({action:'rate',speakerId:ids[0],roundNumber:1,clarity:5,accuracy:5,rhythm:5,raterId:ids[2]});
+  const action=roomAction.parse({action:'rate',speakerId:ids[0],roundNumber:1,matchId:crypto.randomUUID(),clarity:5,accuracy:5,rhythm:5,raterId:ids[2]});
   assert.ok(!('raterId' in action));
   assert.ok(!roomAction.safeParse({...action,clarity:0}).success);assert.ok(!roomAction.safeParse({...action,rhythm:1.5}).success);
 });
 test('tongue twisters require two players and only the active speaker can open rating',()=>{
   const solo=lobby('tongue-twisters');assert.throws(()=>act(solo,ids[0],{action:'start'},extraSeeds),GameError);
-  const game=started('tongue-twisters',3);const target={speakerId:ids[0],roundNumber:1};
+  const game=started('tongue-twisters',3);const target={speakerId:ids[0],roundNumber:1,matchId:game.matchId!};
   assert.equal(game.phase,'speaking');assert.equal(viewGame(game,ids[0]).pronunciation!.speaker.id,ids[0]);
   assert.throws(()=>act(game,ids[1],{action:'performed',...target}),GameError);
   assert.throws(()=>act(game,ids[1],{action:'rate',...target,clarity:5,accuracy:5,rhythm:5}),GameError);
@@ -64,7 +64,7 @@ test('tongue twisters require two players and only the active speaker can open r
   assert.throws(()=>act(game,ids[1],{action:'rate',...target,clarity:6,accuracy:5,rhythm:5}),GameError);
 });
 test('ratings are anonymous and cannot be replaced, forged for another turn or scored early',()=>{
-  const game=started('tongue-twisters',3);const target={speakerId:ids[0],roundNumber:1};
+  const game=started('tongue-twisters',3);const target={speakerId:ids[0],roundNumber:1,matchId:game.matchId!};
   act(game,ids[0],{action:'performed',...target});
   act(game,ids[1],{action:'rate',...target,clarity:1,accuracy:2,rhythm:3});
   const view=viewGame(game,ids[2]);assert.equal(view.pronunciation!.ratingCount,1);assert.deepEqual(view.pronunciation!.results,[]);
@@ -86,7 +86,7 @@ test('four configured pronunciation rounds score once with predictable rounding 
   for(let round=0;round<4;round++) {
     seen.add(game.round!.entry.id);finishTurn(game,{clarity:3,accuracy:4,rhythm:4});finishTurn(game,{clarity:5,accuracy:5,rhythm:5});
     assert.equal(game.phase,'reveal');assert.equal(viewGame(game,ids[0]).pronunciation!.results[0].score,3.7);
-    assert.throws(()=>act(game,ids[0],{action:'rate',speakerId:ids[1],roundNumber:round+1,clarity:5,accuracy:5,rhythm:5}),GameError);
+    assert.throws(()=>act(game,ids[0],{action:'rate',speakerId:ids[1],roundNumber:round+1,matchId:game.matchId!,clarity:5,accuracy:5,rhythm:5}),GameError);
     act(game,ids[0],{action:'next'});
   }
   assert.equal(game.phase,'finished');assert.equal(seen.size,4);assert.deepEqual(game.players.map(p=>p.score),[14.8,20]);

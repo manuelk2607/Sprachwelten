@@ -1,4 +1,5 @@
 export const simplifiedGameTranslations:Record<string,string>={
+ 'Keine spielbaren Beiträge in dieser Kategorie.':'There are no playable contributions in this category.',
  'Alle Kategorien':'All categories',
  'Redewendungen & Dialekte':'Idioms & dialects',
  'Wortverwandtschaft':'Odd word out',

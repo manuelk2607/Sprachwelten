@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import {neon} from '@neondatabase/serverless';
+import {createGame} from '../lib/game';
+import {heartbeatRoom} from '../db/room-presence';
+import {getRoom,mutateRoom} from '../db/repository';
+import {maintainDatabase} from '../db/maintenance';
+import {hashToken} from '../lib/http';
+
+const connection=process.env.DATABASE_URL_UNPOOLED!;
+assert.ok(process.env.TEST_DATABASE_HOST&&new URL(connection).hostname===process.env.TEST_DATABASE_HOST,'Isolated QA database required.');
+const sql=neon(connection),code='M'+crypto.randomUUID().replaceAll('-','').slice(0,5).toUpperCase();
+const base=process.env.TEST_BASE_URL??'http://localhost:5176';
+assert.ok(['localhost','127.0.0.1'].includes(new URL(base).hostname),'Local QA server required.');
+const host={id:crypto.randomUUID(),name:'QA Host',score:0,tokenHash:await hashToken('a'.repeat(64))};
+const guest={id:crypto.randomUUID(),name:'QA Guest',score:0,tokenHash:await hashToken('b'.repeat(64)),lastSeenAt:Date.now()};
+const game=createGame(code,host);game.players.push(guest);
+const oldLimit='maintenance-qa:'+crypto.randomUUID(),activeLimit='maintenance-qa:'+crypto.randomUUID();
+try{
+  await sql`INSERT INTO game_rooms(code,state) VALUES (${code},${JSON.stringify(game)}::jsonb)`;
+  const response=await fetch(base+'/api/rooms/'+code,{headers:{Authorization:'Bearer '+'a'.repeat(64)}});
+  assert.equal(response.status,200,'The server must use the isolated QA database.');
+  const etag=response.headers.get('ETag')!;
+  const heartbeat=await fetch(base+'/api/rooms/'+code,{method:'POST',headers:{Authorization:'Bearer '+'a'.repeat(64),'Content-Type':'application/json',Origin:base},body:JSON.stringify({action:'heartbeat'})});
+  assert.equal(heartbeat.status,204);
+  const unchanged=await fetch(base+'/api/rooms/'+code,{headers:{Authorization:'Bearer '+'a'.repeat(64),'If-None-Match':etag}});
+  assert.equal(unchanged.status,304,'Attendance must preserve the HTTP cache validator.');
+  assert.equal(await heartbeatRoom(code,host.tokenHash),null);
+  await Promise.all([heartbeatRoom(code,host.tokenHash),heartbeatRoom(code,guest.tokenHash)]);
+  const [initial]=await sql`SELECT version,state FROM game_rooms WHERE code=${code}`;
+  assert.equal(initial.version,0,'Attendance must not change the room version.');
+  assert.deepEqual(initial.state,game,'Attendance must not rewrite the game state.');
+  assert.equal((await getRoom(code,false)).state.players.length,2);
+  await assert.rejects(heartbeatRoom(code,'c'.repeat(64)));
+  await sql`UPDATE game_rooms SET state=jsonb_set(state,'{players,0,lastSeenAt}',to_jsonb(${Date.now()-121000}::bigint)) WHERE code=${code}`;
+  await sql`UPDATE room_presence SET seen_at=now()-interval '3 minutes' WHERE room_code=${code} AND player_id=${host.id}`;
+  const changed=await heartbeatRoom(code,guest.tokenHash);
+  assert.equal(changed?.hostId,guest.id);assert.equal(changed?.players.length,1);
+  assert.equal((await sql`SELECT version FROM game_rooms WHERE code=${code}`)[0].version,1);
+  await mutateRoom(code,g=>{g.players[0].lastSeenAt=0;},false);
+  assert.ok((await getRoom(code,false)).state.players[0].lastSeenAt!>Date.now()-60000,'Private presence restores attendance during game mutations.');
+  await sql`INSERT INTO request_limits(key,hits,expires_at) VALUES (${oldLimit},1,now()-interval '2 days'),(${activeLimit},1,now()+interval '1 hour')`;
+  await sql`UPDATE game_rooms SET expires_at=now()-interval '1 minute' WHERE code=${code}`;
+  const result=await maintainDatabase(connection);assert.ok(result.expiredRooms>=1);assert.ok(result.expiredLimits>=1);
+  assert.equal((await sql`SELECT 1 FROM room_presence WHERE room_code=${code}`).length,0);
+  assert.equal((await sql`SELECT 1 FROM request_limits WHERE key=${oldLimit}`).length,0);
+  assert.equal((await sql`SELECT 1 FROM request_limits WHERE key=${activeLimit}`).length,1);
+  console.log('PASS: private/throttled presence, unchanged game version, stale-host transfer, authorization, mutation attendance and bounded expiry cleanup.');
+}finally{
+  await sql`DELETE FROM game_rooms WHERE code=${code}`;
+  await sql`DELETE FROM request_limits WHERE key IN (${oldLimit},${activeLimit})`;
+}

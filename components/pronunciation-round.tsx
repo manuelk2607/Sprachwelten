@@ -11,7 +11,7 @@ export function PronunciationRound({room,busy,action}:{room:GameView;busy:boolea
   if(!turn)return null;
   const speaking=room.phase==='speaking';
   const me=room.playerId===turn.speaker.id;
-  const target={speakerId:turn.speaker.id,roundNumber:room.roundNumber};
+  const target={speakerId:turn.speaker.id,roundNumber:room.roundNumber,matchId:room.matchId};
   return <section className="pronunciation-turn" aria-live="polite">
     <div className="eyebrow"><Mic2 size={17}/>{t('VORTRAG')} {turn.speakerNumber} / {turn.totalSpeakers}</div>
     <h2>{me?t('Du bist dran.'):turn.speaker.name+' '+t('ist dran.')}</h2>

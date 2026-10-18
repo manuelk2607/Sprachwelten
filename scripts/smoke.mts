@@ -106,7 +106,7 @@ try{
   for(let round=0;round<5;round++) {
     for(let speaker=0;speaker<3;speaker++) {
       const turn=current.data.room.pronunciation;assert.equal(current.data.room.phase,'speaking');assert.equal(turn.speakerNumber,speaker+1);assert.equal(turn.results.length,0);
-      const target={speakerId:turn.speaker.id,roundNumber:round+1};
+      const target={speakerId:turn.speaker.id,roundNumber:round+1,matchId:current.data.room.matchId};
       const wrongSpeaker=await request(`/api/rooms/${code}`,{action:'performed',...target},speechTokens[(speaker+1)%3]);assert.equal(wrongSpeaker.status,403);
       current=await request(`/api/rooms/${code}`,{action:'performed',...target},speechTokens[speaker]);assert.equal(current.data.room.phase,'rating');
       assert.equal((await request(`/api/rooms/${code}`,{action:'rate',...target,clarity:5,accuracy:5,rhythm:5},speechTokens[speaker])).status,403);

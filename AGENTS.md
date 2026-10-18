@@ -14,6 +14,8 @@ Primary production is the owner’s Cloudflare Worker `sprachwelten`: https://sp
 - Keep author identity and permissions on the server. Use the managed Neon Auth SDK for email/password authentication.
 - Keep SQL migrations under `db/migrations/`. Run the tracked migration runner; never put credentials in source.
 - Keep answers, author assignments and future cards out of room responses until their reveal phase. Preserve optimistic concurrency checks.
+- Attendance lives in `room_presence`; routine heartbeats must not rewrite or version the game. Merge private presence before stale-player reconciliation. Scheduled maintenance removes expired rooms and old limits in bounded batches. Pronunciation actions require the current match ID, round and speaker.
+- Round availability is scoped to the chosen category and constrains lobby choices. Preserve separate meanings, languages and dialect regions when selecting unique cards. Never use another valid meaning of the same expression as an automatic wrong answer.
 - Validate with `npm run typecheck`, `npm test` and `npm run build`. Use `npm run test:integration` with `.env.test.local` and a configured isolated test database and running server when changing auth, persistence or the game API.
 
 - Zungenbrecher has the Zungenknoten and Klangfallen categories; both repeat a supplied sentence and use peer ratings. Quote rooms distinguish person quotes from song titles. Word building accepts only stored sequences and randomizes public tile IDs per round. Cooperative tasks keep their source briefing and targets private to the caller until reveal.

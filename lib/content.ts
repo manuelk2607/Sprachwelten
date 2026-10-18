@@ -81,7 +81,7 @@ export const roomAction = z.discriminatedUnion('action', [
   z.object({action:z.literal('mission'),path:z.array(z.number().int().min(0).max(8)).min(1).max(31),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
   z.object({action:z.literal('order'),tiles:z.array(z.string().uuid()).min(2).max(16),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
   z.object({action:z.literal('chain'),wordId:z.string().uuid(),turn:z.number().int().min(0).max(20),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
-  z.object({ action:z.literal('performed'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20) }),
-  ratingScores.extend({ action:z.literal('rate'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20) }),
+  z.object({ action:z.literal('performed'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
+  ratingScores.extend({ action:z.literal('rate'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
 ]);
 export type RoomAction = z.infer<typeof roomAction>;

@@ -2,6 +2,7 @@ import {validateRegion} from './regions';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
 import {chainPrompts} from '@/lib/word-chain';
+import type {PoolSettings} from '@/lib/game-pool';
 import { registeredLanguageNames } from '@/lib/language-registry';
 import { neon } from '@neondatabase/serverless';
 import type { Entry, EntryInput, Explanation } from '@/lib/content';
@@ -60,25 +61,30 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   const translations=translation?{[otherLocale(sourceLocale)]:translation}:{};
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
-export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff') {
+export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff',settings:Partial<PoolSettings>={}) {
   if(mode==='word-chain')return chainPrompts();
-  if(mode==='meaning-quiz')return (await database().query(`SELECT ${fields} FROM (SELECT *,row_number() OVER (PARTITION BY kind ORDER BY random()) AS sample_rank FROM content_entries WHERE deleted_at IS NULL AND kind IN ('idiom','dialect','gaming_mission','youth_chat','academic')) sampled WHERE sample_rank<=50`,[]) as Entry[]).map(withLanguageNames);
+  if(mode==='meaning-quiz'){
+    const kinds=settings.meaningCategory==='expression'?['idiom','dialect']:settings.meaningCategory==='gaming'?['gaming_mission']:settings.meaningCategory==='youth'?['youth_chat']:settings.meaningCategory==='academic'?['academic']:['idiom','dialect','gaming_mission','youth_chat','academic'];
+    return (await database().query(`SELECT ${fields} FROM (SELECT *,row_number() OVER (PARTITION BY kind ORDER BY random()) AS sample_rank FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[])) sampled WHERE sample_rank<=50`,[kinds]) as Entry[]).map(withLanguageNames);
+  }
   const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order','joke-quiz':'joke','word-outsider':'word_group','loanword-quiz':'loanword'} as const;
-  if(mode in newKinds){const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 ORDER BY random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds]]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
+  if(mode in newKinds){const category=mode==='who-said-it'&&settings.attributionCategory&&settings.attributionCategory!=='both'?settings.attributionCategory:'';const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 AND ($2='' OR challenge->>'category'=$2) ORDER BY random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds],category]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
   const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region_id'}, 'everyday-language': {kind:'situation',field:'context_id'} } as const;
   if (mode in quiz) {
     // Column names are a fixed server allowlist; values remain parameterized.
     const {kind,field}=quiz[mode as keyof typeof quiz];
     return (await database().query(`SELECT ${fields} FROM content_entries e WHERE e.deleted_at IS NULL AND kind=$1 AND trim(${field})<>'' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.deleted_at IS NULL AND other.kind=$1 AND ((e.audio_hash IS NOT NULL AND other.audio_hash=e.audio_hash) OR (e.phrase<>'' AND other.phrase<>'' AND lower(trim(other.phrase))=lower(trim(e.phrase)))) AND lower(trim(other.${field}))<>lower(trim(e.${field}))) ORDER BY random() LIMIT 40`, [kind]) as Entry[]).map(withLanguageNames);
   }
-  if (mode === 'tongue-twisters') return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind IN ('tongue_twister','sound_pair') ORDER BY random() LIMIT 40`, []) as Entry[]).map(withLanguageNames);
+  if (mode === 'tongue-twisters') return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[]) ORDER BY random() LIMIT 40`, [settings.pronunciationCategory==='twister'?['tongue_twister']:settings.pronunciationCategory==='sound'?['sound_pair']:['tongue_twister','sound_pair']]) as Entry[]).map(withLanguageNames);
   return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='idiom' ORDER BY random() LIMIT 40`, []) as Entry[]).map(withLanguageNames);
 }
 export async function insertRoom(game: Game) { await database()`INSERT INTO game_rooms(code,state) VALUES (${game.code}, ${JSON.stringify(game)}::jsonb)`; }
 export async function getRoom(code: string,includePrompts=true) {
-  const rows=await database().query(`SELECT ${includePrompts?'state':"state - 'prompts'"} AS state,version FROM game_rooms WHERE code=$1 AND expires_at>now()`,[code]);
+  const rows=await database().query(`SELECT ${includePrompts?'state':"state - 'prompts'"} AS state,version,(SELECT jsonb_object_agg(player_id,extract(epoch FROM seen_at)*1000) FROM room_presence WHERE room_code=$1) AS presence FROM game_rooms WHERE code=$1 AND expires_at>now()`,[code]);
   if(!includePrompts&&rows[0])rows[0].state.prompts=[];
   if (!rows[0]) throw new GameError('Dieser Raum existiert nicht oder ist abgelaufen.', 404);
+  const presence=rows[0].presence as Record<string,number>|null;
+  for(const player of (rows[0].state as Game).players)player.lastSeenAt=Math.max(player.lastSeenAt??0,Number(presence?.[player.id]??0));
   return rows[0] as { state: Game; version: number };
 }
 export async function readRoom(code: string) {

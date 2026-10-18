@@ -9,7 +9,8 @@ import { registeredLanguageNames } from './language-registry';
 import { shuffled } from './random';
 import { categoryId, categoryLabel, contextIds, regionIds, type CategoryKind } from './quiz-categories';
 import { translationStatus } from './content-translations';
-import {prepareMeaningEntries,type MeaningCategory} from './meaning-quiz';
+import {type MeaningCategory} from './meaning-categories';
+import {maximumRounds,playablePrompts} from './game-pool';
 import {chainChoices,edgeLetter,type ChainRound} from './word-chain';
 
 export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished'|'briefing'|'mission'|'ordering'|'linking';
@@ -17,7 +18,7 @@ export type Player={id:string;name:string;tokenHash:string;score:number;lastSeen
 export type Option={id:string;text:string;authorId:string|null;solution?:boolean;language?:string;categoryId?:string;categoryKind?:CategoryKind};
 export type PronunciationRound={speakerIndex:number;ratings:Record<string,Record<string,RatingScores>>};
 export type Round={entry:Entry;answers:Record<string,string>;votes:Record<string,string>;options:Option[];chain?:ChainRound;team?:TeamRound;orders?:Record<string,string[]>;tiles?:{id:string;text:string;sourceId:string}[];pronunciation?:PronunciationRound};
-export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number;matchId?:string;notice?:string;meaningCategory?:MeaningCategory;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
+export type Game={code:string;locale:Locale;mode?:PlayableGameMode;hostId:string;phase:Phase;players:Player[];prompts:Entry[];roundIndex:number;round:Round|null;totalRounds:number;availableRounds?:number;matchId?:string;notice?:string;meaningCategory?:MeaningCategory;pronunciationCategory?:PronunciationCategory;attributionCategory?:AttributionCategory};
 export class GameError extends Error {constructor(message:string,public status=409){super(message);}}
 export function createGame(code:string,player:Player,locale:Locale='de',mode:PlayableGameMode='idiom-bluff'):Game {
   player.lastSeenAt=Date.now();
@@ -134,6 +135,7 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann die Rundenzahl ändern.',403);
     if(game.phase!=='lobby')throw new GameError('Die Rundenzahl kann nur in der Lobby geändert werden.');
     if(action.rounds!==undefined&&action.rounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
+    if(action.rounds!==undefined&&action.rounds>maximumRounds(game))throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.',422);
     if(action.rounds!==undefined)game.totalRounds=action.rounds;
     if(action.pronunciationCategory){if(game.mode!=='tongue-twisters')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.pronunciationCategory=action.pronunciationCategory;}
     if(action.attributionCategory){if(game.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);game.attributionCategory=action.attributionCategory;}
@@ -151,9 +153,7 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     const info=modeInfo(game.mode);
     if(game.players.length<info.minPlayers)throw new GameError(info.minPlayers===2?'Zum Start braucht ihr mindestens 2 Personen.':'Zum Start braucht ihr mindestens 3 Personen.');
     if(game.totalRounds<1||game.totalRounds>game.players.length*2)throw new GameError('Die Rundenzahl darf höchstens doppelt so hoch wie die Spielerzahl sein.',422);
-    const candidates=game.mode==='meaning-quiz'?prepareMeaningEntries(prompts,game.locale,game.meaningCategory??'all'):prompts;
-    const eligible=candidates.filter(entry=>(game.mode==='meaning-quiz'?true:game.mode==='word-chain'?entry.language===game.locale:game.mode==='tongue-twisters'?((entry.kind==='tongue_twister'&&game.pronunciationCategory!=='sound')||(entry.kind==='sound_pair'&&game.pronunciationCategory!=='twister')):entry.kind===info.kind)&&(game.mode!=='who-said-it'||!game.attributionCategory||game.attributionCategory==='both'||entry.challenge?.type==='attribution'&&entry.challenge.category===game.attributionCategory)&&(game.mode!=='dialect-detective'||categoryId('region',entry.regionId??entry.region))&&(game.mode!=='everyday-language'||categoryId('context',entry.contextId??entry.context)));
-    const unique=[...new Map(eligible.map(entry=>[entry.phrase?'text:'+entry.phrase.trim().toLocaleLowerCase():'audio:'+entry.audioId,entry])).values()];
+    const unique=playablePrompts(game,prompts);game.availableRounds=unique.length;
     if(unique.length<game.totalRounds)throw new GameError('Für diese Rundenzahl sind noch nicht genügend unterschiedliche Beiträge vorhanden.');
     let ordered=shuffled(unique);if(game.mode==='plain-talk'){const plain=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='plain'),precise=ordered.filter(e=>e.challenge?.type==='academic'&&e.challenge.direction==='precise');ordered=[];while(plain.length||precise.length){const a=plain.shift(),b=precise.shift();if(a)ordered.push(a);if(b)ordered.push(b);}}
     game.prompts=ordered.slice(0,game.totalRounds).map(entry=>localizeEntry(entry,game.locale??'de'));
@@ -184,7 +184,7 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
     const performance=round.pronunciation;
     const speaker=performance?game.players[performance.speakerIndex]:undefined;
     if(game.mode!=='tongue-twisters'||!performance||!speaker)throw new GameError('Hier wird gerade nicht vorgelesen.');
-    if(action.roundNumber!==game.roundIndex+1||action.speakerId!==speaker.id)throw new GameError('Diese Bewertung gehört nicht zum aktuellen Vortrag.');
+    if(action.matchId!==(game.matchId??game.code)||action.roundNumber!==game.roundIndex+1||action.speakerId!==speaker.id)throw new GameError('Diese Bewertung gehört nicht zum aktuellen Vortrag.');
     if(action.action==='performed') {
       if(game.phase!=='speaking')throw new GameError('Der Vortrag wurde bereits beendet.');
       if(playerId!==speaker.id)throw new GameError('Nur die Person, die gerade dran ist, kann den Vortrag beenden.',403);
@@ -238,7 +238,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
     soundWords:c?.type==='sound'&&(textVisible||revealed)?c.words.map(w=>({...w,meaning:challengeText(w.meaning,game.locale)})):null,
     friends:c?.type==='friends'?{otherWord:textVisible||revealed?c.otherWord:'',otherLanguage:c.otherLanguage,context:challengeText(c.context,game.locale),...(revealed?{firstMeaning:challengeText(c.firstMeaning,game.locale),secondMeaning:challengeText(c.secondMeaning,game.locale)}:{})}:null,
     wordOrder:order?{targetLanguage:order.targetLanguage,source:textVisible||revealed?order.source[game.locale]:'',tiles:round?.tiles?.map(t=>({id:t.id,text:t.text}))??[],submitted:!!round?.orders?.[playerId],ownOrder:round?.orders?.[playerId]?.map(id=>round.tiles!.find(t=>t.sourceId===id)!.id)??null,...(revealed?{solution:order.accepted[0].map(id=>order.tiles.find(t=>t.id===id)!.text).join(' '),correct:order.accepted.some(a=>a.join('|')===round?.orders?.[playerId]?.join('|'))}:{})}:null,
-    matchId:game.matchId??game.code,maxRounds:game.players.length*2,notice:game.notice,code:game.code,locale:game.locale??'de',mode:game.mode??'idiom-bluff',hostId:game.hostId,phase:game.phase,playerId,
+    matchId:game.matchId??game.code,maxRounds:maximumRounds(game),notice:game.notice,code:game.code,locale:game.locale??'de',mode:game.mode??'idiom-bluff',hostId:game.hostId,phase:game.phase,playerId,
     roundNumber:Math.min(game.roundIndex+1,game.totalRounds),totalRounds:game.totalRounds,
     players:game.players.map(p=>({id:p.id,name:p.name,score:p.score,answered:!!round?.answers[p.id]||!!round?.team?.paths[p.id]||!!round?.orders?.[p.id],voted:!!round?.votes[p.id],rated:!!activeRatings[p.id]})),
     prompt:round?{presentation:presentationOf(round.entry),phrase:hidden||!textVisible?'':order?order.source[game.locale]:round.entry.phrase,...(audioVisible&&round.entry.audioId?{audioId:round.entry.audioId}:{}),...(!hidden&&(!quiz||game.mode==='everyday-language'||game.mode==='false-friends')?{language:round.entry.language,languageNames:round.entry.languageNames,literal:revealed&&!order&&textVisible?round.entry.literal:''}:{})}:null,

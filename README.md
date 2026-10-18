@@ -203,3 +203,17 @@ contribution does not break a round that already selected it.
 Run `npm run test:browser` after `npx playwright install chromium`. GitHub Actions
 also runs the production build and desktop/mobile Chromium checks without
 production secrets. See [the measured performance changes](docs/performance-2026-10-17.md).
+
+Migration 017 separates private attendance into `room_presence`. Normal heartbeats
+return 204 without changing the room version; stale-player reconciliation still
+transfers the host and completes unfinished turns. Daily maintenance also removes
+expired rooms and rate-limit records older than their expiry plus one day, in
+batches of at most 1,000. Presence is deleted with its room.
+
+The lobby round limit accounts for the selected category's playable cards. Distinct
+meanings, languages and dialect regions retain separate identities; automatic
+distractors exclude other meanings of the same expression. Pronunciation actions
+validate the match ID as well as the round and speaker, including same-room rematches.
+Run `node --env-file=<isolated-QA-env> --import tsx scripts/test-room-maintenance.mts`
+against a running local QA server to verify attendance, ETags and expiry cleanup.
+Measured results and remaining work: [follow-up performance checks](docs/performance-2026-10-18.md).

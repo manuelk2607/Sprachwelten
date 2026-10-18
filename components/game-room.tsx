@@ -141,7 +141,7 @@ export function GameRoom({code}:{code:string}) {
             <h1>{room.players.length===1?t('Dein Sprachgefühl in Punkten'):winners.map(p=>p.name).join(' & ')+' '+t(winners.length>1?'gewinnen!':'gewinnt!')}</h1>
             {room.players.length===1&&<h2>{me?.score} / {room.totalRounds} {t('Punkte')}</h2>}
             <p>{t('Und ihr alle wisst jetzt ein bisschen mehr über die Welt.')}</p>
-            <p className="form-note">{t('Vor der nächsten Partie könnt ihr Kategorie und Rundenzahl in der Lobby ändern.')}</p>
+            <p className="form-note">{t('Vor der nächsten Partie könnt ihr Spiel, Kategorie und Rundenzahl in der Lobby ändern.')}</p>
             {host?<button className="button primary" disabled={busy} onClick={()=>void action({action:'restart'})}>{t('Nächste Partie vorbereiten')}<ArrowRight size={18}/></button>:<p className="muted">{t('Der Gastgeber kann die nächste Partie vorbereiten.')}</p>}<button className="button outline" onClick={requestLeave}>{t('Spiel verlassen')}</button>
           </div>:<>
             <div className="round-header"><span className="eyebrow">{t(info.title)} · {t('RUNDE')} {room.roundNumber} {t('VON')} {room.totalRounds}</span><span className="phase-label">{t({writing:'✎ Erfinden',voting:'◉ Erraten',speaking:'◉ Vorlesen',rating:'✦ Bewerten',briefing:'◉ Erklären',mission:'◉ Route planen',ordering:'◉ Satz bauen',linking:'◉ Wörter verbinden',reveal:'✦ Entdecken'}[room.phase])}</span></div>

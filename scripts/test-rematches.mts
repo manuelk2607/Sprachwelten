@@ -42,11 +42,15 @@ try{
   assert.equal((await request(`/api/rooms/${second}`,{action:'configure',rounds:maximum},secondToken)).status,200);
   await play(second,secondToken,new Set());const empty=await request(`/api/rooms/${second}`,{action:'restart'},secondToken);
   assert.equal(empty.data.room.phase,'lobby');assert.equal(empty.data.room.maxRounds,0);assert.equal((await request(`/api/rooms/${second}`,{action:'start'},secondToken)).status,409);
-  assert.equal((await request(`/api/rooms/${second}`,{action:'configure',mode:'word-chain'},secondToken)).status,422);
+  const changedGame=await request(`/api/rooms/${second}`,{action:'configure',mode:'meaning-quiz',meaningCategory:'youth',rounds:1},secondToken);
+  assert.equal(changedGame.status,200,JSON.stringify(changedGame.data));assert.equal(changedGame.data.room.code,second);assert.equal(changedGame.data.room.players[0].id,empty.data.room.players[0].id);
+  await play(second,secondToken,new Set());await request(`/api/rooms/${second}`,{action:'restart'},secondToken);
+  const returned=await request(`/api/rooms/${second}`,{action:'configure',mode:'loanword-quiz'},secondToken);assert.equal(returned.status,200);assert.equal(returned.data.room.maxRounds,0);
+  assert.equal((await request(`/api/rooms/${second}`,{action:'configure',mode:'word-chain'},secondToken)).status,200);
   const changed=await request(`/api/rooms/${second}`,{action:'configure',mode:'language-quiz',rounds:10},secondToken);assert.equal(changed.status,200,JSON.stringify(changed.data));assert.equal(changed.data.room.totalRounds,10);
   const guest=await request(`/api/rooms/${second}/join`,{name:'QA Observer'});assert.equal(guest.status,201);
   assert.equal((await request(`/api/rooms/${second}`,{action:'configure',mode:'loanword-quiz'},guest.data.token)).status,403);
   assert.equal((await request(`/api/rooms/${second}`,{action:'restart'},guest.data.token)).status,403);
   const [stored]=await sql`SELECT state FROM game_rooms WHERE code=${code}`;assert.equal((stored.state as Game).playedPrompts!.length,22);
-  console.log('PASS: solo ten-round matches, persistent same-room no-repeat history, category changes and return, exhausted category, family variant changes, private state and host authority.');
+  console.log('PASS: solo ten-round matches, persistent same-room no-repeat history across whole-game switches, category changes, exhausted categories, private state and host authority.');
 }finally{for(const code of codes)await sql`DELETE FROM game_rooms WHERE code=${code}`;}

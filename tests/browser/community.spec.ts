@@ -14,6 +14,22 @@ test('half the game cards, expandable explanations, language and mobile login',a
  await page.getByRole('button',{name:'EN',exact:true}).click();await expect(page.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();
  await expect(page.getByRole('heading',{name:'Start game',exact:true})).toBeVisible();
 });
+test('guests can publish without a login and optional account benefits are explained in DE and EN',async({page})=>{
+ await page.route('**/api/auth/get-session**',route=>route.fulfill({json:null}));
+ await page.route('**/api/audio',route=>route.fulfill({json:{available:false}}));
+ await page.route('**/api/translations',route=>route.fulfill({json:{available:true}}));
+ await page.route('**/api/entries/duplicates?*',route=>route.fulfill({json:{duplicate:null}}));
+ let submitted:Record<string,unknown>|undefined;
+ await page.route('**/api/entries',route=>{submitted=route.request().postDataJSON() as Record<string,unknown>;return route.fulfill({status:201,json:{entry:{id:'guest-test'}}});});
+ const ready=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));await page.goto('/');await ready;await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();
+ const dialog=page.getByRole('dialog');await expect(dialog.getByRole('heading',{name:'Ein Stück Sprache teilen.',exact:true})).toBeVisible();await expect(dialog.getByText(/Du kannst ohne Konto beitragen\./)).toBeVisible();
+ await dialog.getByRole('combobox').first().click();await page.getByRole('option',{name:'Wort',exact:true}).click();
+ await dialog.locator('[name="phrase"]').fill('Gastwort');await dialog.locator('[name="literal"]').fill('Eine Testübersetzung');
+ await expect(dialog.getByRole('button',{name:'Übersetzung vorschlagen',exact:true})).toBeDisabled();
+ await dialog.getByRole('button',{name:'Beitrag veröffentlichen',exact:true}).click();await expect(page.getByRole('status')).toHaveText('Dein Beitrag ist jetzt Teil der Sammlung.');expect(submitted?.phrase).toBe('Gastwort');expect(submitted?.creditName).toBe('');
+ await page.getByRole('button',{name:'EN',exact:true}).click();await page.locator('.header').getByRole('button',{name:'Contribute',exact:true}).click();await expect(page.getByRole('dialog').getByText(/You can contribute without an account\./)).toBeVisible();
+ await page.getByRole('button',{name:'Close',exact:true}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('dialog').getByText(/An account lets you manage your contributions across devices/)).toBeVisible();
+});
 test('region failure retains defaults, retry restores registry and selection closes',async({page})=>{
  await mockSession(page);let attempts=0;await page.route('**/api/regions',route=>{attempts++;return route.fulfill(attempts===1?{status:503,json:{error:'Unavailable'}}:{json:{regions:{'custom-test':{de:'Testregion',en:'Test region'}}}});});
  await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();

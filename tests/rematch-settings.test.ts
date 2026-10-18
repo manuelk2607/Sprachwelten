@@ -52,14 +52,30 @@ test('returning to an earlier meaning category does not clear its played history
   assert.ok(unseenPrompts(game,entries).every(entry=>entry.id!==first));
 });
 
-test('family categories can change in the lobby but cannot change families or bypass host authority',()=>{
+test('hosts can change categories and whole games in the lobby while preserving room membership and history',()=>{
   for(const [from,to] of [['language-quiz','loanword-quiz'],['word-outsider','word-chain']] as const){
     const host=player(),guest=player(),game=createGame('FRESHX',host,'de',from);joinGame(game,guest);game.totalRounds=1;
     act(game,host.id,{action:'start'},entries);finishQuiz(game);act(game,host.id,{action:'restart'},entries);
     assert.throws(()=>act(game,guest.id,{action:'configure',mode:to},entries),/Gastgeber/);
     act(game,host.id,{action:'configure',mode:to},entries);assert.equal(game.mode,to);
-    assert.throws(()=>act(game,host.id,{action:'configure',mode:from==='language-quiz'?'word-chain':'language-quiz'},entries),/Kategorie/);
+    const history=JSON.stringify(game.playedPrompts),members=game.players.map(({lastSeenAt,...member})=>member);
+    const other=from==='language-quiz'?'word-outsider':'language-quiz';
+    act(game,host.id,{action:'configure',mode:other},entries);assert.equal(game.mode,other);
+    assert.equal(game.code,'FRESHX');assert.equal(game.hostId,host.id);assert.deepEqual(game.players.map(({lastSeenAt,...member})=>member),members);assert.equal(JSON.stringify(game.playedPrompts),history);
+    act(game,host.id,{action:'configure',mode:from},entries);
+    assert.ok(unseenPrompts(game,entries).every(entry=>!game.playedPrompts!.some(played=>played.id===entry.id)));
   }
+});
+
+test('game switching enforces supported modes, lobby phase, matching categories and minimum players',()=>{
+  for(const mode of ['meaning-quiz','tongue-twisters','who-said-it','false-friends','word-builder','joke-quiz','word-chain'] as const)assert.ok(roomAction.safeParse({action:'configure',mode}).success);
+  for(const mode of ['unknown','idiom-bluff','gaming-call'])assert.equal(roomAction.safeParse({action:'configure',mode}).success,false);
+  const game=createGame('FRESHX',player(),'de','meaning-quiz');
+  assert.throws(()=>act(game,game.hostId,{action:'configure',mode:'joke-quiz',meaningCategory:'gaming'},entries),/Kategorie/);
+  act(game,game.hostId,{action:'configure',mode:'tongue-twisters',rounds:1},entries);
+  assert.throws(()=>act(game,game.hostId,{action:'start'},entries),/mindestens 2/);
+  joinGame(game,player());act(game,game.hostId,{action:'start'},entries);
+  assert.throws(()=>act(game,game.hostId,{action:'configure',mode:'joke-quiz'},entries),/Lobby/);
 });
 
 test('legacy matches remember all shown cards and interrupted matches do not consume future cards',()=>{

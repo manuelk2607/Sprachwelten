@@ -65,7 +65,7 @@ export function Home() {
     if(!response.ok||!data.entry)throw new Error('Entry unavailable');
     setContribute(false);setSelected(data.entry);
   };
-  const openContribute=()=>{if(session?.user)setContribute(true);else setAuth(true);};
+  const openContribute=()=>setContribute(true);
   return <><Header active={activeSection} onDiscover={discover} onPlay={chooseGame} onContribute={openContribute} onLogin={()=>setAuth(true)}/>
     <main><section className="hero"><div className="hero-copy"><div className="eyebrow"><span className="tiny-star">✳</span> {t("SPRACHE IST MEHR ALS VOKABELN")}</div>
       <h1>{t("Andere Worte.")}<br/><span>{t("Neue Welten.")}</span></h1><p>{t("Entdecke, wie Menschen anderswo sprechen.")}<br className="desktop-break"/> {t("Und wie viel Spaß es macht, sie falsch zu verstehen.")}</p>

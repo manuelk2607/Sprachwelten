@@ -3,12 +3,13 @@ import {Select} from './select';
 import { useEffect, useRef, useState } from 'react';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { otherLocale, textsOf, type TranslationTexts } from '@/lib/content-translations';
+import {useAuthSession} from '@/lib/auth/provider';
 export type TranslationField={key:keyof TranslationTexts;label:string;max:number};
 export function TranslationEditor({sourceLocale,setSourceLocale,fields,getSource,translation,onChange,revision,reviewed,setReviewed}:{
   sourceLocale:Locale;setSourceLocale:(locale:Locale)=>void;fields:TranslationField[];getSource:()=>TranslationTexts;
   translation:Partial<TranslationTexts>;onChange:(value:Partial<TranslationTexts>)=>void;revision:number;reviewed:boolean;setReviewed:(value:boolean)=>void;
 }) {
-  const {t}=useI18n();const [available,setAvailable]=useState<boolean|null>(null);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [machine,setMachine]=useState(false);
+  const {t}=useI18n();const session=useAuthSession();const [available,setAvailable]=useState<boolean|null>(null);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [machine,setMachine]=useState(false);
   const version=useRef(revision);version.current=revision;
   const target=otherLocale(sourceLocale);const hasTranslation=fields.some(field=>translation[field.key]?.trim());
   useEffect(()=>{const controller=new AbortController();fetch('/api/translations',{signal:controller.signal}).then(r=>r.json() as Promise<{available:boolean}>).then(data=>setAvailable(data.available===true)).catch(()=>setAvailable(false));return()=>controller.abort();},[]);
@@ -27,7 +28,8 @@ export function TranslationEditor({sourceLocale,setSourceLocale,fields,getSource
     <p className="form-note">{t('Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.')}</p>
     <h3>{t('Übersetzung ins')} {t(target==='de'?'Deutsche':'Englische')}</h3>
     <p className="muted">{t('Du kannst die zweite Sprachfassung selbst schreiben oder einen Vorschlag bearbeiten. Fehlende Felder erscheinen später als gekennzeichneter Originaltext.')}</p>
-    <button type="button" className="button outline" disabled={busy||available!==true} onClick={()=>void suggest()}>{busy?t('Wird übersetzt …'):t('Übersetzung vorschlagen')}</button>
+    <button type="button" className="button outline" disabled={busy||available!==true||!session?.user} onClick={()=>void suggest()}>{busy?t('Wird übersetzt …'):t('Übersetzung vorschlagen')}</button>
+    {!session?.user&&<p className="form-note">{t('Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.')}</p>}
     {available===true&&<p className="form-note">{t('Für Vorschläge werden deine Erklärungstexte an Cloudflare Workers AI gesendet.')}</p>}
     {available===false&&<p className="form-note">{t('Automatische Übersetzung ist momentan nicht verfügbar. Du kannst die Übersetzung selbst ergänzen.')}</p>}
     {machine&&hasTranslation&&<p role="status" className="form-note">{t('Automatischer Übersetzungsvorschlag: Bitte Bedeutung und kulturelle Feinheiten prüfen und bei Bedarf korrigieren.')}</p>}

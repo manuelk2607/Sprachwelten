@@ -26,7 +26,7 @@ export async function body<S extends z.ZodTypeAny>(request: Request, schema: S):
 }
 export async function account() {
   const { data, error } = await getAuth().getSession();
-  if (error || !data?.user) throw new GameError('Bitte melde dich an, um etwas beizutragen.', 401);
+  if (error || !data?.user) throw new GameError('Bitte melde dich an, um diese Funktion zu nutzen.', 401);
   return { id: data.user.id, name: data.user.name?.trim().slice(0,60) || 'Mitglied' };
 }
 export async function hashToken(token: string) {

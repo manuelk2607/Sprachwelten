@@ -27,6 +27,10 @@ for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] 
   await page.getByRole('button',{name:'Nächste Partie vorbereiten',exact:true}).click();
   await expect(page.getByRole('button',{name:'Spiel starten',exact:true})).toBeVisible();
     if(mode==='meaning-quiz'){
+      await expect.poll(()=>page.locator('.room-settings-row').evaluate(row=>{
+        const [category,rounds]=Array.from(row.querySelectorAll('[role="combobox"]')).map(element=>element.getBoundingClientRect());
+        return !!category&&!!rounds&&Math.abs(category.y-rounds.y)<2&&category.right<rounds.x;
+      })).toBe(true);
       await page.getByRole('combobox',{name:'Kategorie',exact:true}).click();
       await page.getByRole('option',{name:'Generationenchat',exact:true}).click();
       await page.getByRole('combobox',{name:'Rundenzahl',exact:true}).click();
@@ -35,10 +39,14 @@ for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] 
     }else if(mode==='loanword-quiz'){
       await page.getByRole('combobox',{name:'Kategorie',exact:true}).click();
       await page.getByRole('option',{name:'Wortdetektiv',exact:true}).click();
+    }else if(mode==='word-outsider'){
+      await page.getByRole('combobox',{name:'Spielmodus',exact:true}).click();
+      await page.getByRole('option',{name:'Pointe, bitte!',exact:true}).click();
     }
   await page.getByRole('button',{name:'Spiel starten',exact:true}).click();
   await expect(page.locator('.round-header')).toBeVisible();expect(game.round!.entry.id).not.toBe(previous);
   if(mode==='meaning-quiz')expect(game.round!.entry.kind).toBe('youth_chat');
   if(mode==='loanword-quiz')expect(game.mode).toBe('language-quiz');
+  if(mode==='word-outsider'){expect(game.mode).toBe('joke-quiz');expect(game.code).toBe('ABC234');expect(game.players[0].id).toBe(host.id);expect(game.playedPrompts?.some(prompt=>prompt.id===previous)).toBeTruthy();}
  });
 }

@@ -18,7 +18,7 @@ const createdIds:string[]=[];const roomCodes:string[]=[];const cacheKeys:string[
 const stamp=Date.now();const email=`qa-${stamp}@sprachwelten.invalid`;const password=crypto.randomUUID()+'!Aa1';
 try{
   const entries=await request('/api/entries');assert.equal(entries.status,200);assert.ok(entries.data.entries!.length===6);
-  assert.equal((await request('/api/entries',{literal:'Test translation',phrase:'Unauthorized test',language:'de',meaning:'No anonymous contributions.'})).status,401);
+  const anonymous=await request('/api/entries',{literal:'Test translation',phrase:`QA-guest-${stamp}`,language:'de'});assert.equal(anonymous.status,201,JSON.stringify(anonymous.data));createdIds.push(anonymous.data.entry.id);assert.equal(anonymous.data.entry.authorName,'');
   const signup=await request('/api/auth/sign-up/email',{email,password,name:'QA Sprachwelten'},undefined,true);assert.equal(signup.status,200,JSON.stringify(signup.data));accountId=signup.data.user?.id;
   const session=await request('/api/auth/get-session',undefined,undefined,true);assert.equal(session.status,200);assert.ok(session.data.user?.id);accountId=session.data.user!.id;
   const entry=await request('/api/entries',{literal:'Test translation',kind:'dialect',phrase:`QA-${stamp}`,language:'de',meaning:'Nur ein kurzlebiger Integrationstest.',regionId:'at',sourceLocale:'de',translation:{meaning:'Only a temporary integration test.'},translationReviewed:true},undefined,true);assert.equal(entry.status,201,JSON.stringify(entry.data));createdIds.push(entry.data.entry.id);assert.equal(entry.data.entry.status,'community');assert.equal(entry.data.entry.regionId,'at');assert.equal(entry.data.entry.translations.en.meaning,'Only a temporary integration test.');assert.equal(entry.data.entry.meaning,'Nur ein kurzlebiger Integrationstest.');
@@ -46,7 +46,8 @@ try{
     const repeated=await request('/api/translations',{sourceLocale,texts},undefined,true);assert.equal(repeated.status,200);assert.equal(repeated.data.cached,true);assert.deepEqual(repeated.data.translation,fresh.data.translation);
     console.log(`Workers AI ${sourceLocale}: ${fresh.data.translation.meaning}`);
   }
-  await request('/api/auth/sign-out',{},undefined,true);assert.equal((await request('/api/entries',{literal:'Test translation',phrase:'Signed out test',language:'de',meaning:'Session must be invalid after logout.'},undefined,true)).status,401);
+  await request('/api/auth/sign-out',{},undefined,true);assert.equal((await request('/api/me/entries',undefined,undefined,true)).status,401);
+  const signedOut=await request('/api/entries',{literal:'Test translation',phrase:`QA-signed-out-${stamp}`,language:'de'},undefined,true);assert.equal(signedOut.status,201,JSON.stringify(signedOut.data));createdIds.push(signedOut.data.entry.id);
   const badLogin=await request('/api/auth/sign-in/email',{email,password:'wrong-password'},undefined,true);assert.equal(badLogin.status,401);
   const login=await request('/api/auth/sign-in/email',{email,password},undefined,true);assert.equal(login.status,200);assert.ok((await request('/api/auth/get-session',undefined,undefined,true)).data.user?.id);
   const host=await request('/api/rooms',{name:'QA Ada',locale:'en',mode:'idiom-bluff'});assert.equal(host.status,201,JSON.stringify(host.data));code=host.data.room.code;roomCodes.push(code!);const tokens=[host.data.token!];

@@ -17,8 +17,9 @@ import { TranslationEditor, type TranslationField } from './translation-editor';
 import { AudioInput } from './audio-input';
 import { LanguagePicker } from './language-picker';
 import { duplicateEntryMessage, type ExistingEntry } from '@/lib/entry-duplicates';
+import {useAuthSession} from '@/lib/auth/provider';
 export function ContributeDialog({close,saved,openExisting,initialEntry,editTarget='admin',review}:{close:()=>void;saved:()=>void;openExisting:(id:string)=>Promise<void>;initialEntry?:Entry;editTarget?:'admin'|'own'|'suggest';review?:{id:string;revision:number}}) {
-  const {t,locale}=useI18n();const formRef=useRef<HTMLFormElement>(null);const validation=useFormErrors(formRef);
+  const {t,locale}=useI18n();const session=useAuthSession();const formRef=useRef<HTMLFormElement>(null);const validation=useFormErrors(formRef);
   const [media,setMedia]=useState<MediaChoice>({text:presentationOf(initialEntry??{})!=='audio',audio:presentationOf(initialEntry??{})!=='text'});
   const [challenge,setChallenge]=useState<Challenge|undefined>(initialEntry?initialEntry.challenge:initialChallenge('idiom'));
   const [kind,setKind]=useState<ContentKind>(initialEntry?.kind??'idiom');const [busy,setBusy]=useState(false);const [error,setError]=useState('');
@@ -53,6 +54,7 @@ export function ContributeDialog({close,saved,openExisting,initialEntry,editTarg
     catch(error){setError(error instanceof Error?t(error.message):t('Dein Beitrag konnte nicht gespeichert werden.'));}finally{setBusy(false);}
   }
   return <Dialog title={t(review?'Vorschlag prüfen und übernehmen':editTarget==='suggest'?'Verbesserung vorschlagen':initialEntry?'Beitrag bearbeiten':'Ein Stück Sprache teilen.')} close={close} wide><p className="muted">{t('Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.')}</p>
+    {!initialEntry&&!session?.user&&<p className="notice">{t('Du kannst ohne Konto beitragen. Mit einem Konto kannst du deine Beiträge später geräteübergreifend bearbeiten und löschen sowie den Stand deiner Verbesserungsvorschläge verfolgen. Melde dich dafür vor dem Einreichen an. Gastbeiträge werden keinem später erstellten Konto automatisch zugeordnet.')}</p>}
     <form ref={formRef} className="form-stack" onSubmit={submit} onInvalidCapture={validation.invalid}><FormErrors issues={validation.issues} form={formRef}/>
       <div className="form-row"><label>{t('Art des Beitrags')}<Select name="kind" disabled={busy} value={kind} onValueChange={value=>{setKind(value as ContentKind);setChallenge(initialChallenge(value as ContentKind));sourceChanged();}}>{Object.entries(kindLabels).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label><LanguagePicker label={kind==='loanword'?'Heutige Sprache des Lehnworts':'Sprache des Originalausdrucks'} name="language" value={language} onChange={setLanguage} disabled={busy}/></div>
       <div data-field="presentation"><MediaChoiceInput value={media} onChange={value=>{setMedia(value);setError('');}} disabled={busy||audioBusy}/></div>

@@ -4,14 +4,13 @@ import {challengeText,challengeHasFallback,type PronunciationCategory,type Attri
 import { languages, ratingScores, type Entry, type RatingScores, type RoomAction } from './content';
 import type { Locale } from './translations';
 import { localizeEntry } from './entry-localization';
-import { isQuizMode, isTeamMode, modeInfo, prepareChoices, prepareLanguageQuiz, type PlayableGameMode } from './modes';
+import { currentModeIds, isQuizMode, isTeamMode, modeInfo, prepareChoices, prepareLanguageQuiz, type PlayableGameMode } from './modes';
 import { registeredLanguageNames } from './language-registry';
 import { shuffled } from './random';
 import { categoryId, categoryLabel, contextIds, regionIds, type CategoryKind } from './quiz-categories';
 import { translationStatus } from './content-translations';
 import {type MeaningCategory} from './meaning-categories';
 import {maximumRounds,promptIdentity,unseenPrompts,updateAvailability} from './game-pool';
-import {familyFor} from './game-families';
 import {chainChoices,edgeLetter,type ChainRound} from './word-chain';
 
 export type Phase='lobby'|'writing'|'voting'|'speaking'|'rating'|'reveal'|'finished'|'briefing'|'mission'|'ordering'|'linking';
@@ -143,10 +142,9 @@ export function act(game:Game,playerId:string,action:RoomAction,prompts:Entry[]=
   if(action.action==='heartbeat')return;
   if(action.action==='leave'){leaveGame(game,playerId);return;}
   if(action.action==='configure'){
-    if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann die Rundenzahl ändern.',403);
-    if(game.phase!=='lobby')throw new GameError('Die Rundenzahl kann nur in der Lobby geändert werden.');
-    const family=familyFor(game.mode??'idiom-bluff');
-    if(action.mode&&(!family.modes.includes(game.mode!)||!family.modes.includes(action.mode)))throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);
+    if(playerId!==game.hostId)throw new GameError('Nur der Gastgeber kann die Spieleinstellungen ändern.',403);
+    if(game.phase!=='lobby')throw new GameError('Die Spieleinstellungen können nur in der Lobby geändert werden.');
+    if(action.mode&&!currentModeIds.includes(action.mode))throw new GameError('Dieses Spiel ist nicht verfügbar.',422);
     const next={...game,mode:action.mode??game.mode};
     if(action.pronunciationCategory){if(next.mode!=='tongue-twisters')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);next.pronunciationCategory=action.pronunciationCategory;}
     if(action.attributionCategory){if(next.mode!=='who-said-it')throw new GameError('Diese Kategorie passt nicht zum Spiel.',422);next.attributionCategory=action.attributionCategory;}

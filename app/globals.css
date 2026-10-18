@@ -90,3 +90,6 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
   .header-actions .login-button{font-size:12px;padding:10px}
   .header-actions .login-button svg{display:none}
 }
+.room-settings-row{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:16px;max-width:520px;align-items:start}
+.room-settings-row>label{min-width:0}
+.room-settings-row .room-round-count:only-child{grid-column:2}

@@ -33,7 +33,7 @@ export function AuthDialog({close, initial = 'signin', email = '', resetToken = 
   }
   async function sendCode(){setBusy(true);setError('');try{const {error}=await (await getAuthClient()).emailOtp.sendVerificationOtp({email,type:'email-verification'});if(error)throw new Error(error.message);setMessage(t('Bestätigungscode gesendet. Bitte prüfe auch deinen Spam-Ordner.'));setCooldown(true);setTimeout(()=>setCooldown(false),60000);}catch(e){setError(t((e as Error).message));}finally{setBusy(false);}}
   return <Dialog title={title} close={close}>
-    <p className="muted">{mode==='signup'?t("Entdecke mit anderen neue Sprachwelten und teile deine eigenen Ausdrücke."):mode==='signin'?t("Melde dich an, um Redewendungen und Erklärungen beizutragen."):mode==='verify'?t("Gib den Bestätigungscode aus deiner E-Mail ein."):t("Wir helfen dir, wieder Zugang zu deinem Konto zu bekommen.")}</p>
+    <p className="muted">{mode==='signup'||mode==='signin'?t('Mit einem Konto verwaltest du deine Beiträge auf allen Geräten: bearbeiten, löschen und Verbesserungsvorschläge verfolgen. Spielen und neue Beiträge einreichen geht auch ohne Konto.'):mode==='verify'?t("Gib den Bestätigungscode aus deiner E-Mail ein."):t("Wir helfen dir, wieder Zugang zu deinem Konto zu bekommen.")}</p>
     {mode==='verify'&&<button className="button outline" disabled={busy||cooldown} onClick={()=>void sendCode()}>{t('Bestätigungscode anfordern')}</button>}
     <form className="form-stack" onSubmit={submit}>
       {mode==='signup'&&<label>{t("Dein Anzeigename")}<input name="name" autoComplete="nickname" required minLength={2} maxLength={60} placeholder={t("Wie sollen wir dich nennen?")}/></label>}

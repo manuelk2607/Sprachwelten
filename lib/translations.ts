@@ -3,6 +3,16 @@ import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Du kannst ohne Konto beitragen. Mit einem Konto kannst du deine Beiträge später geräteübergreifend bearbeiten und löschen sowie den Stand deiner Verbesserungsvorschläge verfolgen. Melde dich dafür vor dem Einreichen an. Gastbeiträge werden keinem später erstellten Konto automatisch zugeordnet.':'You can contribute without an account. With an account, you can edit and delete your contributions across devices and track your improvement suggestions. Sign in before submitting to use these features. Guest contributions are not automatically linked to accounts created later.',
+  'Mit einem Konto verwaltest du deine Beiträge auf allen Geräten: bearbeiten, löschen und Verbesserungsvorschläge verfolgen. Spielen und neue Beiträge einreichen geht auch ohne Konto.':'An account lets you manage your contributions across devices: edit, delete and track improvement suggestions. Playing and submitting new contributions work without an account too.',
+  'Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.':'Automatic translation suggestions are available with an account. Without an account, you can add the second language yourself or display the labelled original text.',
+  'Bitte melde dich an, um diese Funktion zu nutzen.':'Please sign in to use this feature.',
+  'Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.':'Your sign-in could not be checked. Please try again.',
+  'Vor der nächsten Partie könnt ihr Spiel, Kategorie und Rundenzahl in der Lobby ändern.':'Before the next match, you can change the game, category and number of rounds in the lobby.',
+  'Keine ungespielten Aufgaben in dieser Kategorie. Wählt ein anderes Spiel oder eine andere Kategorie.':'There are no unplayed tasks in this category. Choose another game or category.',
+  'Dieses Spiel ist nicht verfügbar.':'This game is not available.',
+  'Nur der Gastgeber kann die Spieleinstellungen ändern.':'Only the host can change the game settings.',
+  'Die Spieleinstellungen können nur in der Lobby geändert werden.':'Game settings can only be changed in the lobby.',
   'Eigene Beiträge durchsuchen':'Search your contributions',
   'Wort, Übersetzung oder Erklärung':'Word, translation or explanation',
   'Keine eigenen Beiträge zu dieser Suche gefunden.':'No contributions of yours match this search.',

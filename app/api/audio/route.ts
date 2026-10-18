@@ -1,13 +1,15 @@
-import { account, respond, safe } from '@/lib/http';
-import { database, rateLimit } from '@/db/repository';
+import { respond, safe } from '@/lib/http';
+import {contributor,limitContribution,withContributor} from '@/lib/contributor';
+import { database } from '@/db/repository';
 import { GameError } from '@/lib/game';
 import { audioBucket } from '@/lib/audio-storage';
 import { maxAudioBytes, validateAudioWave } from '@/lib/audio-format';
 export const GET=async()=>respond({available:!!await audioBucket()});
 export const POST=(request:Request)=>safe(async()=>{
-  const user=await account();if(request.headers.get('origin')!==new URL(request.url).origin)throw new GameError('Diese Anfrage ist nicht erlaubt.',403);
+  if(request.headers.get('origin')!==new URL(request.url).origin)throw new GameError('Diese Anfrage ist nicht erlaubt.',403);
+  const user=await contributor(request);
   const bucket=await audioBucket();if(!bucket)throw new GameError('Audio ist momentan nicht verfügbar.',503);
-  await rateLimit(`audio:${user.id}`,20,86400);
+  await limitContribution(request,user,'audio');
   if(request.headers.get('content-type')!=='audio/wav')throw new GameError('Bitte eine gültige Audioaufnahme auswählen.',415);
   const reader=request.body?.getReader();if(!reader)throw new GameError('Die Audiodatei fehlt.',400);
   const chunks:Uint8Array[]=[];let length=0;
@@ -22,5 +24,5 @@ export const POST=(request:Request)=>safe(async()=>{
     await bucket.put(key,bytes,{httpMetadata:{contentType:'audio/wav',cacheControl:'public, max-age=86400'}});
     await sql`INSERT INTO pronunciation_audio(id,owner_id,storage_key,byte_size,duration_ms,content_hash) VALUES (${id},${user.id},${key},${metadata.byteSize},${metadata.durationMs},${contentHash})`;
   }catch(error){await bucket.delete(key);await sql`UPDATE audio_upload_budget SET clips=greatest(0,clips-1) WHERE key='global'`;throw error;}
-  return respond({audio:{id,durationMs:metadata.durationMs}},201);
+  return withContributor(respond({audio:{id,durationMs:metadata.durationMs}},201),request,user);
 });

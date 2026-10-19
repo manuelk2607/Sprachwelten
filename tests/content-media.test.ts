@@ -31,7 +31,7 @@ test('audio-only prompts remain distinct and hide source text in every game proj
  for(const mode of gameModes.filter(mode=>mode.id!=='word-chain')){
   let prompts=samples.filter(e=>e.kind===mode.kind).slice(0,4).map(e=>({...e,presentation:'audio' as const,phrase:'',literal:'Hidden transcript',audioId:crypto.randomUUID()}));
   if(mode.id==='who-said-it')prompts=prepareAttributionEntries(samples.filter(e=>e.kind==='attribution')).map(e=>({...e,presentation:'audio' as const,phrase:'',literal:'Hidden transcript',audioId:crypto.randomUUID()}));
-  assert.ok(prompts.length>=2,mode.id);const p=player(1),g=createGame('ABC234',p,'en',mode.id);for(let i=2;i<=mode.minPlayers;i++)joinGame(g,player(i));act(g,p.id,{action:'start'},prompts);
+  assert.ok(prompts.length>=2,mode.id);const p=player(1),g=createGame('ABC234',p,'en',mode.id);if(mode.id==='tongue-twisters')g.pronunciationLanguage='';for(let i=2;i<=mode.minPlayers;i++)joinGame(g,player(i));act(g,p.id,{action:'start'},prompts);
   assert.equal(g.prompts.length,2,mode.id);assert.notEqual(g.prompts[0].audioId,g.prompts[1].audioId);
   const view=viewGame(g,p.id);assert.equal(view.prompt?.phrase,'');assert.equal(view.prompt?.audioId,g.round!.entry.audioId);assert.ok(!view.prompt?.literal);assert.equal(view.prompt?.presentation,'audio');assert.equal(view.revelation,null);
   if(view.friends)assert.equal(view.friends.otherWord,'');if(view.wordOrder)assert.equal(view.wordOrder.source,'');if(view.team){assert.equal(view.team.briefing?.phrase,'');const receiver=viewGame(g,g.players[1].id);assert.equal(receiver.prompt?.audioId,undefined);assert.equal(receiver.team?.briefing,null);}

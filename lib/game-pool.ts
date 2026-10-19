@@ -5,10 +5,11 @@ import {categoryId} from './quiz-categories';
 import {normalizedAnswer} from './challenges';
 import {prepareMeaningEntries} from './meaning-quiz';
 
-export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'attributionCategory'>;
+export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'pronunciationLanguage' | 'attributionCategory'>;
 export const poolKey = (game: PoolSettings) => JSON.stringify([game.mode, game.locale,
   game.mode === 'meaning-quiz' ? game.meaningCategory ?? 'all' : null,
   game.mode === 'tongue-twisters' ? game.pronunciationCategory ?? 'both' : null,
+  game.mode === 'tongue-twisters' ? game.pronunciationLanguage ?? '' : null,
   game.mode === 'who-said-it' ? game.attributionCategory ?? 'both' : null]);
 
 export function promptIdentity(entry: Entry) {
@@ -31,7 +32,8 @@ export function playablePrompts(game: PoolSettings, prompts: Entry[]) {
     && (game.mode !== 'who-said-it' || !game.attributionCategory || game.attributionCategory === 'both' || entry.challenge?.type === 'attribution' && entry.challenge.category === game.attributionCategory)
     && (game.mode !== 'dialect-detective' || categoryId('region', entry.regionId ?? entry.region))
     && (game.mode !== 'everyday-language' || categoryId('context', entry.contextId ?? entry.context)));
-  return [...new Map(eligible.map(entry => [promptIdentity(entry), entry])).values()];
+  const filtered=game.mode==='tongue-twisters'&&game.pronunciationLanguage?eligible.filter(entry=>entry.language===game.pronunciationLanguage):eligible;
+  return [...new Map(filtered.map(entry => [promptIdentity(entry), entry])).values()];
 }
 
 export type RoomPoolSettings = PoolSettings & Pick<Game, 'playedPrompts'> & Partial<Pick<Game, 'round'>>;

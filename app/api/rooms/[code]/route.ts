@@ -27,6 +27,7 @@ export const POST = (request:Request,ctx:Context) => safe(async()=>{
     ...(action.mode?{mode:action.mode}:{}),
     ...(action.meaningCategory?{meaningCategory:action.meaningCategory}:{}),
     ...(action.pronunciationCategory?{pronunciationCategory:action.pronunciationCategory}:{}),
+    ...(action.pronunciationLanguage!==undefined?{pronunciationLanguage:action.pronunciationLanguage}:{}),
     ...(action.attributionCategory?{attributionCategory:action.attributionCategory}:{}),
   }:{})});
   if (action.action==='start'||action.action==='restart'||action.action==='configure') {

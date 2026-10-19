@@ -84,6 +84,7 @@ test('legacy matches remember all shown cards and interrupted matches do not con
   const shown=game.prompts.map(entry=>entry.id);act(game,game.hostId,{action:'restart'},wordSeeds);
   assert.ok(shown.every(id=>game.playedPrompts!.some(entry=>entry.id===id)));
   const interrupted=createGame('FRESHX',player(),'de','tongue-twisters');joinGame(interrupted,player());
+  interrupted.pronunciationLanguage='';
   act(interrupted,interrupted.hostId,{action:'start'},extraSeeds);
   assert.equal(interrupted.playedPrompts!.length,1);assert.ok(!interrupted.playedPrompts!.some(entry=>entry.id===interrupted.prompts[1].id));
 });

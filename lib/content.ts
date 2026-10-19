@@ -65,11 +65,12 @@ export const explanationInput = z.object({ creditName:text(80),body: z.string().
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);
 export const roomCode = z.string().regex(/^[A-Z0-9]{6}$/);
+export const pronunciationLanguageInput=z.string().trim().max(30).refine(value=>value===''||isRegisteredLanguage(value),'Bitte eine Sprache aus dem geprüften Register wählen.');
 export const ratingScores=z.object({clarity:z.number().int().min(1).max(5),accuracy:z.number().int().min(1).max(5),rhythm:z.number().int().min(1).max(5)});
 export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({ action: z.literal('start') }),
-  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
+  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
   z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional(),immediate:z.boolean().optional() }),
   z.object({ action:z.literal('leave') }),
   z.object({ action:z.literal('heartbeat') }),

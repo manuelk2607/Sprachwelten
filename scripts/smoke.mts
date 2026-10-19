@@ -101,7 +101,7 @@ try{
     }
     assert.equal(current.data.room.phase,'finished');assert.equal(current.data.room.players[0].score,2);
   }
-  const tongue=await request('/api/rooms',{name:'QA Speaker',mode:'tongue-twisters',locale:'en'});assert.equal(tongue.status,201);code=tongue.data.room.code;roomCodes.push(code!);
+  const tongue=await request('/api/rooms',{name:'QA Speaker',mode:'tongue-twisters',locale:'en',pronunciationLanguage:''});assert.equal(tongue.status,201);code=tongue.data.room.code;roomCodes.push(code!);
   const speechTokens=[tongue.data.token!];
   assert.equal((await request(`/api/rooms/${code}`,{action:'start'},speechTokens[0])).status,409);
   for(const name of ['QA Listener 1','QA Listener 2']){const guest=await request(`/api/rooms/${code}/join`,{name});assert.equal(guest.status,201);speechTokens.push(guest.data.token!);}

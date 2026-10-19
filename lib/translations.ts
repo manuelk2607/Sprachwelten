@@ -3,6 +3,10 @@ import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Sprache der Zungenbrecher':'Tongue-twister language',
+  'Gilt für Texte und Aufnahmen in beiden Kategorien. Mit „Alle Sprachen“ werden die Sprachen gemischt.':'Applies to text and audio in both categories. “All languages” mixes the languages.',
+  'Für diese Sprache und Kategorie gibt es keine ungespielten Aufgaben. Wähle eine andere Sprache oder Kategorie.':'There are no unplayed tasks for this language and category. Choose another language or category.',
+  'Dieser Sprachfilter passt nicht zum Spiel.':'This language filter does not apply to this game.',
   'Tipp fürs Spiel':'In-game hint',
   'Tipp anzeigen':'Show hint',
   'Tipp ausblenden':'Hide hint',

@@ -6,7 +6,7 @@ import { extraSeeds } from '../lib/extra-seeds';
 import { wordSeeds } from '../lib/word-seeds';
 import type { PlayableGameMode } from '../lib/modes';
 const player=(id:string)=>({id,name:id,tokenHash:'secret-'+id,score:0});
-function lobby(mode:PlayableGameMode='idiom-bluff',count=3){const game=createGame('ABC234',player('host'),'de',mode);for(let i=1;i<count;i++)joinGame(game,player('guest'+i));return game;}
+function lobby(mode:PlayableGameMode='idiom-bluff',count=3){const game=createGame('ABC234',player('host'),'de',mode);if(mode==='tongue-twisters')game.pronunciationLanguage='';for(let i=1;i<count;i++)joinGame(game,player('guest'+i));return game;}
 test('hosts choose up to ten rounds independently of player count',()=>{
  const game=lobby();assert.equal(game.totalRounds,2);act(game,'host',{action:'configure',rounds:10});assert.equal(game.totalRounds,10);assert.throws(()=>act(game,'host',{action:'configure',rounds:11}));assert.throws(()=>act(game,'guest1',{action:'configure',rounds:2}));leaveGame(game,'guest2');assert.equal(game.totalRounds,10);
  const solo=lobby('language-quiz',1);act(solo,'host',{action:'configure',rounds:10});act(solo,'host',{action:'start'},wordSeeds);assert.equal(solo.prompts.length,10);

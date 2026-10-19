@@ -10,6 +10,7 @@ const ids=[0,1,2].map(index=>`40000000-0000-4000-8000-${String(index+1).padStart
 const player=(index:number)=>({id:ids[index],name:`Player ${index}`,score:0,tokenHash:`secret-${index}`});
 function lobby(mode:PlayableGameMode,count=1) {
   const game=createGame('ABC234',player(0),'en',mode);
+  if(mode==='tongue-twisters')game.pronunciationLanguage='';
   for(let index=1;index<count;index++)joinGame(game,player(index));
   return game;
 }

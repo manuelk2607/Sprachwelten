@@ -248,6 +248,7 @@ export function viewGame(game:Omit<Game,'prompts'>,playerId:string) {
   const speaker=performance?game.players[performance.speakerIndex]:undefined;
   const activeRatings=speaker?performance?.ratings[speaker.id]??{}:{};
   return {
+    hint:round?.entry.kind==='dialect'&&round.entry.hint&&game.phase==='voting'?{text:round.entry.hint,sourceLocale:round.entry.sourceLocale??'de',status:translationStatus({hint:round.entry.hint,sourceLocale:round.entry.sourceLocale,translations:round.entry.translations},game.locale)}:null,
     meaningCategory:game.meaningCategory??'all',
     outsider:c?.type==='outsider'?{rule:challengeText(c.rule,game.locale),...(revealed?{explanation:challengeText(c.explanation,game.locale)}:{})}:null,
     chain:round?.chain?{words:round.chain.words,turn:round.chain.turn,activePlayerId:round.chain.queue[0]??null,requiredLetter:edgeLetter(round.chain.words.at(-1)!.text,'last'),choices:game.phase==='linking'&&round.chain.queue[0]===playerId?round.chain.choices:[],results:round.chain.results}:null,

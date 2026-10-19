@@ -21,6 +21,7 @@ const entryFields = z.object({
   phrase:z.string().trim().max(1500).default(''),
   language:z.string().trim().max(30).refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.'),
   literal:text(300),
+  hint:text(300),
   meaning: z.string().trim().max(1500).default(''),
   example: text(600), region: text(100), culturalNote: text(1000), context: text(200),
   sourceUrl: z.union([z.literal(''), z.string().url().max(500).refine(s => /^https?:\/\//.test(s))]).default(''),
@@ -59,7 +60,7 @@ export const entryInput=contentSchema(true);
 // Stored starter cards and saved rounds predate the required translation.
 export const storedEntryInput=contentSchema(false);
 export type EntryInput = z.infer<typeof entryInput>;
-export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'> & {sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
+export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'|'hint'> & {hint?:string;sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
 export const explanationInput = z.object({ creditName:text(80),body: z.string().trim().min(10).max(1500),sourceLocale:z.enum(['de','en']).optional(),translation:translationFields.optional(),translationReviewed:z.boolean().optional() }).refine(input=>!input.translation?.body||input.translationReviewed,{message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);

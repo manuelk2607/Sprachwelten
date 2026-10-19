@@ -9,7 +9,7 @@ import type {bulkInput} from '@/lib/community-input';
 export async function ownsEntry(id:string,userId:string){return (await database()`SELECT id FROM content_entries WHERE id=${id} AND author_id=${userId} AND deleted_at IS NULL`).length===1;}
 export async function ownEntries(userId:string,offset:number,query=''){
  const pattern='%'+query.replace(/[\\%_]/g,'\\$&')+'%';
- const rows=await database().query(`SELECT ${fields} FROM content_entries WHERE author_id=$1 AND deleted_at IS NULL AND ($3='%%' OR concat_ws(' ',phrase,literal,meaning,sense,translations::text,challenge::text) ILIKE $3) ORDER BY created_at DESC,id LIMIT 31 OFFSET $2`,[userId,offset,pattern]);
+ const rows=await database().query(`SELECT ${fields} FROM content_entries WHERE author_id=$1 AND deleted_at IS NULL AND ($3='%%' OR concat_ws(' ',phrase,literal,meaning,hint,sense,translations::text,challenge::text) ILIKE $3) ORDER BY created_at DESC,id LIMIT 31 OFFSET $2`,[userId,offset,pattern]);
  return {entries:(rows.slice(0,30) as Entry[]).map(withLanguageNames),more:rows.length>30};
 }
 export async function suggestEntry(id:string,input:EntryInput,revision:number,note:string,user:{id:string;name:string}){

@@ -7,11 +7,12 @@ export const translationFields=z.object({
   example:z.string().trim().max(600).default(''),
   culturalNote:z.string().trim().max(1000).default(''),
   body:z.string().trim().max(1500).default(''),
+  hint:z.string().trim().max(300).default(''),
 });
 export type TranslationTexts=z.infer<typeof translationFields>;
 export type SavedTranslation=Partial<TranslationTexts>&{origin:'contributor';};
 export type ContentTranslations=Partial<Record<Locale,SavedTranslation>>;
-export const translationKeys=['literal','meaning','example','culturalNote','body'] as const;
+export const translationKeys=['literal','meaning','example','culturalNote','body','hint'] as const;
 export const otherLocale=(locale:Locale):Locale=>locale==='de'?'en':'de';
 export function textsOf(input:Partial<TranslationTexts>):TranslationTexts {
   return translationFields.parse(Object.fromEntries(translationKeys.map(key=>[key,input[key]??''])));

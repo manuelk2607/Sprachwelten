@@ -93,6 +93,10 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
 .room-settings-row{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:16px;align-items:start}
 .room-settings-row>label{min-width:0}
 .room-settings-row .room-round-count:only-child{grid-column:1;width:100px}
+.round-hint{margin:18px 0}
+.round-hint>div:not([hidden]){margin-top:12px;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:var(--white)}
+.round-hint p{font-size:14px;line-height:1.6;margin:0}
+.round-hint .translation-notice{margin-top:10px}
 .finished-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:stretch}
 .finished-actions .button{min-width:0;white-space:normal;padding:16px 12px}
 @media(max-width:600px){.finished-actions{display:flex;flex-direction:column}.finished-actions .prepare-next{order:-1;min-height:60px}.finished-actions .button{width:100%}}

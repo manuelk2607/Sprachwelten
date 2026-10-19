@@ -3,6 +3,10 @@ import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Tipp fürs Spiel':'In-game hint',
+  'Tipp anzeigen':'Show hint',
+  'Tipp ausblenden':'Hide hint',
+  'Gib einen kleinen Hinweis, ohne die Lösung zu verraten. Im Spiel wird er erst auf Wunsch eingeblendet und kostet keine Punkte.':'Give a small clue without revealing the answer. Players can choose to reveal it during the game without losing points.',
   'Direkt weiterspielen':'Play again now',
   'Für direktes Weiterspielen fehlen Mitspieler oder ungespielte Aufgaben. Bereite die nächste Partie in der Lobby vor.':'There are not enough players or unplayed tasks to play again immediately. Prepare the next match in the lobby.',
   'Du kannst ohne Konto beitragen. Mit einem Konto kannst du deine Beiträge später geräteübergreifend bearbeiten und löschen sowie den Stand deiner Verbesserungsvorschläge verfolgen. Melde dich dafür vor dem Einreichen an. Gastbeiträge werden keinem später erstellten Konto automatisch zugeordnet.':'You can contribute without an account. With an account, you can edit and delete your contributions across devices and track your improvement suggestions. Sign in before submitting to use these features. Guest contributions are not automatically linked to accounts created later.',

@@ -4,14 +4,14 @@ import {entryInput} from '../lib/content';
 import {communityGameEntries} from '../lib/community-game-seeds';
 import {newGameEntries} from '../lib/new-game-seeds';
 import {neighbors} from '../lib/challenges';
-import {gamePrompts,addEntry,findDuplicateEntry} from '../db/repository';
+import {gamePrompts,addEntry} from '../db/repository';
 import type {Game,GameView} from '../lib/game';
 const base='http://localhost:5176',url=process.env.DATABASE_URL_UNPOOLED!;
 assert.equal(new URL(url).hostname,'ep-gentle-glitter-b9qamivx.c-7.eu-central-1.aws.neon.tech','This test is restricted to the named QA branch.');
 const sql=neon(url),rooms:string[]=[],entries:string[]=[];
 async function request(path:string,data?:unknown,token?:string){const response=await fetch(base+path,{method:data?'POST':'GET',headers:{...(data?{'Content-Type':'application/json',Origin:base}:{}),...(token?{Authorization:`Bearer ${token}`}:{})},...(data?{body:JSON.stringify(data)}:{})});const result=await response.json() as {room:GameView;token:string;error?:string;entry?:unknown};return {status:response.status,...result};}
 async function state(code:string){return (await sql`SELECT state FROM game_rooms WHERE code=${code}`)[0].state as Game;}
-function route(g:Game){const c=g.round!.entry.challenge;assert.ok(c?.type==='mission');let path=[c.start];for(let stage=0;stage<3;stage++){const target=c.checkpoints[stage],q=[path.slice(-1)],seen=new Set(q[0]);let found:number[]|undefined;for(const p of q){if(p.at(-1)===target){found=p;break;}for(const n of neighbors(p.at(-1)!))if(!seen.has(n)&&!c.blocked.includes(n)&&!c.checkpoints.slice(stage+1).includes(n)){seen.add(n);q.push([...p,n]);}}assert.ok(found);path.push(...found.slice(1));}return path;}
+function route(g:Game){const c=g.round!.entry.challenge;assert.ok(c?.type==='mission');const path=[c.start];for(let stage=0;stage<3;stage++){const target=c.checkpoints[stage],q=[path.slice(-1)],seen=new Set(q[0]);let found:number[]|undefined;for(const p of q){if(p.at(-1)===target){found=p;break;}for(const n of neighbors(p.at(-1)!))if(!seen.has(n)&&!c.blocked.includes(n)&&!c.checkpoints.slice(stage+1).includes(n)){seen.add(n);q.push([...p,n]);}}assert.ok(found);path.push(...found.slice(1));}return path;}
 try{
  // Prove the running server uses this QA database before any API mutations.
  const probe=await addEntry(entryInput.parse({...newGameEntries[48],literal:'QA translation',phrase:'QA branch probe '+crypto.randomUUID()}),'qa-new-games','QA New Games');entries.push(probe.id);assert.equal((await request('/api/entries/'+probe.id)).status,200,'Server must use the QA branch.');

@@ -1,10 +1,10 @@
 'use client';
-import {hasAudio,hasText} from '@/lib/content-media';
+import {hasAudio} from '@/lib/content-media';
 import {ChallengeDetails} from './challenge-details';
 import { useEffect, useState } from 'react';
 import { BookOpen, ExternalLink, Lightbulb } from 'lucide-react';
 import { useI18n, type Locale } from '@/lib/i18n';
-import { kindLabels, languages, type Entry, type Explanation } from '@/lib/content';
+import { kindLabels, type Entry, type Explanation } from '@/lib/content';
 import { localizeEntry } from '@/lib/entry-localization';
 import { localizedTexts, textsOf, translationStatus, type TranslationTexts } from '@/lib/content-translations';
 import { languageLabel } from '@/lib/language-label';
@@ -19,7 +19,7 @@ export function EntryDialog({entry:original,close,login,signedIn}:{entry:Entry;c
   const [creditName,setCreditName]=useState('');const [permissions,setPermissions]=useState({canEdit:false,canSuggest:false});const [editing,setEditing]=useState(false);const [current,setCurrent]=useState(original);const [notice,setNotice]=useState('');
   const entry=localizeEntry(current,locale);
   const [sourceLocale,setSourceLocale]=useState<Locale>(locale);const [text,setText]=useState('');const [translation,setTranslation]=useState<Partial<TranslationTexts>>({});const [reviewed,setReviewed]=useState(false);const [revision,setRevision]=useState(0);
-  useEffect(()=>{const controller=new AbortController();fetch(`/api/entries/${entry.id}`,{signal:controller.signal}).then(async response=>{const result=await response.json() as {explanations:Explanation[];error:string;entry:Entry;canEdit:boolean;canSuggest:boolean};if(!response.ok)throw new Error(result.error);return result;}).then(result=>{setExplanations(result.explanations);setCurrent(result.entry);setPermissions({canEdit:result.canEdit,canSuggest:result.canSuggest});setError('');}).catch(error=>{if(error.name!=='AbortError')setError(t(error.message));});return()=>controller.abort();},[entry.id,refresh,signedIn]);
+  useEffect(()=>{const controller=new AbortController();fetch(`/api/entries/${entry.id}`,{signal:controller.signal}).then(async response=>{const result=await response.json() as {explanations:Explanation[];error:string;entry:Entry;canEdit:boolean;canSuggest:boolean};if(!response.ok)throw new Error(result.error);return result;}).then(result=>{setExplanations(result.explanations);setCurrent(result.entry);setPermissions({canEdit:result.canEdit,canSuggest:result.canSuggest});setError('');}).catch(error=>{if(error.name!=='AbortError')setError(error.message);});return()=>controller.abort();},[entry.id,refresh,signedIn]);
   async function add(event:React.FormEvent<HTMLFormElement>) {
     event.preventDefault();setBusy(true);setError('');
     try {const response=await fetch(`/api/entries/${entry.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({body:text,creditName,sourceLocale,translation,translationReviewed:reviewed})});const result=await response.json() as {error:string};if(!response.ok)throw new Error(result.error);setText('');setCreditName('');setTranslation({});setReviewed(false);setRefresh(value=>value+1);}

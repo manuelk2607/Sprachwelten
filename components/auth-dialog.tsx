@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { getAuthClient } from '@/lib/auth/client';
 import { Dialog } from './dialog';
 export function AuthDialog({close, initial = 'signin', email = '', resetToken = ''}: {close:()=>void; initial?:'signin'|'verify'|'reset';email?:string;resetToken?:string}) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [mode,setMode]=useState<'signin'|'signup'|'forgot'|'verify'|'reset'>(initial);
   const [cooldown,setCooldown]=useState(false);
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [message,setMessage]=useState('');

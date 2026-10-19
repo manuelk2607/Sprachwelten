@@ -1,7 +1,7 @@
 import {withRoomAudio} from '@/lib/room-audio';
 import {resolvePlayerName} from '@/lib/player-name';
 import { z } from 'zod';
-import { playerName, roomCode } from '@/lib/content';
+import { roomCode } from '@/lib/content';
 import { body, hashToken, randomToken, respond, safe } from '@/lib/http';
 import { joinGame, viewGame } from '@/lib/game';
 import { mutateRoom, rateLimit } from '@/db/repository';

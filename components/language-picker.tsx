@@ -12,6 +12,7 @@ export function LanguagePicker({label,value,onChange,name,allowAll=false,disable
     if(!custom)return;const controller=new AbortController();fetch('/api/languages?'+new URLSearchParams({code:value,locale}),{signal:controller.signal}).then(r=>r.json() as Promise<{languages:LanguageOption[]}>).then(data=>setSelected(data.languages[0]??null)).catch(()=>{});return()=>controller.abort();
   },[custom,value,locale]);
   useEffect(()=>{
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset obsolete registry results before the debounced external lookup.
     setResults([]);if(!other||query.trim().length<2){setLoading(false);return;}
     const controller=new AbortController();setLoading(true);const timer=setTimeout(()=>fetch('/api/languages?'+new URLSearchParams({q:query.trim(),locale}),{signal:controller.signal}).then(r=>r.json() as Promise<{languages:LanguageOption[]}>).then(data=>{if(!controller.signal.aborted)setResults(data.languages);}).catch(()=>{}).finally(()=>{if(!controller.signal.aborted)setLoading(false);}),250);
     return()=>{clearTimeout(timer);controller.abort();};

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {entryInput,contentKinds,type Entry} from '../lib/content';
+import {entryInput,contentKinds} from '../lib/content';
 import {hasAudio,hasText,presentationOf} from '../lib/content-media';
 import {createGame,joinGame,act,viewGame} from '../lib/game';
 import {gameModes} from '../lib/modes';

@@ -1,4 +1,5 @@
 "use client";
+import {PhraseText} from "./phrase-text";
 import { useApiResource } from "@/lib/use-api-resource";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useEffect, useState } from "react";
@@ -30,12 +31,13 @@ export function MyContributions() {
     "",
   );
   useEffect(() => {
+    if (query.trim() === search) return;
     const timer = setTimeout(() => {
       setSearch(query.trim());
       setOffset(0);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, search]);
   const resource = useApiResource<{ entries: Entry[]; more: boolean }>(
     userId
       ? "/api/me/entries?" +
@@ -156,7 +158,7 @@ export function MyContributions() {
                     <span className="kind-pill">
                       {t(kindLabels[entry.kind])}
                     </span>
-                    <h2>{entry.phrase || t("Audiobeitrag")}</h2>
+                    <h2>{entry.phrase ? <PhraseText entry={entry}/> : t("Audiobeitrag")}</h2>
                     {entry.sense && (
                       <p className="form-note">
                         {t("Bedeutungsvariante")}: {entry.sense}

@@ -1,16 +1,322 @@
-'use client';
-import {useEffect,useState} from 'react';
-import {useI18n} from '@/lib/i18n';
-import {kindLabels,type Entry,type EntryInput} from '@/lib/content';
-import {Dialog} from './dialog';
-import {ContributeDialog} from './contribute-dialog';
-type Suggestion={id:string;entryId:string;authorName:string;payload:EntryInput;note:string;baseRevision:number;currentRevision:number;revision:number;createdAt:string;phrase:string;literal:string;meaning:string};
-type Feed={events:{id:string;phrase:string;kind:Entry['kind'];createdAt:string;unread:boolean}[];unreadCount:number;pendingSuggestions:number};
-export function AdminInbox({refresh,onChanged,onEdit}:{refresh:number;onChanged:()=>void;onEdit:(entry:Entry)=>void}){
- const {t,locale}=useI18n();const [feed,setFeed]=useState<Feed|null>(null),[suggestions,setSuggestions]=useState<Suggestion[]>([]),[editing,setEditing]=useState<{entry:Entry;suggestion:Suggestion}|null>(null),[rejecting,setRejecting]=useState<Suggestion|null>(null),[note,setNote]=useState(''),[feedback,setFeedback]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
- useEffect(()=>{const controller=new AbortController();Promise.all(['/api/admin/inbox','/api/admin/suggestions'].map(async path=>{const r=await fetch(path,{signal:controller.signal});const data=await r.json() as Feed & {suggestions:Suggestion[];error:string};if(!r.ok)throw new Error(data.error);return data;})).then(([inbox,list])=>{setFeed(inbox);setSuggestions(list.suggestions);setError('');}).catch(e=>{if(e.name!=='AbortError')setError(e.message);});return()=>controller.abort();},[refresh]);
- async function markSeen(){setBusy(true);try{const r=await fetch('/api/admin/inbox',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'seen'})});if(!r.ok)throw new Error((await r.json() as {error:string}).error);onChanged();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
- async function openEntry(id:string,suggestion?:Suggestion){setError('');try{const r=await fetch('/api/entries/'+id),data=await r.json() as {entry:Entry;error:string};if(!r.ok)throw new Error(data.error);const entry=data.entry as Entry;if(suggestion){const payload=suggestion.payload,source=payload.sourceLocale??'de';setEditing({suggestion,entry:{...entry,...payload,revision:suggestion.baseRevision,translations:payload.translation?{[source==='de'?'en':'de']:payload.translation}:{}}});}else onEdit(entry);}catch(e){setError((e as Error).message);}}
- async function reject(){if(!rejecting)return;setBusy(true);try{const r=await fetch('/api/admin/suggestions/'+rejecting.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision:rejecting.revision,action:'reject',note,feedback})});const data=await r.json() as {entry:Entry;error:string};if(!r.ok)throw new Error(data.error);setRejecting(null);onChanged();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
- return <section className="community-inbox" aria-label={t('Benachrichtigungen')}><div className="inbox-heading"><div><h2>{t('Benachrichtigungen')}</h2><p className="muted">{feed?.unreadCount??0} {t('neue Beiträge')} · {feed?.pendingSuggestions??0} {t('offene Vorschläge')}</p></div><button className="button outline" onClick={()=>onChanged()}>{t('Aktualisieren')}</button></div>{error&&<p className="error" role="alert">{t(error)}</p>}{feed&&<><details open={suggestions.length>0}><summary>{t('Verbesserungsvorschläge')} ({suggestions.length})</summary><p className="form-note">{t('Vorschläge verändern den öffentlichen Beitrag erst, wenn du sie übernimmst.')}</p>{suggestions.map(s=><article key={s.id} className="suggestion-card"><h3>{s.phrase||t('Audiobeitrag')}</h3><p className="form-note">{s.authorName} · {new Date(s.createdAt).toLocaleString(locale)}</p><div className="suggestion-comparison"><div><strong>{t('Aktueller Beitrag')}</strong><p>{s.literal}</p><p>{s.meaning}</p></div><div><strong>{t('Vorgeschlagene Fassung')}</strong><p>{s.payload.phrase}</p><p>{s.payload.literal}</p><p>{s.payload.meaning}</p><p>{t(kindLabels[s.payload.kind])} · {s.payload.language}{s.payload.region?' · '+t(s.payload.region):''}</p></div></div>{s.note&&<blockquote>{s.note}</blockquote>}{s.baseRevision!==s.currentRevision&&<p className="error">{t('Der Beitrag wurde seit diesem Vorschlag geändert. Bitte ablehnen und einen aktuellen Vorschlag anfordern.')}</p>}<div className="dialog-actions"><button className="button outline" disabled={busy} onClick={()=>{setRejecting(s);setNote('');setFeedback('');}}>{t('Ablehnen')}</button><button className="button dark" disabled={s.baseRevision!==s.currentRevision} onClick={()=>void openEntry(s.entryId,s)}>{t('Prüfen & bearbeiten')}</button></div></article>)}{!suggestions.length&&<p>{t('Keine offenen Vorschläge.')}</p>}</details><details><summary>{t('Neueste Beiträge')} ({feed.unreadCount} {t('ungelesen')})</summary><p className="form-note">{t('Die letzten 50 veröffentlichten Beiträge, neueste zuerst.')}</p><button className="button outline" disabled={busy||!feed.unreadCount} onClick={()=>void markSeen()}>{t('Als gelesen markieren')}</button><ol className="inbox-list">{feed.events.map(event=><li key={event.id} className={event.unread?'unread':''}><button className="text-link" onClick={()=>void openEntry(event.id)}>{event.phrase||t('Audiobeitrag')}</button><span>{t(kindLabels[event.kind])} · {new Date(event.createdAt).toLocaleString(locale)}{event.unread?' · '+t('Neu'):''}</span></li>)}</ol></details></>}{editing&&<ContributeDialog initialEntry={editing.entry} review={{id:editing.suggestion.id,revision:editing.suggestion.revision}} close={()=>setEditing(null)} saved={onChanged} openExisting={async()=>{}}/>}{rejecting&&<Dialog title={t('Vorschlag ablehnen?')} close={()=>{if(!busy)setRejecting(null);}}><p>{rejecting.phrase||t('Audiobeitrag')}</p><label>{t('Rückmeldung an beitragende Person')}<textarea value={feedback} maxLength={1000} onChange={e=>setFeedback(e.target.value)}/></label><label>{t('Interne Notiz')}<textarea value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/></label>{error&&<p className="error">{t(error)}</p>}<div className="dialog-actions"><button className="button outline" disabled={busy} onClick={()=>setRejecting(null)}>{t('Abbrechen')}</button><button className="button dark" disabled={busy} onClick={()=>void reject()}>{t('Ablehnen')}</button></div></Dialog>}</section>;
+"use client";
+import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
+import { kindLabels, type Entry, type EntryInput } from "@/lib/content";
+import { Dialog } from "./dialog";
+import { ContributeDialog } from "./contribute-dialog";
+type Suggestion = {
+  id: string;
+  entryId: string;
+  authorName: string;
+  payload: EntryInput;
+  note: string;
+  baseRevision: number;
+  currentRevision: number;
+  revision: number;
+  createdAt: string;
+  phrase: string;
+  literal: string;
+  meaning: string;
+};
+type Feed = {
+  events: {
+    id: string;
+    phrase: string;
+    kind: Entry["kind"];
+    createdAt: string;
+    unread: boolean;
+  }[];
+  unreadCount: number;
+  pendingSuggestions: number;
+};
+export function AdminInbox({
+  refresh,
+  onChanged,
+  onEdit,
+  onRead,
+}: {
+  refresh: number;
+  onChanged: () => void;
+  onEdit: (entry: Entry) => void;
+  onRead: (entryId: string) => Promise<void>;
+}) {
+  const { t, locale } = useI18n();
+  const [feed, setFeed] = useState<Feed | null>(null),
+    [suggestions, setSuggestions] = useState<Suggestion[]>([]),
+    [editing, setEditing] = useState<{
+      entry: Entry;
+      suggestion: Suggestion;
+    } | null>(null),
+    [rejecting, setRejecting] = useState<Suggestion | null>(null),
+    [note, setNote] = useState(""),
+    [feedback, setFeedback] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all(
+      ["/api/admin/inbox", "/api/admin/suggestions"].map(async (path) => {
+        const r = await fetch(path, { signal: controller.signal });
+        const data = (await r.json()) as Feed & {
+          suggestions: Suggestion[];
+          error: string;
+        };
+        if (!r.ok) throw new Error(data.error);
+        return data;
+      }),
+    )
+      .then(([inbox, list]) => {
+        setFeed(inbox);
+        setSuggestions(list.suggestions);
+        setError("");
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      });
+    return () => controller.abort();
+  }, [refresh]);
+  async function markSeen() {
+    setBusy(true);
+    try {
+      const r = await fetch("/api/admin/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "seen" }),
+      });
+      if (!r.ok) throw new Error(((await r.json()) as { error: string }).error);
+      onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function openEntry(id: string, suggestion?: Suggestion) {
+    setError("");
+    try {
+      const r = await fetch("/api/entries/" + id),
+        data = (await r.json()) as { entry: Entry; error: string };
+      if (!r.ok) throw new Error(data.error);
+      const entry = data.entry as Entry;
+      if (suggestion) {
+        const payload = suggestion.payload,
+          source = payload.sourceLocale ?? "de";
+        setEditing({
+          suggestion,
+          entry: {
+            ...entry,
+            ...payload,
+            revision: suggestion.baseRevision,
+            translations: payload.translation
+              ? { [source === "de" ? "en" : "de"]: payload.translation }
+              : {},
+          },
+        });
+        await onRead(entry.id);
+      } else onEdit(entry);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  async function reject() {
+    if (!rejecting) return;
+    setBusy(true);
+    try {
+      const r = await fetch("/api/admin/suggestions/" + rejecting.id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          revision: rejecting.revision,
+          action: "reject",
+          note,
+          feedback,
+        }),
+      });
+      const data = (await r.json()) as { entry: Entry; error: string };
+      if (!r.ok) throw new Error(data.error);
+      setRejecting(null);
+      onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="community-inbox" aria-label={t("Benachrichtigungen")}>
+      <div className="inbox-heading">
+        <div>
+          <h2>{t("Benachrichtigungen")}</h2>
+          <p className="muted">
+            {feed?.unreadCount ?? 0} {t("neue Beiträge")} ·{" "}
+            {feed?.pendingSuggestions ?? 0} {t("offene Vorschläge")}
+          </p>
+        </div>
+        <button className="button outline" onClick={() => onChanged()}>
+          {t("Aktualisieren")}
+        </button>
+      </div>
+      {error && (
+        <p className="error" role="alert">
+          {t(error)}
+        </p>
+      )}
+      {feed && (
+        <>
+          <details open={suggestions.length > 0}>
+            <summary>
+              {t("Verbesserungsvorschläge")} ({suggestions.length})
+            </summary>
+            <p className="form-note">
+              {t(
+                "Vorschläge verändern den öffentlichen Beitrag erst, wenn du sie übernimmst.",
+              )}
+            </p>
+            {suggestions.map((s) => (
+              <article key={s.id} className="suggestion-card">
+                <h3>{s.phrase || t("Audiobeitrag")}</h3>
+                <p className="form-note">
+                  {s.authorName} ·{" "}
+                  {new Date(s.createdAt).toLocaleString(locale)}
+                </p>
+                <div className="suggestion-comparison">
+                  <div>
+                    <strong>{t("Aktueller Beitrag")}</strong>
+                    <p>{s.literal}</p>
+                    <p>{s.meaning}</p>
+                  </div>
+                  <div>
+                    <strong>{t("Vorgeschlagene Fassung")}</strong>
+                    <p>{s.payload.phrase}</p>
+                    <p>{s.payload.literal}</p>
+                    <p>{s.payload.meaning}</p>
+                    <p>
+                      {t(kindLabels[s.payload.kind])} · {s.payload.language}
+                      {s.payload.region ? " · " + t(s.payload.region) : ""}
+                    </p>
+                  </div>
+                </div>
+                {s.note && <blockquote>{s.note}</blockquote>}
+                {s.baseRevision !== s.currentRevision && (
+                  <p className="error">
+                    {t(
+                      "Der Beitrag wurde seit diesem Vorschlag geändert. Bitte ablehnen und einen aktuellen Vorschlag anfordern.",
+                    )}
+                  </p>
+                )}
+                <div className="dialog-actions">
+                  <button
+                    className="button outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setRejecting(s);
+                      setNote("");
+                      setFeedback("");
+                    }}
+                  >
+                    {t("Ablehnen")}
+                  </button>
+                  <button
+                    className="button dark"
+                    disabled={s.baseRevision !== s.currentRevision}
+                    onClick={() => void openEntry(s.entryId, s)}
+                  >
+                    {t("Prüfen & bearbeiten")}
+                  </button>
+                </div>
+              </article>
+            ))}
+            {!suggestions.length && <p>{t("Keine offenen Vorschläge.")}</p>}
+          </details>
+          <details>
+            <summary>
+              {t("Neueste Beiträge")} ({feed.unreadCount} {t("ungelesen")})
+            </summary>
+            <p className="form-note">
+              {t("Die letzten 50 veröffentlichten Beiträge, neueste zuerst.")}
+            </p>
+            <button
+              className="button outline"
+              disabled={busy || !feed.unreadCount}
+              onClick={() => void markSeen()}
+            >
+              {t("Alle als gelesen markieren")}
+            </button>
+            <ol className="inbox-list">
+              {feed.events.map((event) => (
+                <li key={event.id} className={event.unread ? "unread" : ""}>
+                  <button
+                    className="text-link"
+                    onClick={() => void openEntry(event.id)}
+                  >
+                    {event.phrase || t("Audiobeitrag")}
+                  </button>
+                  <span>
+                    {t(kindLabels[event.kind])} ·{" "}
+                    {new Date(event.createdAt).toLocaleString(locale)}
+                    {" · " + t(event.unread ? "Neu" : "Gelesen")}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </>
+      )}
+      {editing && (
+        <ContributeDialog
+          initialEntry={editing.entry}
+          review={{
+            id: editing.suggestion.id,
+            revision: editing.suggestion.revision,
+          }}
+          close={() => setEditing(null)}
+          saved={onChanged}
+          openExisting={async () => {}}
+        />
+      )}
+      {rejecting && (
+        <Dialog
+          title={t("Vorschlag ablehnen?")}
+          close={() => {
+            if (!busy) setRejecting(null);
+          }}
+        >
+          <p>{rejecting.phrase || t("Audiobeitrag")}</p>
+          <label>
+            {t("Rückmeldung an beitragende Person")}
+            <textarea
+              value={feedback}
+              maxLength={1000}
+              onChange={(e) => setFeedback(e.target.value)}
+            />
+          </label>
+          <label>
+            {t("Interne Notiz")}
+            <textarea
+              value={note}
+              maxLength={1000}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </label>
+          {error && <p className="error">{t(error)}</p>}
+          <div className="dialog-actions">
+            <button
+              className="button outline"
+              disabled={busy}
+              onClick={() => setRejecting(null)}
+            >
+              {t("Abbrechen")}
+            </button>
+            <button
+              className="button dark"
+              disabled={busy}
+              onClick={() => void reject()}
+            >
+              {t("Ablehnen")}
+            </button>
+          </div>
+        </Dialog>
+      )}
+    </section>
+  );
 }

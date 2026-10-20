@@ -61,7 +61,7 @@ async function request(
   }
   return { status: res.status, data: parsed };
 }
-const clean = (entry:Entry) =>
+const clean = (entry: Entry) =>
   entryInput.parse({
     ...entry,
     audioId: entry.audioId ?? undefined,
@@ -199,6 +199,11 @@ try {
   );
   for (const path of ["/api/admin/suggestions", "/api/admin/inbox"])
     assert.equal((await request(path)).status, 403);
+  assert.equal(
+    (await request("/api/admin/inbox", "POST", { action: "seen", entryId: id }))
+      .status,
+    403,
+  );
   assert.equal(
     (
       await request("/api/admin/suggestions/" + suggested.data.id, "PATCH", {
@@ -679,6 +684,71 @@ try {
   const inbox = await request("/api/admin/inbox");
   assert.ok(inbox.data.events.some((e) => e.id === id));
   assert.ok(inbox.data.unreadCount > 0);
+  const badgeBefore = (await request("/api/admin/access")).data.unreadCount;
+  const individual = await request("/api/admin/inbox", "POST", {
+    action: "seen",
+    entryId: id,
+  });
+  assert.equal(individual.status, 200);
+  const afterRead = await request("/api/admin/inbox");
+  assert.equal(afterRead.data.events.find((e) => e.id === id)?.unread, false);
+  const phrase = afterRead.data.events.find((e) => e.id === id)!.phrase;
+  const filter = new URLSearchParams({
+    q: phrase,
+    unread: "true",
+    adminId: crypto.randomUUID(),
+  });
+  const unreadEntries = await request("/api/admin/entries?" + filter);
+  assert.equal(unreadEntries.status, 200);
+  assert.ok(!unreadEntries.data.entries.some((entry) => entry.id === id));
+  filter.set("unread", "false");
+  const allEntries = await request("/api/admin/entries?" + filter);
+  assert.equal(allEntries.status, 200);
+  assert.ok(allEntries.data.entries.some((entry) => entry.id === id));
+  assert.equal(afterRead.data.unreadCount, inbox.data.unreadCount - 1);
+  assert.equal(
+    (await request("/api/admin/access")).data.unreadCount,
+    badgeBefore - 1,
+  );
+  assert.equal(
+    (await request("/api/admin/inbox", "POST", { action: "seen", entryId: id }))
+      .status,
+    200,
+  );
+  assert.equal(
+    (await request("/api/admin/inbox")).data.unreadCount,
+    afterRead.data.unreadCount,
+  );
+  assert.equal(
+    (
+      await request("/api/admin/inbox", "POST", {
+        action: "seen",
+        entryId: "invalid",
+      })
+    ).status,
+    422,
+  );
+  assert.equal(
+    (
+      await request("/api/admin/inbox", "POST", {
+        action: "seen",
+        entryId: crypto.randomUUID(),
+      })
+    ).status,
+    404,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/admin/inbox",
+        "POST",
+        { action: "seen", entryId: id },
+        jars[0],
+        "https://other.invalid",
+      )
+    ).status,
+    403,
+  );
   assert.equal(
     (await request("/api/admin/inbox", "POST", { action: "seen" })).status,
     200,
@@ -696,6 +766,8 @@ try {
   for (const id of grants)
     await sql`DELETE FROM app_admins WHERE user_id=${id}`;
   if (adminId) await sql`DELETE FROM admin_inbox_seen WHERE user_id=${adminId}`;
+  if (adminId)
+    await sql`DELETE FROM admin_inbox_reads WHERE user_id=${adminId}`;
   for (const id of ids) {
     await sql`DELETE FROM entry_suggestions WHERE entry_id=${id}`;
     await sql`DELETE FROM moderation_events WHERE entry_id=${id}`;

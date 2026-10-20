@@ -33,7 +33,13 @@ Der Gastgeber wählt 1 bis 10 Runden, unabhängig von der Spielerzahl. Die Vorei
 
 Eigene Beiträge können nach Ausdruck, Übersetzung und Erklärung durchsucht werden, auch in der zweiten Sprachfassung. Die Suche ist serverseitig auf das angemeldete Konto beschränkt und wird vor der Seiteneinteilung angewendet.
 
-Dialektbeiträge können einen freiwilligen Tipp von bis zu 300 Zeichen enthalten, einschließlich geprüfter zweiter Sprachfassung. Beim Bedeutungs- und Dialektquiz erscheint für die aktuelle Aufgabe „Tipp anzeigen“; jede Person entscheidet selbst, ob sie ihn öffnet. Die nächste Aufgabe beginnt wieder ohne eingeblendeten Tipp. Es gibt keinen Punkteabzug. Fehlende Übersetzungen werden als Originaltext gekennzeichnet. Tipps sind auch nachträglich über die vorhandene Beitragsbearbeitung ergänzbar und in der Suche eigener Beiträge enthalten. Migration 018 ergänzt die Speicherung, ohne bestehende Beiträge zu verändern.
+Redewendungen und Dialektbeiträge können einen freiwilligen Tipp von bis zu 300 Zeichen enthalten, einschließlich geprüfter zweiter Sprachfassung. Beim Bedeutungs- und Dialektquiz erscheint für die aktuelle Aufgabe „Tipp anzeigen“; jede Person entscheidet selbst, ob sie ihn öffnet. Die nächste Aufgabe beginnt wieder ohne eingeblendeten Tipp. Es gibt keinen Punkteabzug. Fehlende Übersetzungen werden als Originaltext gekennzeichnet. Tipps sind auch nachträglich über die vorhandene Beitragsbearbeitung ergänzbar und in der Suche eigener Beiträge enthalten. Migration 018 ergänzt die Speicherung, ohne bestehende Beiträge zu verändern.
+
+Bei Redewendungen hebt `**Wort**` einzelne Wörter im Ausdruck fett hervor. Die Vorschau im Formular, die Sammlung, die Detailansicht und das Spiel zeigen die Hervorhebung. Migration 021 speichert die optionale Darstellung separat in `phrase_markup`; der Originalausdruck bleibt ohne Formatierungssterne gespeichert und für Suche, Dublettenprüfung und Spielhistorie maßgeblich. Es werden ausschließlich sichere Textknoten und Fettschrift ausgegeben, kein HTML oder weiteres Markdown. Bestehende Ausdrücke werden durch die Migration nicht umgeschrieben.
+
+Alle bearbeitbaren zweisprachigen Antworttexte bieten Übersetzungsvorschläge von Deutsch nach Englisch und zurück. Der Vorschlag lässt sich prüfen und korrigieren und ersetzt erst mit „Vorschlag übernehmen“ die bisherige Sprachfassung. Änderungen am Ausgangs- oder Zieltext verwerfen veraltete Vorschläge. Die bestehende Workers-AI-Schnittstelle mit Anmeldung, Cache und Zeichen-/Anfragelimits wird wiederverwendet; beim Spiel-Polling wird nichts übersetzt. Eigennamen, Liedtitel und feste Sprach-/Regionskennungen behalten ihre eigene Darstellung. Dialektbeiträge können optional vier eigene Bedeutungsantworten hinterlegen; die bisherigen Beiträge und das Regionenquiz bleiben kompatibel.
+
+`scripts/test-idiom-editing.mts` prüft Speicherung, Vorschlagsfreigabe, Dublettenschutz, Revisionskonflikte und Sammeländerung/Rückgängig auf Repository-Ebene. Nach den Migrationen ausschließlich mit einer isolierten Testdatenbank und passendem `TEST_DATABASE_HOST` ausführen. Das Skript legt keine Konten oder Adminberechtigungen an und entfernt seine Inhalts- und Audit-Testdaten wieder. Die Browserprüfungen für Antwortübersetzungen verwenden kontrollierte KI-Antworten; echte Neon-Auth- und Workers-AI-Aufrufe benötigen die entsprechend konfigurierte Testumgebung.
 
 Zungenbrecher lassen sich bereits beim Erstellen und später in der Lobby nach Originalsprache filtern. Das gilt für Zungenknoten und Klangfallen sowie Text- und Audiovorgaben. Neue Räume wählen die Sprache vor; „Alle Sprachen“ erlaubt bewusst gemischte Aufgaben. Die Rundenauswahl berücksichtigt nur ungespielte Aufgaben der gewählten Sprache und Kategorie. Ist die Auswahl leer, wird kein fremdsprachiger Ersatz eingestreut. Sprache und Aufgabenhistorie bleiben beim direkten Weiterspielen erhalten; alte Räume ohne Sprachwahl behalten zunächst ihre gemischte Auswahl.
 
@@ -189,6 +195,18 @@ For a local preview without Cloudflare login, set `SPRACHWELTEN_OFFLINE_PREVIEW=
 ### Community review and contribution tools
 
 Signed-in users manage their own entries at `/me`; edits use revision checks and removals are recoverable by administration. Other users submit full improvement drafts from an entry's detail view. `/admin` shows pending drafts, supports editing before acceptance or rejection, and keeps the public version unchanged until acceptance. The inbox lists the latest 50 active entries with persistent per-admin read status. Bulk editing applies classification, region or context changes atomically to up to 30 selected entries; conflicts leave the whole selection unchanged.
+
+Opening a contribution from the inbox, the admin editor or a suggestion review
+marks only that contribution as read for the current administrator. Other
+contributions and pending suggestions stay unread/open; the navigation badge is
+updated after the read state is saved. “Mark all as read” remains available.
+The admin contribution list offers “Unread contributions only”, applied on the
+server before pagination and combined with search. Reading an entry removes it
+from that filtered list; changing the filter clears selections from the old list.
+Migration 020 adds individual read records while retaining existing bulk-read
+timestamps. Run `node --env-file=.env.test.local --import tsx scripts/test-admin-inbox.mts`
+against a migrated isolated test database to check per-account isolation,
+concurrent reads, counts and cleanup without creating accounts or admin grants.
 
 Authenticated contributors can add region names to the shared registry. These are community-provided names, not geographically certified data. Custom region IDs are validated against the database before use. `sense` distinguishes explicitly labelled meanings of the same expression; equivalent normalized labels still collide. Additional explanations belong on the existing entry.
 

@@ -81,6 +81,7 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
 }
 .room-settings{margin:24px 0}
 .own-entry-search{display:grid;gap:8px;margin:24px 0;font-size:13px;font-weight:600}.own-entry-search>div{display:flex;align-items:center;gap:10px}.own-entry-search svg{color:var(--muted)}
+.admin-toolbar .unread-filter{display:flex;align-items:center;gap:10px;min-width:0}.admin-toolbar .unread-filter input{width:1.1rem;height:1.1rem;accent-color:var(--coral)}
 .audio-trimmer{display:grid;gap:14px;padding:18px;border:1px solid var(--line);border-radius:12px;margin-top:16px;background:var(--white)}.audio-trimmer h4{margin:0;font-size:15px}.audio-trimmer audio{width:100%;min-width:0}.audio-trimmer input[type=range]{padding:0;min-height:30px;accent-color:var(--coral)}.audio-trimmer .dialog-actions{flex-wrap:wrap}.audio-trimmer .form-row{gap:12px}.audio-preview audio{min-width:0;flex:1}.audio-preview .icon-button{flex-shrink:0}
 @media(max-width:360px){
   .header .brand{font-size:23px}
@@ -100,3 +101,8 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
 .finished-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:stretch}
 .finished-actions .button{min-width:0;white-space:normal;padding:16px 12px}
 @media(max-width:600px){.finished-actions{display:flex;flex-direction:column}.finished-actions .prepare-next{order:-1;min-height:60px}.finished-actions .button{width:100%}}
+/* Reviewed suggestions stay beside the answer they belong to. */
+.answer-translation-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .5rem; }
+.answer-translation-preview { padding: .8rem; margin-top: .6rem; border: 1px solid var(--line, #dedbd3); border-radius: .6rem; }
+.phrase-preview { overflow-wrap: anywhere; }
+.phrase-preview strong, .entry-card h3 strong, .modal-heading strong, .prompt-card h1 strong, .admin-entry h2 strong { font-weight: 800; }

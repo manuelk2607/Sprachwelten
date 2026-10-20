@@ -851,7 +851,7 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
   const activeRatings = speaker ? (performance?.ratings[speaker.id] ?? {}) : {};
   return {
     hint:
-      round?.entry.kind === "dialect" &&
+      round && ["idiom", "dialect"].includes(round.entry.kind) &&
       round.entry.hint &&
       game.phase === "voting"
         ? {
@@ -968,6 +968,7 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
     prompt: round
       ? {
           presentation: presentationOf(round.entry),
+          ...(!hidden && textVisible && !order && round.entry.kind === "idiom" && round.entry.phraseMarkup ? {phraseMarkup: round.entry.phraseMarkup} : {}),
           phrase:
             hidden || !textVisible
               ? ""

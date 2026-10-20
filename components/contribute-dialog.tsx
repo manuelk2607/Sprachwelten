@@ -1,5 +1,7 @@
 "use client";
 import { useKeyedState } from "@/lib/use-keyed-state";
+import { phraseInput } from "@/lib/phrase-markup";
+import { PhraseText } from "./phrase-text";
 import { presentationOf } from "@/lib/content-media";
 import type { Entry } from "@/lib/content";
 import { MediaChoiceInput, type MediaChoice } from "./media-choice";
@@ -56,7 +58,19 @@ export function ContributeDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sense, setSense] = useState(initialEntry?.sense ?? "");
-  const [phrase, setPhrase] = useState(initialEntry?.phrase ?? "");
+  const [phrase, setPhrase] = useState(
+    initialEntry?.kind === "idiom"
+      ? initialEntry.phraseMarkup || initialEntry.phrase
+      : (initialEntry?.phrase ?? ""),
+  );
+  const plainPhrase =
+    initialEntry &&
+    !initialEntry.phraseMarkup &&
+    phrase === initialEntry.phrase &&
+    kind === initialEntry.kind
+      ? { phrase, phraseMarkup: "" }
+      : phraseInput(phrase, kind);
+  const hintsRelevant = kind === "idiom" || kind === "dialect";
   const [language, setLanguage] = useState(initialEntry?.language ?? "de");
   const [regionId, setRegionId] = useState(initialEntry?.regionId ?? "");
   const [contextId, setContextId] = useState(initialEntry?.contextId ?? "");
@@ -93,7 +107,7 @@ export function ContributeDialog({
     const timer = setTimeout(() => {
       const query = new URLSearchParams({
         kind,
-        phrase: phrase.trim(),
+        phrase: phraseInput(phrase, kind).phrase,
         language,
         sense,
         ...(kind === "dialect" ? { regionId } : {}),
@@ -193,7 +207,7 @@ export function ContributeDialog({
     { key: "meaning", label: "Bedeutung oder Erklärung", max: 1500 },
     { key: "example", label: "Beispielsatz", max: 600 },
     { key: "culturalNote", label: "Kultureller Hinweis", max: 1000 },
-    ...(kind === "dialect" ? [hintField] : []),
+    ...(hintsRelevant ? [hintField] : []),
   ];
   const sourceChanged = () => {
     setRevision((value) => value + 1);
@@ -233,7 +247,7 @@ export function ContributeDialog({
       translation,
       translationReviewed: reviewed,
       presentation: media.text ? (media.audio ? "both" : "text") : "audio",
-      phrase: media.text ? phrase : "",
+      ...(media.text ? plainPhrase : { phrase: "", phraseMarkup: "" }),
       audioId: media.audio ? audio?.id : undefined,
       challenge,
       ...(initialEntry ? { revision: initialEntry.revision } : {}),
@@ -328,6 +342,7 @@ export function ContributeDialog({
               disabled={busy}
               value={kind}
               onValueChange={(value) => {
+                setPhrase(plainPhrase.phrase);
                 setKind(value as ContentKind);
                 setChallenge(initialChallenge(value as ContentKind));
                 sourceChanged();
@@ -392,10 +407,23 @@ export function ContributeDialog({
                   ? 1
                   : 3
               }
-              maxLength={kind === "joke" ? 1500 : 180}
+              maxLength={kind === "joke" ? 1500 : kind === "idiom" ? 900 : 180}
               rows={kind === "joke" ? 4 : 2}
             />
           </label>
+        )}
+        {media.text && kind === "idiom" && (
+          <div className="phrase-preview">
+            <p className="form-note">
+              {t(
+                "Mit **Wort** kannst du besondere Wörter fett hervorheben. Der Ausdruck darf ohne Sterne höchstens 180 Zeichen haben.",
+              )}
+            </p>
+            <p>
+              <span className="eyebrow">{t("Vorschau")}</span>{" "}
+              <PhraseText entry={{ ...plainPhrase, kind }} />
+            </p>
+          </div>
         )}
         {senseRelevant ? (
           <>
@@ -452,7 +480,7 @@ export function ContributeDialog({
             value={initialEntry?.region ?? ""}
           />
         )}
-        {kind === "dialect" && (
+        {hintsRelevant && (
           <>
             <label>
               {t("Tipp fürs Spiel")}{" "}
@@ -510,6 +538,24 @@ export function ContributeDialog({
               "Sprich den Ausgangssatz ein. Die Wortbausteine und gültigen Reihenfolgen ergänzt du weiterhin als Text.",
             )}
           </p>
+        )}
+        {kind === "dialect" && (
+          <label className="translation-review">
+            <input
+              type="checkbox"
+              checked={challenge?.type === "meaning"}
+              onChange={(event) =>
+                setChallenge(
+                  event.target.checked ? initialChallenge("idiom") : undefined,
+                )
+              }
+            />
+            <span>
+              {t(
+                "Eigene Antwortmöglichkeiten für das Bedeutungsquiz eintragen",
+              )}
+            </span>
+          </label>
         )}
         {challenge && (
           <ChallengeEditor value={challenge} onChange={setChallenge} />
@@ -626,7 +672,7 @@ export function ContributeDialog({
             </label>
           </details>
         )}
-        {(literalRequired || kind === "dialect") && (
+        {(literalRequired || hintsRelevant) && (
           <TranslationEditor
             sourceLocale={sourceLocale}
             setSourceLocale={(value) => {

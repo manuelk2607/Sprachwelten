@@ -102,9 +102,9 @@ export async function inbox(adminId: string) {
   const since =
     (seen?.last_seen_at as string | undefined) ?? "1970-01-01T00:00:00Z";
   const events =
-    await database()`SELECT id,phrase,kind,created_at as "createdAt",created_at>${since}::timestamptz AS unread FROM content_entries WHERE deleted_at IS NULL ORDER BY created_at DESC,id LIMIT 50`;
+    await database()`SELECT e.id,e.phrase,e.kind,e.created_at as "createdAt",(e.created_at>${since}::timestamptz AND r.entry_id IS NULL) AS unread FROM content_entries e LEFT JOIN admin_inbox_reads r ON r.entry_id=e.id AND r.user_id=${adminId} WHERE e.deleted_at IS NULL ORDER BY e.created_at DESC,e.id LIMIT 50`;
   const [count] =
-    await database()`SELECT count(*)::int AS count FROM content_entries WHERE deleted_at IS NULL AND created_at>${since}::timestamptz`;
+    await database()`SELECT count(*)::int AS count FROM content_entries e WHERE deleted_at IS NULL AND created_at>${since}::timestamptz AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=${adminId} AND r.entry_id=e.id)`;
   const [pending] =
     await database()`SELECT (SELECT count(*) FROM entry_suggestions WHERE status='pending')::int AS suggestions`;
   return {
@@ -112,6 +112,15 @@ export async function inbox(adminId: string) {
     unreadCount: Number(count.count),
     pendingSuggestions: Number(pending.suggestions),
   };
+}
+export async function markInboxEntrySeen(adminId: string, entryId: string) {
+  const rows =
+    await database()`INSERT INTO admin_inbox_reads(user_id,entry_id) SELECT ${adminId}::uuid,id FROM content_entries WHERE id=${entryId} AND deleted_at IS NULL ON CONFLICT (user_id,entry_id) DO UPDATE SET read_at=now() RETURNING entry_id`;
+  if (!rows.length)
+    throw new GameError("Dieser Beitrag wurde nicht gefunden.", 404);
+}
+export async function markInboxSeen(adminId: string) {
+  await database()`INSERT INTO admin_inbox_seen(user_id,last_seen_at) VALUES (${adminId},now()) ON CONFLICT (user_id) DO UPDATE SET last_seen_at=now()`;
 }
 export async function bulkEdit(
   input: z.infer<typeof bulkInput>,
@@ -213,6 +222,6 @@ export async function ownSuggestions(userId: string, offset: number) {
 
 export async function inboxCount(adminId: string) {
   const [row] =
-    await database()`SELECT ((SELECT count(*) FROM content_entries WHERE deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=${adminId}),'1970-01-01'::timestamptz))+(SELECT count(*) FROM entry_suggestions WHERE status='pending'))::int AS total`;
+    await database()`SELECT ((SELECT count(*) FROM content_entries e WHERE deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=${adminId}),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=${adminId} AND r.entry_id=e.id))+(SELECT count(*) FROM entry_suggestions WHERE status='pending'))::int AS total`;
   return Number(row.total);
 }

@@ -5,6 +5,7 @@ import { isRegisteredLanguage } from './language-codes';
 import type { LanguageNames } from './language-label';
 import { categoryId, categoryLabel } from './quiz-categories';
 import { translationFields, type ContentTranslations } from './content-translations';
+import {parsePhraseMarkup} from './phrase-markup';
 
 export const contentKinds = ['idiom', 'dialect', 'situation', 'word', 'tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order','joke','word_group','loanword'] as const;
 export type ContentKind = typeof contentKinds[number];
@@ -19,6 +20,7 @@ const entryFields = z.object({
   presentation:z.enum(presentations).optional(),
   sense:text(160),
   phrase:z.string().trim().max(1500).default(''),
+  phraseMarkup:z.string().trim().max(900).optional(),
   language:z.string().trim().max(30).refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.'),
   literal:text(300),
   hint:text(300),
@@ -33,6 +35,10 @@ const entryFields = z.object({
   translationReviewed:z.boolean().optional(),
 });
 function contentSchema(requireLiteral:boolean){return entryFields.superRefine((input, ctx) => {
+  if(input.phraseMarkup){
+    const parsed=parsePhraseMarkup(input.phraseMarkup);
+    if(!parsed.formatted||parsed.plain.trim()!==input.phrase||input.presentation==='audio')ctx.addIssue({code:'custom',path:['phrase'],message:'Die Hervorhebung muss zum Originalausdruck passen.'});
+  }
   if(input.kind!=='joke'&&input.phrase.length>180)ctx.addIssue({code:'custom',path:['phrase'],message:'Der Ausdruck darf höchstens 180 Zeichen haben.'});
   if(requireLiteral&&needsLiteralTranslation(input.kind)&&input.challenge?.type!=='meaning'&&!input.literal)ctx.addIssue({code:'custom',path:['literal'],message:'Bitte eine wörtliche Übersetzung ergänzen.'});
   const presentation=input.presentation??(input.audioId?'both':'text');

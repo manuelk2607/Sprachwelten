@@ -1,4 +1,5 @@
 "use client";
+import {PhraseText} from "./phrase-text";
 import { Select } from "./select";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useI18n } from "@/lib/i18n";
@@ -491,7 +492,7 @@ export function Home() {
                               : ""}
                         </span>
                       </div>
-                      <h3>{entry.phrase || t("Audiobeitrag")}</h3>
+                      <h3>{entry.phrase ? <PhraseText entry={entry}/> : t("Audiobeitrag")}</h3>
                       <p>
                         {t("Übersetzung und Lösung erst beim Öffnen anzeigen.")}
                       </p>

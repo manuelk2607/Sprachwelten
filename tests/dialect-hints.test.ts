@@ -5,9 +5,29 @@ import {localizeEntry} from '../lib/entry-localization';
 import {storedTranslation,translationStatus,textsOf} from '../lib/content-translations';
 import {act,createGame,viewGame} from '../lib/game';
 import {extraSeeds} from '../lib/extra-seeds';
+import {seedEntries} from '../lib/seeds';
 
 const entries:Entry[]=extraSeeds.filter(entry=>entry.kind==='dialect').map((entry,index)=>({...entry,hint:`Deutscher Tipp ${index}`,sourceLocale:'de',translations:{en:{hint:`English hint ${index}`,origin:'contributor'}}}));
 const player=()=>({id:crypto.randomUUID(),name:'QA',tokenHash:crypto.randomUUID(),score:0});
+
+test('idiom hints are optional, reviewed, localized and limited to the current voting round',()=>{
+  const base={kind:'idiom',phrase:'Da liegt der Hund begraben.',language:'de',literal:'Here lies the dog buried.'};
+  assert.equal(entryInput.parse(base).hint,'');
+  assert.equal(entryInput.safeParse({...base,hint:'a'.repeat(301)}).success,false);
+  assert.equal(entryInput.safeParse({...base,hint:'Ein Tier.',translation:{hint:'An animal.'}}).success,false);
+  assert.equal(entryInput.parse({...base,hint:'Ein Tier.',translation:{hint:'An animal.'},translationReviewed:true}).translation?.hint,'An animal.');
+  const sources=seedEntries.map((entry,index)=>({...entry,hint:`Redewendungs-Tipp ${index}`,sourceLocale:'de' as const,translations:{en:{hint:`Idiom hint ${index}`,origin:'contributor' as const}}}));
+  for(const locale of ['de','en'] as const){
+    const game=createGame('IDIOMX',player(),locale,'meaning-quiz');game.totalRounds=2;
+    act(game,game.hostId,{action:'start'},sources);
+    const view=viewGame(game,game.hostId),first=game.round!.entry.hint!;
+    assert.equal(view.hint?.text,first);assert.match(first,locale==='de'?/^Redewendungs-Tipp/:/^Idiom hint/);
+    assert.equal(view.revelation,null);assert.ok(!JSON.stringify(view).includes(JSON.stringify(game.prompts[1].hint!)));
+    const right=game.round!.options.find(option=>option.solution)!;
+    act(game,game.hostId,{action:'vote',optionId:right.id});assert.equal(game.players[0].score,1);assert.equal(viewGame(game,game.hostId).hint,null);
+    act(game,game.hostId,{action:'next'});assert.notEqual(viewGame(game,game.hostId).hint?.text,first);
+  }
+});
 
 test('dialect hints are optional, bounded and translated only after contributor review',()=>{
   const input={kind:'dialect',phrase:'Grind',language:'de',regionId:'ch',literal:'Kopf'};

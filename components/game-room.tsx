@@ -1,4 +1,5 @@
 "use client";
+import {PhraseText} from "./phrase-text";
 import { RoomSettings } from "./room-settings";
 import { roomPollDelay } from "@/lib/room-polling";
 import { RoundHint } from "./round-hint";
@@ -620,7 +621,7 @@ export function GameRoom({ code }: { code: string }) {
                           : ""}
                       </span>
                       <h1>
-                        {room.prompt?.phrase ||
+                        {room.prompt?.phrase ? <PhraseText entry={room.prompt}/> :
                           t(
                             room.prompt?.audioId
                               ? "Hör dir die Aufnahme an."

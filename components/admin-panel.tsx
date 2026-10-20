@@ -1,4 +1,5 @@
 "use client";
+import {PhraseText} from "./phrase-text";
 import { useApiResource } from "@/lib/use-api-resource";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useEffect, useState } from "react";
@@ -24,19 +25,34 @@ export function AdminPanel() {
     [search, setSearch] = useState(""),
     [offset, setOffset] = useState(0),
     [refresh, setRefresh] = useState(0),
+    [inboxRefresh, setInboxRefresh] = useState(0),
     [editing, setEditing] = useState<Entry | null>(null),
     [confirm, setConfirm] = useState<AdminEntry | null>(null),
     [busy, setBusy] = useState(false);
   useEffect(() => {
+    if (query === search) return;
     const timer = setTimeout(() => {
       setSearch(query);
       setOffset(0);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, search]);
   const userId = session?.user?.id;
+  const [unreadFilter, setUnreadFilter] = useKeyedState(userId ?? "", false);
+  const unreadOnly = tab === "entries" && !removed && unreadFilter;
+  const readRefresh = unreadOnly ? inboxRefresh : 0;
+  const [readError, setReadError] = useKeyedState(userId ?? "", "");
   const [error, setError] = useKeyedState(
-    JSON.stringify([userId, tab, removed, search, offset, refresh]),
+    JSON.stringify([
+      userId,
+      tab,
+      removed,
+      search,
+      offset,
+      refresh,
+      unreadOnly,
+      readRefresh,
+    ]),
     "",
   );
   const resource = useApiResource<{
@@ -52,15 +68,40 @@ export function AdminPanel() {
             q: search,
             offset: String(offset),
             removed: String(removed),
+            ...(tab === "entries" ? { unread: String(unreadOnly) } : {}),
           })
       : null,
-    userId + ":" + refresh,
+    userId + ":" + refresh + ":" + readRefresh,
   );
   const entries = resource.data?.entries ?? [],
     users = resource.data?.users ?? [],
     more = resource.data?.more ?? false,
     loading = resource.loading,
     failure = error || resource.error;
+  async function markRead(entryId: string) {
+    setReadError("");
+    try {
+      const response = await fetch("/api/admin/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "seen", entryId }),
+      });
+      if (!response.ok)
+        throw new Error(
+          "Der Gelesen-Status konnte nicht gespeichert werden. Bitte öffne den Beitrag erneut.",
+        );
+      setInboxRefresh((v) => v + 1);
+      window.dispatchEvent(new Event("sprachwelten-inbox"));
+    } catch {
+      setReadError(
+        "Der Gelesen-Status konnte nicht gespeichert werden. Bitte öffne den Beitrag erneut.",
+      );
+    }
+  }
+  function openEditor(entry: Entry) {
+    setEditing(entry);
+    void markRead(entry.id);
+  }
   async function moderate() {
     if (!confirm) return;
     setBusy(true);
@@ -85,7 +126,16 @@ export function AdminPanel() {
     }
   }
   const [selected, setSelected] = useKeyedState<Record<string, number>>(
-      JSON.stringify([userId, tab, removed, search, offset, refresh]),
+      JSON.stringify([
+        userId,
+        tab,
+        removed,
+        search,
+        offset,
+        refresh,
+        unreadOnly,
+        readRefresh,
+      ]),
       {},
     ),
     [bulk, setBulk] = useState(false);
@@ -112,13 +162,20 @@ export function AdminPanel() {
         ) : (
           <>
             <AdminInbox
-              refresh={refresh}
+              key={userId}
+              refresh={refresh + inboxRefresh}
               onChanged={() => {
                 setRefresh((v) => v + 1);
                 window.dispatchEvent(new Event("sprachwelten-inbox"));
               }}
-              onEdit={setEditing}
+              onEdit={openEditor}
+              onRead={markRead}
             />
+            {readError && (
+              <p className="error" role="alert">
+                {t(readError)}
+              </p>
+            )}
             <BulkHistory
               refresh={refresh}
               onChanged={() => setRefresh((v) => v + 1)}
@@ -177,6 +234,20 @@ export function AdminPanel() {
                     </option>
                     <option value="removed">{t("Entfernte Beiträge")}</option>
                   </Select>
+                </label>
+              )}
+              {tab === "entries" && !removed && (
+                <label className="unread-filter">
+                  <input
+                    type="checkbox"
+                    checked={unreadFilter}
+                    onChange={(event) => {
+                      setUnreadFilter(event.target.checked);
+                      setOffset(0);
+                      setSelected({});
+                    }}
+                  />
+                  {t("Nur ungelesene Beiträge")}
                 </label>
               )}
             </div>
@@ -257,7 +328,7 @@ export function AdminPanel() {
                             <span className="kind-pill">
                               {t(kindLabels[entry.kind])}
                             </span>
-                            <h2>{entry.phrase || t("Audiobeitrag")}</h2>
+                            <h2>{entry.phrase ? <PhraseText entry={entry}/> : t("Audiobeitrag")}</h2>
                             {entry.sense && (
                               <p className="form-note">
                                 {t("Bedeutungsvariante")}: {entry.sense}
@@ -283,7 +354,7 @@ export function AdminPanel() {
                             {!entry.deletedAt && (
                               <button
                                 className="button outline"
-                                onClick={() => setEditing(entry)}
+                                onClick={() => openEditor(entry)}
                               >
                                 {t("Bearbeiten")}
                               </button>

@@ -30,7 +30,7 @@ export function EntryDialog({entry:original,close,login,signedIn}:{entry:Entry;c
   return <Dialog titleContent={entry.phrase?<PhraseText entry={entry}/>:undefined} title={entry.phrase||t('Audiobeitrag')} close={close} wide>
     <div className="detail-meta"><span className="kind-pill">{t(kindLabels[entry.kind])}</span><span>{languageLabel(entry.language,locale,entry.languageNames)}{entry.region&&' · '+t(entry.region)}</span></div>
     {entry.sense&&<p className="form-note">{t('Bedeutungsvariante')}: {entry.sense}</p>}
-    {['idiom','dialect'].includes(entry.kind)&&entry.hint&&<p className="cultural-note"><Lightbulb size={19}/><span><strong>{t('Tipp fürs Spiel')}:</strong> {entry.hint}</span></p>}
+    {(['idiom','dialect'].includes(entry.kind)||(entry.challenge?.type==='attribution'&&entry.challenge.category==='song'))&&entry.hint&&<p className="cultural-note"><Lightbulb size={19}/><span><strong>{t('Tipp fürs Spiel')}:</strong> {entry.hint}</span></p>}
     <PronunciationAudio id={hasAudio(entry)?entry.audioId:undefined}/>{entry.status==='community'&&<TranslationNotice status={translationStatus(current,locale)} sourceLocale={current.sourceLocale??'de'}/>}
     {entry.literal&&<p className="literal">{t('Wörtlich: „')}{entry.literal}{locale==='en'?'”':'“'}</p>}
     {entry.meaning&&<div className="meaning-block"><Lightbulb size={24}/><div><span className="eyebrow">{t('DAS STECKT DAHINTER')}</span><p>{entry.meaning}</p></div></div>}

@@ -4,6 +4,10 @@ import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Album':'Album',
+  'Album anzeigen':'Show album',
+  'Album ausblenden':'Hide album',
+  'Im Spiel könnt ihr zuerst den Tipp und danach das Album einblenden. Ohne eigenen Tipp dient der Interpret als erste Hilfe, falls er angegeben ist.':'In the game, you can reveal the hint first and the album afterwards. If there is no custom hint, the artist is used as the first clue when provided.',
   'Vorschau':'Preview',
   'Eigene Antwortmöglichkeiten für das Bedeutungsquiz eintragen':'Add custom answer choices for the meaning quiz',
   'Mit **Wort** kannst du besondere Wörter fett hervorheben. Der Ausdruck darf ohne Sterne höchstens 180 Zeichen haben.':'Use **word** to highlight special words in bold. The expression may contain up to 180 characters without the markers.',

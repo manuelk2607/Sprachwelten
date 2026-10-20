@@ -650,10 +650,12 @@ export function GameRoom({ code }: { code: string }) {
                       )}
                     </div>
                   )}
-                  {room.hint && (
+                  {(room.hint || room.songHelp?.album || room.songHelp?.artist) && (
                     <RoundHint
                       key={room.matchId + ":" + room.roundNumber}
                       hint={room.hint}
+                      album={room.songHelp?.album}
+                      artist={room.songHelp?.artist}
                     />
                   )}
                   {room.challengeFallback && (

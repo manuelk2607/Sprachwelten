@@ -331,7 +331,11 @@ export function ChallengeEditor({
               <Select
                 value={value.category}
                 onValueChange={(v) =>
-                  onChange({ ...value, category: v as "person" | "song" })
+                  onChange({
+                    ...value,
+                    category: v as "person" | "song",
+                    album: v === "song" ? value.album : undefined,
+                  })
                 }
               >
                 <option value="person">{t("Personenzitat")}</option>
@@ -352,17 +356,35 @@ export function ChallengeEditor({
               />
             </label>
             {value.category === "song" && (
-              <label>
-                {t("Interpret oder Fassung")} {t("(optional)")}
-                <input
-                  name="challenge.artist"
-                  maxLength={80}
-                  value={value.artist}
-                  onChange={(e) =>
-                    onChange({ ...value, artist: e.target.value })
-                  }
-                />
-              </label>
+              <>
+                <label>
+                  {t("Interpret oder Fassung")} {t("(optional)")}
+                  <input
+                    name="challenge.artist"
+                    maxLength={80}
+                    value={value.artist}
+                    onChange={(e) =>
+                      onChange({ ...value, artist: e.target.value })
+                    }
+                  />
+                </label>
+                <label>
+                  {t("Album")} {t("(optional)")}
+                  <input
+                    name="challenge.album"
+                    maxLength={160}
+                    value={value.album ?? ""}
+                    onChange={(e) =>
+                      onChange({ ...value, album: e.target.value })
+                    }
+                  />
+                </label>
+                <p className="form-note">
+                  {t(
+                    "Im Spiel könnt ihr zuerst den Tipp und danach das Album einblenden. Ohne eigenen Tipp dient der Interpret als erste Hilfe, falls er angegeben ist.",
+                  )}
+                </p>
+              </>
             )}
             <details>
               <summary>{t("Drei falsche Antworten selbst angeben")}</summary>

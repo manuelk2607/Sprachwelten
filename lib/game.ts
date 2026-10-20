@@ -849,9 +849,13 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
     ? game.players[performance.speakerIndex]
     : undefined;
   const activeRatings = speaker ? (performance?.ratings[speaker.id] ?? {}) : {};
+  const song = game.mode === "who-said-it" && c?.type === "attribution" && c.category === "song" ? c : null;
   return {
+    songHelp: song && game.phase === "voting"
+      ? { album: song.album ?? "", artist: round?.entry.hint ? "" : song.artist }
+      : null,
     hint:
-      round && ["idiom", "dialect"].includes(round.entry.kind) &&
+      round && (["idiom", "dialect"].includes(round.entry.kind) || song) &&
       round.entry.hint &&
       game.phase === "voting"
         ? {

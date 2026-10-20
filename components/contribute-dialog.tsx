@@ -70,7 +70,8 @@ export function ContributeDialog({
     kind === initialEntry.kind
       ? { phrase, phraseMarkup: "" }
       : phraseInput(phrase, kind);
-  const hintsRelevant = kind === "idiom" || kind === "dialect";
+  const hintsRelevant = kind === "idiom" || kind === "dialect" ||
+    (kind === "attribution" && challenge?.type === "attribution" && challenge.category === "song");
   const [language, setLanguage] = useState(initialEntry?.language ?? "de");
   const [regionId, setRegionId] = useState(initialEntry?.regionId ?? "");
   const [contextId, setContextId] = useState(initialEntry?.contextId ?? "");

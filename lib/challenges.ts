@@ -19,7 +19,7 @@ const mission=z.object({type:z.literal('mission'),start:cell,blocked:z.array(cel
 const relay=z.object({type:z.literal('relay'),term:z.string().trim().min(2).max(60),choices,correctIndex:z.number().int().min(0).max(3)});
 const academic=z.object({type:z.literal('academic'),direction:z.enum(['plain','precise']),taboo:z.array(bilingual).length(3),choices,correctIndex:z.number().int().min(0).max(3)});
 const sound=z.object({type:z.literal('sound'),words:z.array(z.object({word:z.string().trim().min(1).max(60),meaning:bilingual,pronunciation:z.string().trim().max(80)})).length(2)});
-const attribution=z.object({type:z.literal('attribution'),category:z.enum(['person','song']),answer:z.string().trim().min(2).max(100),artist:z.string().trim().max(80).default(''),aliases:z.array(z.string().trim().min(1).max(100)).max(5).default([]),alternatives:z.array(z.string().trim().min(2).max(160)).max(3).default([])}).superRefine((v,c)=>{
+const attribution=z.object({type:z.literal('attribution'),category:z.enum(['person','song']),answer:z.string().trim().min(2).max(100),artist:z.string().trim().max(80).default(''),album:z.string().trim().max(160).optional(),aliases:z.array(z.string().trim().min(1).max(100)).max(5).default([]),alternatives:z.array(z.string().trim().min(2).max(160)).max(3).default([])}).superRefine((v,c)=>{
  if(v.alternatives.length!==0&&v.alternatives.length!==3)c.addIssue({code:'custom',message:'Bitte drei falsche Antworten oder keine angeben.'});
  const keys=[v.answer,...v.aliases].map(normalizedAnswer),other=v.alternatives.map(normalizedAnswer);
  if(new Set(other).size!==other.length||other.some(k=>keys.includes(k)))c.addIssue({code:'custom',message:'Antworten müssen verschieden sein.'});

@@ -53,6 +53,12 @@ Der Hell-/Dunkel-Umschalter sitzt links neben DE/EN und speichert die Wahl lokal
 
 Das freiwillige Feld „Beitragende Person“ erscheint bei Einträgen und zusätzlichen Erklärungen. Ohne Angabe wird kein Name gezeigt. Der serverseitige Autor bleibt beim Einreichen mit Anmeldung an das Konto gebunden; Gastbeiträge erhalten eine getrennte, nicht öffentliche Gastkennung.
 
+### Hilfen beim Liedtext-Raten
+
+Liedbeiträge können einen freiwilligen Tipp mit geprüfter DE/EN-Fassung und den Albumtitel enthalten. Während der Abstimmung öffnet „Tipp anzeigen“ zuerst den Hinweis; anschließend lässt sich „Album anzeigen“ wählen. Ohne eigenen Tipp dient der hinterlegte Interpret als erste Hilfe. Ist ausschließlich ein Album hinterlegt, kann es direkt geöffnet werden. Jede Hilfe ist freiwillig, kostet keine Punkte und beginnt in der nächsten Runde wieder geschlossen. Fehlende Albumangaben werden nicht erfunden; alte Beiträge bleiben spielbar und können über die Beitragsbearbeitung ergänzt werden. Albumtitel werden als Eigennamen nicht übersetzt. Personenzitate zeigen diese Liedhilfen nicht.
+
+Das Album wird im vorhandenen Aufgaben-JSON gespeichert; eine weitere SQL-Migration ist nicht nötig. `scripts/test-song-hints.mts` prüft Speicherung, eigene Bearbeitung, Vorschlagsfreigabe und Spielprojektion ausschließlich mit einer isolierten QA-Datenbank und passendem `TEST_DATABASE_HOST`.
+
 ## Optionale Ausspracheclips
 
 Alle fünf Einreichkategorien unterstützen eine eigene Aufnahme oder einen Audiodateiupload, jeweils bis 20 Sekunden. Der Browser fragt erst nach dem Klick auf „Aufnehmen“ nach Mikrofonzugriff. Er wandelt decodierbare Audiodateien in Mono-PCM-WAV mit 16 kHz um. Eingangsdateien dürfen höchstens 20 MB groß sein. Der Server prüft Dateiaufbau und aus den Audiodaten berechnete Länge (höchstens 640.044 Bytes), statt einer vom Client behaupteten Dauer zu vertrauen. Das Mikrofon wird nach Ende, Ablauf oder Schließen gestoppt.

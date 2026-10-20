@@ -7,6 +7,7 @@ export function ChallengeDetails({challenge:c}:{challenge?:Challenge}){const {t,
  {challengeHasFallback(c,locale)&&<p className="form-note">{t('Ein Teil dieser Aufgabe wird im Original angezeigt, weil die Übersetzung fehlt.')}</p>}
  {c.type==='sound'&&<div className="sound-words">{c.words.map(w=><div key={w.word}><strong>{w.word}</strong><span>{w.pronunciation}</span><p>{challengeText(w.meaning,locale)}</p></div>)}</div>}
  {c.type==='attribution'&&<p><strong>{t(c.category==='person'?'Gesuchte Person':'Gesuchter Liedtitel')}:</strong> {c.answer}{c.artist&&' — '+c.artist}</p>}
+ {c.type==='attribution'&&c.category==='song'&&c.album&&<p><strong>{t('Album')}:</strong> {c.album}</p>}
  {c.type==='friends'&&<><p><strong>{c.otherWord}</strong> · {languageLabel(c.otherLanguage,locale)}</p><p>{challengeText(c.context,locale)}</p><p><strong>{t(c.sameMeaning?'Gleiche Bedeutung':'False Friend')}</strong></p><dl><dt>{t('Bedeutung des ersten Wortes')}</dt><dd>{challengeText(c.firstMeaning,locale)}</dd><dt>{t('Bedeutung des zweiten Wortes')}</dt><dd>{challengeText(c.secondMeaning,locale)}</dd></dl></>}
  {c.type==='order'&&<><p>{c.source[locale]} → {languageLabel(c.targetLanguage,locale)}</p><ul>{c.accepted.map((a,i)=><li key={i}>{a.map(id=>c.tiles.find(t=>t.id===id)?.text).join(' ')}</li>)}</ul></>}
  {c.type==='mission'&&<p>{t('Ziele')}: {c.checkpoints.map(n=>missionTiles[n][locale]).join(' → ')}</p>}

@@ -327,3 +327,5 @@ test("editing legacy choices preserves the correct index when accepting an answe
     .toBe("Suggested English answer");
   expect(saved?.challenge).toMatchObject({ correctIndex: 2 });
 });
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

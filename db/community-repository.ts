@@ -222,6 +222,6 @@ export async function ownSuggestions(userId: string, offset: number) {
 
 export async function inboxCount(adminId: string) {
   const [row] =
-    await database()`SELECT ((SELECT count(*) FROM content_entries e WHERE deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=${adminId}),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=${adminId} AND r.entry_id=e.id))+(SELECT count(*) FROM entry_suggestions WHERE status='pending'))::int AS total`;
+    await database()`SELECT ((SELECT count(*) FROM content_entries e WHERE deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=${adminId}),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=${adminId} AND r.entry_id=e.id))+(SELECT count(*) FROM entry_suggestions WHERE status='pending')+(SELECT count(*) FROM round_reports WHERE status='open'))::int AS total`;
   return Number(row.total);
 }

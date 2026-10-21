@@ -5,6 +5,7 @@ import {useI18n} from '@/lib/i18n';
 import {languageLabel} from '@/lib/language-label';
 export function ChallengeDetails({challenge:c}:{challenge?:Challenge}){const {t,locale}=useI18n();if(!c)return null;return <div className="challenge-details">
  {challengeHasFallback(c,locale)&&<p className="form-note">{t('Ein Teil dieser Aufgabe wird im Original angezeigt, weil die Übersetzung fehlt.')}</p>}
+ {c.type==='taboo'&&<p><strong>{t('Verbotene Wörter')}:</strong> {c.forbidden.join(' · ')}</p>}
  {c.type==='sound'&&<div className="sound-words">{c.words.map(w=><div key={w.word}><strong>{w.word}</strong><span>{w.pronunciation}</span><p>{challengeText(w.meaning,locale)}</p></div>)}</div>}
  {c.type==='attribution'&&<p><strong>{t(c.category==='person'?'Gesuchte Person':'Gesuchter Liedtitel')}:</strong> {c.answer}{c.artist&&' — '+c.artist}</p>}
  {c.type==='attribution'&&c.category==='song'&&c.album&&<p><strong>{t('Album')}:</strong> {c.album}</p>}

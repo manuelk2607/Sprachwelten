@@ -1,4 +1,5 @@
 "use client";
+import {draftKey,parseDraft,draftChallenge,draftFieldNames,type ContributionDraft} from "@/lib/contribution-draft";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { phraseInput } from "@/lib/phrase-markup";
 import { PhraseText } from "./phrase-text";
@@ -217,6 +218,21 @@ export function ContributeDialog({
   };
   const getSource = () =>
     textsOf(Object.fromEntries(new FormData(formRef.current!).entries()));
+  const draftOwner=session?.user?.id??'guest';
+  const [pendingDraft,setPendingDraft]=useState<ContributionDraft|null>(null);
+  const [draftDirty,setDraftDirty]=useState(false),[draftNotice,setDraftNotice]=useState('');
+  const [,setDraftChange]=useState(0);
+  const [restoreFields,setRestoreFields]=useState<ContributionDraft|null>(null);
+  const draftSnapshot:ContributionDraft={version:1,updatedAt:0,kind,phrase,sense,language,regionId,contextId,sourceLocale,translation:textsOf(translation),reviewed,media,challenge,fields:{}};
+  const draftRef=useRef({owner:draftOwner,snapshot:draftSnapshot,dirty:false,pending:false});
+  useEffect(()=>{draftRef.current={owner:draftOwner,snapshot:{...draftSnapshot,updatedAt:Date.now(),fields:Object.fromEntries(draftFieldNames.map(name=>[name,String(formRef.current?new FormData(formRef.current).get(name)??'':'')]))},dirty:draftDirty&&!initialEntry,pending:!!pendingDraft};});
+  function persistDraft(){const current=draftRef.current;if(!current.dirty||current.pending)return;try{localStorage.setItem(draftKey(current.owner),JSON.stringify(current.snapshot));setDraftNotice('Entwurf in diesem Browser gespeichert.');}catch{setDraftNotice('Der Entwurf konnte nicht im Browser gespeichert werden.');}}
+  useEffect(()=>{if(initialEntry)return;let active=true;queueMicrotask(()=>{if(!active)return;try{setPendingDraft(parseDraft(localStorage.getItem(draftKey(draftOwner))));}catch{/* Storage can be unavailable. */}setDraftDirty(false);setDraftNotice('');});return()=>{active=false;};},[draftOwner,initialEntry]);
+  useEffect(()=>{if(!draftDirty||initialEntry||pendingDraft)return;const timer=setTimeout(persistDraft,700);return()=>clearTimeout(timer);});
+  useEffect(()=>{if(initialEntry)return;const save=()=>persistDraft();window.addEventListener('pagehide',save);return()=>{window.removeEventListener('pagehide',save);const current=draftRef.current;if(current.dirty&&!current.pending)try{localStorage.setItem(draftKey(current.owner),JSON.stringify(current.snapshot));}catch{/* Keep the form usable. */}};},[initialEntry]);
+  useEffect(()=>{if(!restoreFields||!formRef.current)return;for(const name of draftFieldNames){const control=formRef.current.elements.namedItem(name);if(control instanceof HTMLInputElement||control instanceof HTMLTextAreaElement)control.value=restoreFields.fields[name]??'';}queueMicrotask(()=>setRestoreFields(null));},[restoreFields]);
+  function restoreDraft(){if(!pendingDraft)return;const d=pendingDraft;setKind(d.kind);setPhrase(d.phrase);setSense(d.sense);setLanguage(d.language);setRegionId(d.regionId);setContextId(d.contextId);setSourceLocale(d.sourceLocale);setTranslation(d.translation);setReviewed(d.reviewed);setMedia(d.media);setChallenge(draftChallenge(d.challenge,initialChallenge(d.kind)));setRestoreFields(d);setPendingDraft(null);setDraftDirty(true);setDraftNotice(d.media.audio?'Textentwurf wiederhergestellt. Bitte die Aufnahme erneut hinzufügen.':'Entwurf wiederhergestellt.');}
+  function discardDraft(){try{localStorage.removeItem(draftKey(draftOwner));}catch{}setPendingDraft(null);setDraftDirty(false);setDraftNotice('');}
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || audioBusy) return;
@@ -290,6 +306,7 @@ export function ContributeDialog({
         if (json.duplicate && !initialEntry) setDuplicate(json.duplicate);
         throw new Error(json.error);
       }
+      if(!initialEntry&&!pendingDraft){draftRef.current.dirty=false;try{localStorage.removeItem(draftKey(draftOwner));}catch{}}
       saved();
       close();
     } catch (error) {
@@ -328,7 +345,10 @@ export function ContributeDialog({
           )}
         </p>
       )}
+      {!initialEntry&&pendingDraft&&<section className="notice"><p>{t('Ein gespeicherter Beitragsentwurf ist vorhanden.')}</p><div className="button-row"><button className="button small outline" onClick={restoreDraft}>{t('Entwurf wiederherstellen')}</button><button className="button small outline" onClick={discardDraft}>{t('Entwurf verwerfen')}</button></div></section>}
+      {!initialEntry&&draftNotice&&<p className="form-note" role="status">{t(draftNotice)}</p>}
       <form
+        onChangeCapture={()=>{setDraftDirty(true);setDraftChange(value=>value+1);}}
         ref={formRef}
         className="form-stack"
         onSubmit={submit}
@@ -559,7 +579,7 @@ export function ContributeDialog({
           </label>
         )}
         {challenge && (
-          <ChallengeEditor value={challenge} onChange={setChallenge} />
+          <ChallengeEditor audioOnly={!media.text} value={challenge} onChange={setChallenge} />
         )}
         {duplicate && (
           <div className="duplicate-notice" role="status">

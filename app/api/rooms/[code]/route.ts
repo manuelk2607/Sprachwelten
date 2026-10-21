@@ -73,6 +73,7 @@ export const POST = (request: Request, ctx: Context) =>
             ...(action.pronunciationLanguage !== undefined
               ? { pronunciationLanguage: action.pronunciationLanguage }
               : {}),
+            ...(action.tabooLanguages ? {tabooLanguages:action.tabooLanguages}:{}),
             ...(action.attributionCategory
               ? { attributionCategory: action.attributionCategory }
               : {}),
@@ -89,6 +90,7 @@ export const POST = (request: Request, ctx: Context) =>
           action.pronunciationCategory,
           action.pronunciationLanguage,
           action.attributionCategory,
+          action.tabooLanguages,
         ].some((value) => value !== undefined));
     if (refreshPool) {
       const { state } = await getRoom(code, false);
@@ -117,13 +119,13 @@ export const POST = (request: Request, ctx: Context) =>
               "Die Auswahl wurde inzwischen geändert. Bitte lade die Liste neu.",
               409,
             );
-          game.availableRounds = unseenPrompts(requested, prompts).length;
+          game.availableRounds = Math.floor(unseenPrompts(requested, prompts).length/(requested.mode==="taboo"?2:1));
         }
         act(game, id, action, prompts);
         if (action.action === "configure" && refreshPool)
           updateAvailability(game, prompts);
       },
-      ["start", "restart", "next"].includes(action.action),
+      ["start", "restart", "next", "taboo"].includes(action.action),
     );
     return withRoomAudio(
       action.action === "leave"

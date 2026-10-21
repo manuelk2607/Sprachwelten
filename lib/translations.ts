@@ -1,9 +1,11 @@
+import {improvementTranslations} from './improvement-translations';
 import {reviewFixTranslations} from './review-fix-translations';
 import {communityTranslations} from './community-translations';
 import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  ...improvementTranslations,
   'Album':'Album',
   'Album anzeigen':'Show album',
   'Album ausblenden':'Hide album',

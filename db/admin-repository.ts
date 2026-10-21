@@ -6,8 +6,9 @@ import {GameError} from '@/lib/game';
 import {otherLocale,storedTranslation} from '@/lib/content-translations';
 import {DuplicateEntryError} from '@/lib/entry-duplicates';
 import {audioBucket} from '@/lib/audio-storage';
-export async function adminEntries(search:string,removed:boolean,offset:number,unreadFor?:string){
- const rows=await database().query(`SELECT ${fields},deleted_at as "deletedAt",author_id as "authorId" FROM content_entries WHERE (deleted_at IS NOT NULL)=$1 AND ($2='' OR phrase ILIKE '%'||$2||'%' OR literal ILIKE '%'||$2||'%' OR meaning ILIKE '%'||$2||'%' OR credit_name ILIKE '%'||$2||'%') AND ($4::uuid IS NULL OR (deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=$4),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=$4 AND r.entry_id=content_entries.id))) ORDER BY created_at DESC,id LIMIT 31 OFFSET $3`,[removed,search,offset,unreadFor??null]);
+import {qualityPredicate,type QualityFilter} from '@/lib/content-quality';
+export async function adminEntries(search:string,removed:boolean,offset:number,unreadFor?:string,quality:QualityFilter='all'){
+ const rows=await database().query(`SELECT ${fields},deleted_at as "deletedAt",author_id as "authorId" FROM content_entries WHERE (deleted_at IS NOT NULL)=$1 AND ($2='' OR phrase ILIKE '%'||$2||'%' OR literal ILIKE '%'||$2||'%' OR meaning ILIKE '%'||$2||'%' OR credit_name ILIKE '%'||$2||'%') AND ($4::uuid IS NULL OR (deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=$4),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=$4 AND r.entry_id=content_entries.id))) AND (${qualityPredicate(quality)}) ORDER BY created_at DESC,id LIMIT 31 OFFSET $3`,[removed,search,offset,unreadFor??null]);
  return {entries:(rows.slice(0,30) as AdminEntry[]).map(withLanguageNames),more:rows.length>30};
 }
 export async function adminUsers(search:string,offset:number){

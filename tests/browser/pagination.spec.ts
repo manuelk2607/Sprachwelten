@@ -94,3 +94,5 @@ for (const path of ["/me", "/admin"]) {
       .toEqual({ q: "Neue Suche", offset: "0" });
   });
 }
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

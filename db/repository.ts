@@ -62,6 +62,7 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff',settings:Partial<RoomPoolSettings>={}) {
+  if(mode==='taboo')return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='taboo' AND language=ANY($1::text[]) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 240`,[settings.tabooLanguages??[settings.locale??'de'],(settings.playedPrompts??[]).map(p=>p.id)]) as Entry[]).map(withLanguageNames);
   if(mode==='word-chain')return chainPrompts();
   const seenIds=[...new Set([...(settings.playedPrompts??[]).map(prompt=>prompt.id),...(settings.round?[settings.round.entry.id]:[])])];
   if(mode==='meaning-quiz'){

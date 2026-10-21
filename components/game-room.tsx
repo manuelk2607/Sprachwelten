@@ -1,4 +1,6 @@
 "use client";
+import {TabooRound} from "./taboo-round";
+import {RoundReportButton} from "./round-report";
 import {PhraseText} from "./phrase-text";
 import { RoomSettings } from "./room-settings";
 import { roomPollDelay } from "@/lib/room-polling";
@@ -482,6 +484,7 @@ export function GameRoom({ code }: { code: string }) {
                 </div>
               ) : room.phase === "finished" ? (
                 <div className="finished-card">
+                  {room.taboo&&<p className="notice">{t("Teampunkte")}: A {room.taboo.scores[0]} : B {room.taboo.scores[1]}</p>}
                   <Trophy size={48} />
                   <div className="eyebrow">{t("PARTIE GESCHAFFT")}</div>
                   <h1>
@@ -577,12 +580,13 @@ export function GameRoom({ code }: { code: string }) {
                           mission: "◉ Route planen",
                           ordering: "◉ Satz bauen",
                           linking: "◉ Wörter verbinden",
+                          guessing: "◉ Erraten",
                           reveal: "✦ Entdecken",
                         }[room.phase],
                       )}
                     </span>
                   </div>
-                  {!room.chain && (!room.team || room.phase === "reveal") && (
+                  {!room.taboo && !room.chain && (!room.team || room.phase === "reveal") && (
                     <div className="prompt-card">
                       <span className="mini-label">
                         {room.attributionType
@@ -750,6 +754,7 @@ export function GameRoom({ code }: { code: string }) {
                       ))}
                     </div>
                   )}
+                  {room.taboo&&["briefing","guessing"].includes(room.phase)&&<TabooRound key={room.matchId+":"+room.taboo.cardIndex} room={room} busy={busy} act={action}/>}
                   {room.team && room.phase !== "reveal" && (
                     <TeamRound
                       key={
@@ -876,6 +881,7 @@ export function GameRoom({ code }: { code: string }) {
                     )}
                   {room.phase === "reveal" && (
                     <>
+                      {room.taboo&&<section className="notice"><h2>{t("Teampunkte")}: A {room.taboo.scores[0]} : B {room.taboo.scores[1]}</h2><ul>{room.taboo.results.map((result,i)=><li key={i}>{result.word} · {t(result.result==="correct"?"Richtig":result.result==="skip"?"Übersprungen":result.result==="buzz"?"Regelverstoß":"Zeit abgelaufen")}</li>)}</ul></section>}
                       <div className="revelation">
                         <Lightbulb size={26} />
                         <div>
@@ -1026,7 +1032,9 @@ export function GameRoom({ code }: { code: string }) {
                           onClick={() => action({ action: "next" })}
                         >
                           {t(
-                            room.roundNumber === room.totalRounds
+                            room.taboo&&room.taboo.team===0
+                              ? "Nächstes Team"
+                              :room.roundNumber === room.totalRounds
                               ? "Zum Ergebnis"
                               : "Nächste Runde",
                           )}
@@ -1041,6 +1049,7 @@ export function GameRoom({ code }: { code: string }) {
                   )}
                 </>
               )}
+              {token&&room.roundNumber>0&&["reveal","finished"].includes(room.phase)&&<RoundReportButton key={room.matchId+":"+room.roundNumber} room={room} token={token}/>}
             </section>
             <aside className="players-panel">
               <h2>

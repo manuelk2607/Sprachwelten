@@ -41,6 +41,8 @@ export function initialChallenge(kind: ContentKind): Challenge | undefined {
           { word: "", meaning: empty(), pronunciation: "" },
         ],
       };
+    case "taboo":
+      return {type:"taboo",forbidden:Array.from({length:5},()=>""),aliases:[]};
     case "attribution":
       return {
         type: "attribution",
@@ -73,8 +75,10 @@ export function initialChallenge(kind: ContentKind): Challenge | undefined {
 export function ChallengeEditor({
   value,
   onChange,
+  audioOnly=false,
 }: {
   value: Challenge;
+  audioOnly?:boolean;
   onChange: (value: Challenge) => void;
 }) {
   const { t, locale } = useI18n();
@@ -324,6 +328,7 @@ export function ChallengeEditor({
             ))}
           </>
         )}
+        {value.type==="taboo"&&<>{audioOnly&&<label>{t("Geheimes Suchwort zur Aufnahme")}<input name="challenge.target" value={value.target??""} maxLength={100} onChange={e=>onChange({...value,target:e.target.value})}/></label>}<p className="form-note">{t('Das Originalwort und alle Tabuwörter bleiben in derselben Sprache. Gib fünf typische Wörter an, die beim Erklären verboten sind.')}</p>{value.forbidden.map((word,i)=><label key={i}>{t('Verbotenes Wort')} {i+1}<input name={'challenge.forbidden.'+i} value={word} maxLength={60} onChange={e=>onChange({...value,forbidden:value.forbidden.map((w,n)=>n===i?e.target.value:w)})}/></label>)}<label>{t('Weitere gültige Schreibweisen')} · {t('(optional)')}<input name="challenge.aliases" value={value.aliases.join(';')} maxLength={500} onChange={e=>onChange({...value,aliases:e.target.value.split(';').slice(0,5)})}/></label></>}
         {value.type === "attribution" && (
           <>
             <label>

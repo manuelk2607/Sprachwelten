@@ -7,6 +7,8 @@ import { useAuthSession } from "@/lib/auth/provider";
 import { useI18n } from "@/lib/i18n";
 import { kindLabels, type Entry } from "@/lib/content";
 import type { AdminEntry, AdminUser } from "@/lib/admin-types";
+import {AdminReports} from "./admin-reports";
+import {qualityLabels,type QualityFilter} from "@/lib/content-quality";
 import { AdminInbox } from "./admin-inbox";
 import { BulkEditDialog } from "./bulk-edit-dialog";
 import { BulkHistory } from "./bulk-history";
@@ -39,6 +41,7 @@ export function AdminPanel() {
   }, [query, search]);
   const userId = session?.user?.id;
   const [unreadFilter, setUnreadFilter] = useKeyedState(userId ?? "", false);
+  const [quality,setQuality]=useKeyedState<QualityFilter>(userId ?? "", "all");
   const unreadOnly = tab === "entries" && !removed && unreadFilter;
   const readRefresh = unreadOnly ? inboxRefresh : 0;
   const [readError, setReadError] = useKeyedState(userId ?? "", "");
@@ -50,6 +53,7 @@ export function AdminPanel() {
       search,
       offset,
       refresh,
+      quality,
       unreadOnly,
       readRefresh,
     ]),
@@ -68,7 +72,7 @@ export function AdminPanel() {
             q: search,
             offset: String(offset),
             removed: String(removed),
-            ...(tab === "entries" ? { unread: String(unreadOnly) } : {}),
+            ...(tab === "entries" ? { quality, unread: String(unreadOnly) } : {}),
           })
       : null,
     userId + ":" + refresh + ":" + readRefresh,
@@ -133,7 +137,8 @@ export function AdminPanel() {
         search,
         offset,
         refresh,
-        unreadOnly,
+        quality,
+      unreadOnly,
         readRefresh,
       ]),
       {},
@@ -161,6 +166,7 @@ export function AdminPanel() {
           </div>
         ) : (
           <>
+            <AdminReports key={"reports:"+userId} refresh={inboxRefresh} onChanged={()=>{setInboxRefresh(v=>v+1);window.dispatchEvent(new Event("sprachwelten-inbox"));}} onEdit={openEditor}/>
             <AdminInbox
               key={userId}
               refresh={refresh + inboxRefresh}
@@ -236,6 +242,7 @@ export function AdminPanel() {
                   </Select>
                 </label>
               )}
+              {tab === "entries" && <label>{t("Qualitätsfilter")}<Select value={quality} onValueChange={v=>{setQuality(v as QualityFilter);setOffset(0);setSelected({});}}>{Object.entries(qualityLabels).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label>}
               {tab === "entries" && !removed && (
                 <label className="unread-filter">
                   <input

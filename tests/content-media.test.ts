@@ -9,10 +9,11 @@ import {newGameEntries} from '../lib/new-game-seeds';
 import {seedEntries} from '../lib/seeds';
 import {extraSeeds} from '../lib/extra-seeds';
 import {wordSeeds} from '../lib/word-seeds';
+import {tabooSeeds} from '../lib/taboo-seeds';
 import {prepareAttributionEntries} from '../lib/attribution';
 const clip=crypto.randomUUID();
 const player=(n:number)=>({id:crypto.randomUUID(),name:'Media '+n,tokenHash:'hash-'+n,score:0});
-const samples=[...seedEntries,...extraSeeds,...wordSeeds,...newGameEntries,...communityGameEntries];
+const samples=[...tabooSeeds,...seedEntries,...extraSeeds,...wordSeeds,...newGameEntries,...communityGameEntries];
 test('text, audio and combined input validate independently; legacy submissions keep their behavior',()=>{
  assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en'}).presentation,'text');
  assert.equal(entryInput.parse({literal:'Test translation',kind:'word',phrase:'word',language:'en',audioId:clip}).presentation,'both');
@@ -28,7 +29,7 @@ test('saved legacy rounds infer their original presentation without losing recor
  assert.equal(presentationOf({}),'text');assert.equal(presentationOf({audioId:clip}),'both');assert.equal(hasText({presentation:'audio',audioId:clip}),false);assert.equal(hasAudio({presentation:'text',audioId:clip}),false);
 });
 test('audio-only prompts remain distinct and hide source text in every game projection',()=>{
- for(const mode of gameModes.filter(mode=>mode.id!=='word-chain')){
+ for(const mode of gameModes.filter(mode=>mode.id!=='word-chain'&&mode.id!=='taboo')){
   let prompts=samples.filter(e=>e.kind===mode.kind).slice(0,4).map(e=>({...e,presentation:'audio' as const,phrase:'',literal:'Hidden transcript',audioId:crypto.randomUUID()}));
   if(mode.id==='who-said-it')prompts=prepareAttributionEntries(samples.filter(e=>e.kind==='attribution')).map(e=>({...e,presentation:'audio' as const,phrase:'',literal:'Hidden transcript',audioId:crypto.randomUUID()}));
   assert.ok(prompts.length>=2,mode.id);const p=player(1),g=createGame('ABC234',p,'en',mode.id);if(mode.id==='tongue-twisters')g.pronunciationLanguage='';for(let i=2;i<=mode.minPlayers;i++)joinGame(g,player(i));act(g,p.id,{action:'start'},prompts);

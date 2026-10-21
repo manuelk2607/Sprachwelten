@@ -1,4 +1,5 @@
 "use client";
+import {LanguageSetPicker} from "./language-set-picker";
 import { useAuthSession } from "@/lib/auth/provider";
 import { familyFor, gameFamilies } from "@/lib/game-families";
 import { Select } from "./select";
@@ -40,6 +41,7 @@ export function RoomForm({
   const [pronunciationLanguage, setPronunciationLanguage] = useState(
     locale as string,
   );
+  const [tabooLanguages,setTabooLanguages]=useState<string[]>([locale]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const info = modeInfo(mode);
@@ -65,6 +67,7 @@ export function RoomForm({
             name: data.get("name"),
             locale: data.get("locale") ?? locale,
             mode,
+            tabooLanguages:mode==="taboo"?tabooLanguages:undefined,
             meaningCategory: data.get("meaningCategory") ?? undefined,
             pronunciationCategory:
               data.get("pronunciationCategory") ?? undefined,
@@ -188,6 +191,7 @@ export function RoomForm({
             preserveSelectionWhileSearching
           />
         )}
+        {!join&&mode==="taboo"&&<LanguageSetPicker value={tabooLanguages} onChange={setTabooLanguages} disabled={busy}/>}
         {!join && mode === "who-said-it" && (
           <label>
             {t("Kategorie")}

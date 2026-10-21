@@ -24,15 +24,16 @@ const attribution=z.object({type:z.literal('attribution'),category:z.enum(['pers
  const keys=[v.answer,...v.aliases].map(normalizedAnswer),other=v.alternatives.map(normalizedAnswer);
  if(new Set(other).size!==other.length||other.some(k=>keys.includes(k)))c.addIssue({code:'custom',message:'Antworten müssen verschieden sein.'});
 });
+const taboo=z.object({type:z.literal('taboo'),target:z.string().trim().min(1).max(100).optional(),forbidden:z.array(z.string().trim().min(1).max(60)).length(5),aliases:z.array(z.string().trim().max(100)).max(5).default([]).transform(values=>values.filter(Boolean))}).refine(v=>new Set(v.forbidden.map(normalizedAnswer)).size===5,'Bitte fünf verschiedene Tabuwörter angeben.');
 const joke=z.object({type:z.literal('joke'),choices,correctIndex:z.number().int().min(0).max(3)});
 const friends=z.object({type:z.literal('friends'),otherWord:z.string().trim().min(1).max(100),otherLanguage:language,sameMeaning:z.boolean(),firstMeaning:bilingual,secondMeaning:bilingual,context:bilingual});
 const wordOrder=z.object({type:z.literal('order'),targetLanguage:language,source:z.object({de:z.string().trim().min(1).max(180),en:z.string().trim().min(1).max(180)}),tiles:z.array(z.object({id:z.string().regex(/^[a-z0-9-]{1,30}$/),text:z.string().trim().min(1).max(50)})).min(2).max(16),accepted:z.array(z.array(z.string()).min(2).max(16)).min(1).max(5)}).superRefine((v,c)=>{
  const ids=v.tiles.map(t=>t.id);if(new Set(ids).size!==ids.length)c.addIssue({code:'custom',message:'Jeder Baustein braucht eine eigene ID.'});
  for(const order of v.accepted)if(order.length!==ids.length||new Set(order).size!==ids.length||order.some(id=>!ids.includes(id)))c.addIssue({code:'custom',message:'Jede gültige Wortfolge muss alle Bausteine genau einmal verwenden.'});
 });
-export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,friends,wordOrder,joke,meaning,outsider,loan]);
+export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,taboo,friends,wordOrder,joke,meaning,outsider,loan]);
 export type Challenge=z.infer<typeof challengeSchema>;
-export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke',word_group:'outsider',loanword:'loan'} as const;
+export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke',word_group:'outsider',loanword:'loan',taboo:'taboo'} as const;
 export type PronunciationCategory='both'|'twister'|'sound';
 export type AttributionCategory='both'|'person'|'song';
 export const missionTiles:Bilingual[]=[{de:'Beutekiste',en:'Loot crate'},{de:'Brücke',en:'Bridge'},{de:'Turm',en:'Tower'},{de:'Deckung',en:'Cover'},{de:'Basis',en:'Base'},{de:'Heilpunkt',en:'Healing point'},{de:'Lager',en:'Camp'},{de:'Sammelpunkt',en:'Rally point'},{de:'Ausgang',en:'Exit'}];

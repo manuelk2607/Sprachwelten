@@ -90,3 +90,5 @@ test('audio is cropped before upload and an uploaded clip can be trimmed again',
  await dialog.getByRole('button',{name:'Audio zuschneiden',exact:true}).click();await expect(dialog.getByRole('spinbutton',{name:'Ende (Sekunden)',exact:true})).toHaveValue('1');
  await dialog.getByRole('spinbutton',{name:'Ende (Sekunden)',exact:true}).fill('0.5');await dialog.getByRole('button',{name:'Ausschnitt übernehmen',exact:true}).click();await expect.poll(()=>durations).toEqual([1000,500]);
 });
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

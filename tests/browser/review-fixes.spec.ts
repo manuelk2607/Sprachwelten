@@ -206,3 +206,5 @@ test("administrators can confirm an undo and see its availability update in both
     page.getByText("Recent bulk changes", { exact: true }),
   ).toBeVisible();
 });
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

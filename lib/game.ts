@@ -1,3 +1,4 @@
+import {initializeTaboo,actTaboo,viewTaboo,tabooPlayerLeft,type TabooState} from "./taboo-game";
 import { hasText, hasAudio, presentationOf } from "./content-media";
 import { songTitle } from "./attribution";
 import {
@@ -17,6 +18,7 @@ import {
 import {
   languages,
   pronunciationLanguageInput,
+  tabooLanguagesInput,
   ratingScores,
   type Entry,
   type RatingScores,
@@ -63,7 +65,8 @@ export type Phase =
   | "briefing"
   | "mission"
   | "ordering"
-  | "linking";
+  | "linking"
+  | "guessing";
 export type Player = {
   id: string;
   name: string;
@@ -114,6 +117,8 @@ export type Game = {
   pronunciationCategory?: PronunciationCategory;
   pronunciationLanguage?: string;
   attributionCategory?: AttributionCategory;
+  tabooLanguages?: string[];
+  taboo?: TabooState;
 };
 export class GameError extends Error {
   constructor(
@@ -135,6 +140,7 @@ export function createGame(
     locale,
     mode,
     pronunciationLanguage: locale,
+    tabooLanguages: [locale],
     hostId: player.id,
     phase: "lobby",
     players: [player],
@@ -456,8 +462,8 @@ export function leaveGame(game: Game, playerId: string) {
     game.prompts = [];
     return;
   }
-  if (game.phase === "lobby") return;
-  if (game.phase === "finished") return;
+  if (game.phase === "lobby"||game.phase==="finished") return;
+  if(game.mode==="taboo"){tabooPlayerLeft(game);return;}
   const minimum =
     isQuizMode(game.mode) ||
     game.mode === "word-builder" ||
@@ -557,6 +563,7 @@ export function act(
     if (action.mode && !currentModeIds.includes(action.mode))
       throw new GameError("Dieses Spiel ist nicht verfügbar.", 422);
     const next = { ...game, mode: action.mode ?? game.mode };
+    if(action.tabooLanguages){if(next.mode!=="taboo")throw new GameError("Dieser Sprachfilter passt nicht zum Spiel.",422);const parsed=tabooLanguagesInput.safeParse(action.tabooLanguages);if(!parsed.success)throw new GameError("Bitte eine Sprache aus der Liste wählen.",422);next.tabooLanguages=parsed.data;}
     if (action.pronunciationCategory) {
       if (next.mode !== "tongue-twisters")
         throw new GameError("Diese Kategorie passt nicht zum Spiel.", 422);
@@ -651,7 +658,7 @@ export function act(
       throw new GameError(
         info.minPlayers === 2
           ? "Zum Start braucht ihr mindestens 2 Personen."
-          : "Zum Start braucht ihr mindestens 3 Personen.",
+          : info.minPlayers===4?"Zum Start braucht ihr mindestens 4 Personen.":"Zum Start braucht ihr mindestens 3 Personen.",
       );
     if (
       !Number.isInteger(game.totalRounds) ||
@@ -660,8 +667,8 @@ export function act(
     )
       throw new GameError("Bitte zwischen 1 und 10 Runden wählen.", 422);
     const unique = unseenPrompts(game, prompts);
-    game.availableRounds = unique.length;
-    if (unique.length < game.totalRounds)
+    game.availableRounds = game.mode==="taboo"?Math.floor(unique.length/2):unique.length;
+    if (unique.length < game.totalRounds*(game.mode==="taboo"?2:1))
       throw new GameError(
         "Für diese Rundenzahl sind noch nicht genügend ungespielte Beiträge vorhanden.",
       );
@@ -685,6 +692,8 @@ export function act(
         if (b) ordered.push(b);
       }
     }
+    if(game.mode==="taboo"){game.prompts=ordered;game.roundIndex=0;game.matchId=crypto.randomUUID();for(const member of game.players)member.score=0;initializeTaboo(game);return;}
+    delete game.taboo;
     game.prompts = ordered
       .slice(0, game.totalRounds)
       .map((entry) => localizeEntry(entry, game.locale ?? "de"));
@@ -695,6 +704,8 @@ export function act(
     newRound(game);
     return;
   }
+  if(actTaboo(game,playerId,action))return;
+  if(action.action==="taboo")throw new GameError("Diese Aktion passt nicht zum Spiel.",422);
   const round = game.round;
   if (!round) throw new GameError("Das Spiel hat noch nicht begonnen.");
   if (action.action === "chain") {
@@ -840,7 +851,8 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
   const quiz = isQuizMode(game.mode) || isTeamMode(game.mode);
   const c = round?.entry.challenge;
   const team = viewTeam(game, playerId);
-  const hidden = !!team && !team.briefing;
+  const taboo=viewTaboo(game,playerId);
+  const hidden = (!!team && !team.briefing)||!!taboo&&!taboo.card;
   const order = c?.type === "order" ? c : null;
   const textVisible = !!round && hasText(round.entry);
   const audioVisible = !!round && hasAudio(round.entry) && !hidden;
@@ -851,6 +863,8 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
   const activeRatings = speaker ? (performance?.ratings[speaker.id] ?? {}) : {};
   const song = game.mode === "who-said-it" && c?.type === "attribution" && c.category === "song" ? c : null;
   return {
+    taboo,
+    tabooLanguages: game.tabooLanguages??[game.locale],
     songHelp: song && game.phase === "voting"
       ? { album: song.album ?? "", artist: round?.entry.hint ? "" : song.artist }
       : null,

@@ -1,4 +1,5 @@
 'use client';
+import {LanguageSetPicker} from './language-set-picker';
 import {useI18n} from '@/lib/i18n';
 import type {GameView} from '@/lib/game';
 import type {RoomAction} from '@/lib/content';
@@ -14,6 +15,7 @@ export function RoomSettings({room,disabled,configure}:{room:GameView;disabled:b
   return <div className="form-stack room-settings">
     <label>{t('Spielmodus')}<Select disabled={disabled} value={family.id} onValueChange={mode=>configure({action:'configure',mode:mode as Configuration['mode']})}>{gameFamilies.map(item=><option key={item.id} value={item.id}>{t(item.title)}</option>)}</Select></label>
     {room.mode==='tongue-twisters'&&<><LanguagePicker label="Sprache der Zungenbrecher" value={room.pronunciationLanguage} onChange={pronunciationLanguage=>configure({action:'configure',pronunciationLanguage})} disabled={disabled} allowAll preserveSelectionWhileSearching/><p className="form-note">{t('Gilt für Texte und Aufnahmen in beiden Kategorien. Mit „Alle Sprachen“ werden die Sprachen gemischt.')}</p></>}
+    {room.mode==='taboo'&&<LanguageSetPicker value={room.tabooLanguages} onChange={tabooLanguages=>configure({action:'configure',tabooLanguages})} disabled={disabled}/>}
     <div className="room-settings-row">
     {family.modes.length>1&&<label>{t('Kategorie')}<Select disabled={disabled} value={room.mode} onValueChange={mode=>configure({action:'configure',mode:mode as Configuration['mode']})}>{family.modes.map(mode=><option key={mode} value={mode}>{t(modeInfo(mode).title)}</option>)}</Select></label>}
     {room.mode==='meaning-quiz'&&<label>{t('Kategorie')}<Select disabled={disabled} value={room.meaningCategory} onValueChange={meaningCategory=>configure({action:'configure',meaningCategory:meaningCategory as MeaningCategory})}>{Object.entries(meaningCategories).map(([id,label])=><option key={id} value={id}>{t(label)}</option>)}</Select></label>}

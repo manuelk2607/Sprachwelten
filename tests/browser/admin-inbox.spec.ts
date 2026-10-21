@@ -314,3 +314,5 @@ test("the unread filter combines with search, clears hidden selections and remov
     page.locator('.admin-entry input[type="checkbox"]:checked'),
   ).toHaveCount(0);
 });
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

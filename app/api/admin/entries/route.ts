@@ -1,5 +1,6 @@
 import { requireAdministrator } from "@/lib/admin";
 import { respond, safe } from "@/lib/http";
+import {qualityFilter} from "@/lib/content-quality";
 import { adminEntries } from "@/db/admin-repository";
 export const GET = (request: Request) =>
   safe(async () => {
@@ -11,6 +12,7 @@ export const GET = (request: Request) =>
         q.get("removed") === "true",
         Math.max(0, Math.min(100000, Number(q.get("offset")) || 0)),
         q.get("unread") === "true" ? admin : undefined,
+        qualityFilter.parse(q.get("quality") ?? "all"),
       ),
     );
   });

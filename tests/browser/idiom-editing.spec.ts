@@ -230,3 +230,5 @@ test("the current idiom displays bold words and an opt-in hint that resets on th
     page.getByText(game.round!.entry.hint!, { exact: true }),
   ).toHaveCount(0);
 });
+
+test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});

@@ -26,7 +26,7 @@ test('guests can publish without a login and optional account benefits are expla
  await dialog.getByRole('combobox').first().click();await page.getByRole('option',{name:'Wort',exact:true}).click();
  await dialog.locator('[name="phrase"]').fill('Gastwort');await dialog.locator('[name="literal"]').fill('Eine Testübersetzung');
  await expect(dialog.getByRole('button',{name:'Übersetzung vorschlagen',exact:true})).toBeDisabled();
- await dialog.getByRole('button',{name:'Beitrag veröffentlichen',exact:true}).click();await expect(page.getByRole('status')).toHaveText('Dein Beitrag ist jetzt Teil der Sammlung.');expect(submitted?.phrase).toBe('Gastwort');expect(submitted?.creditName).toBe('');
+ await dialog.getByRole('button',{name:'Beitrag veröffentlichen',exact:true}).click();await expect(page.getByRole('status')).toHaveText('Dein Beitrag wurde veröffentlicht.');expect(submitted?.phrase).toBe('Gastwort');expect(submitted?.creditName).toBe('');
  await page.getByRole('button',{name:'EN',exact:true}).click();await page.locator('.header').getByRole('button',{name:'Contribute',exact:true}).click();await expect(page.getByRole('dialog').getByText(/You can contribute without an account\./)).toBeVisible();
  await page.getByRole('button',{name:'Close',exact:true}).click();await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page.getByRole('dialog').getByText(/An account lets you manage your contributions across devices/)).toBeVisible();
 });

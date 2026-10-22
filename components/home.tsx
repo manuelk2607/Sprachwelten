@@ -410,7 +410,7 @@ export function Home() {
                     onValueChange={setKind}
                   >
                     <option value="">{t("Alles")}</option>
-                    {Object.entries(kindLabels).map(([id, label]) => (
+                    {Object.entries(kindLabels).filter(([id]) => id !== "taboo").map(([id, label]) => (
                       <option key={id} value={id}>
                         {t(label)}
                       </option>
@@ -573,7 +573,7 @@ export function Home() {
           close={() => setContribute(false)}
           saved={() => {
             setRefresh((r) => r + 1);
-            setToast(t("Dein Beitrag ist jetzt Teil der Sammlung."));
+            setToast(t("Dein Beitrag wurde veröffentlicht."));
           }}
         />
       )}

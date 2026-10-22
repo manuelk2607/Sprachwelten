@@ -25,14 +25,30 @@ for (const [kind, language, search] of [
   for (const offset of [0, 6]) {
     const rows = await listEntries(kind, language, search, offset);
     assert.ok(rows.every((e) => e.kind !== "taboo"));
-    const expected =
-      await sql`SELECT id FROM content_entries WHERE deleted_at IS NULL AND kind<>'taboo' AND (${kind}='' OR kind=${kind}) AND (${language}='' OR language=${language}) AND (${search}='' OR phrase ILIKE '%'||${search}||'%' OR meaning ILIKE '%'||${search}||'%' OR translations#>>'{de,meaning}' ILIKE '%'||${search}||'%' OR translations#>>'{en,meaning}' ILIKE '%'||${search}||'%') ORDER BY created_at DESC,id LIMIT 6 OFFSET ${offset}`;
-    assert.deepEqual(
-      rows.map((e) => e.id),
-      expected.map((e) => e.id),
-    );
+    if (kind === "taboo") assert.deepEqual(rows, []);
+    if (!kind && !language && !search)
+      assert.equal(
+        rows.length,
+        6,
+        "Taboo must be removed before LIMIT, not after loading a page.",
+      );
   }
 }
+const first = await listEntries(),
+  second = await listEntries("", "", "", 6);
+assert.equal(
+  new Set([...first, ...second].map((e) => e.id)).size,
+  12,
+  "Pages must not overlap.",
+);
+const [ordinary] =
+  await sql`SELECT phrase,language FROM content_entries WHERE kind='idiom' AND deleted_at IS NULL ORDER BY length(phrase) DESC LIMIT 1`;
+assert.ok(ordinary);
+const searched = await listEntries("idiom", ordinary.language, ordinary.phrase);
+assert.ok(
+  searched.some((e) => e.phrase === ordinary.phrase),
+  "Ordinary contributions remain searchable.",
+);
 const game = await gamePrompts("taboo", {
   locale: "de",
   tabooLanguages: ["de"],

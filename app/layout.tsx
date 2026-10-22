@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth/provider";
 import { themeBootstrap } from "@/lib/theme-bootstrap";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
     default: "Sprachwelten – kostenlose Sprachspiele online",
@@ -16,14 +16,16 @@ export const metadata: Metadata = {
   description:
     "Kostenlose Sprachspiele für dich und deine Freunde: Redewendungen, Dialekte, Tabu und Zungenbrecher. Direkt im Browser, auf Deutsch und Englisch.",
   applicationName: site.name,
-  ...(process.env.GOOGLE_SITE_VERIFICATION
-    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
-    : {}),
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
 };
+
+export function generateMetadata(): Metadata {
+  const google = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+  return { ...baseMetadata, ...(google ? { verification: { google } } : {}) };
+}
 
 export default async function RootLayout({
   children,

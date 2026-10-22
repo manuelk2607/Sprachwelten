@@ -1,4 +1,5 @@
 export const improvementTranslations: Record<string, string> = {
+  "Spielanleitungen": "Game guides",
   "Dein Beitrag wurde veröffentlicht.": "Your contribution has been published.",
   "Bitte eine Sprache aus der Liste wählen.":
     "Please choose a language from the list.",

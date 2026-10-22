@@ -13,12 +13,34 @@ const I18n = createContext({
   setLocale: (_locale: Locale) => {},
   t: (text: string) => text,
 });
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLanguage] = useState<Locale>("de");
+export function I18nProvider({
+  children,
+  initialLocale = "de",
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLanguage] = useState<Locale>(initialLocale);
   useEffect(() => {
-    const stored = localStorage.getItem("sprachwelten-language");
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate the persisted browser language once after server rendering.
-    if (stored === "de" || stored === "en") setLanguage(stored);
+    const path = window.location.pathname;
+    const routeLocale =
+      path === "/en" || path.startsWith("/en/")
+        ? "en"
+        : path === "/spiele" || path.startsWith("/spiele/")
+          ? "de"
+          : null;
+    const parameter = new URLSearchParams(window.location.search).get("lang");
+    const explicit =
+      routeLocale ??
+      (parameter === "en" || parameter === "de" ? parameter : null);
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem("sprachwelten-language");
+    } catch {}
+    const preferred =
+      explicit ?? (stored === "de" || stored === "en" ? stored : null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate the route or saved browser language once.
+    if (preferred) setLanguage(preferred);
   }, []);
   const setLocale = useCallback((value: Locale) => {
     setLanguage(value);
@@ -26,7 +48,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = "Sprachwelten";
   }, [locale]);
   const t = useCallback((text: string) => translate(text, locale), [locale]);
   return (

@@ -267,3 +267,7 @@ validate the match ID as well as the round and speaker, including same-room rema
 Run `node --env-file=<isolated-QA-env> --import tsx scripts/test-room-maintenance.mts`
 against a running local QA server to verify attendance, ETags and expiry cleanup.
 Measured results and remaining work: [follow-up performance checks](docs/performance-2026-10-18.md).
+
+## SEO und öffentlicher Start
+
+Die Spielanleitungen sind ohne JavaScript und ohne Anmeldung auf `/spiele` (Deutsch) und `/en/games` (Englisch) lesbar. Beide Startseiten und alle Anleitungen haben eigene Metadaten, Canonical-/Sprachverweise und Linkvorschauen. Die Sitemap enthält ausschließlich öffentliche Informationsseiten; Quizlösungen und Raum-/Kontodaten werden dort nicht veröffentlicht. Schritte zur Google-Bestätigung und zu einer optionalen eigenen Domain stehen in [docs/public-launch.md](docs/public-launch.md).

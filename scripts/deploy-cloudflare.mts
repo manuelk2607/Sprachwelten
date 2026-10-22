@@ -18,6 +18,7 @@ config.preview_urls = false;
 config.triggers = { crons: ["17 3 * * *"] };
 config.ratelimits = readLimitBindings;
 config.ai = { binding: "AI" };
+if(process.env.GOOGLE_SITE_VERIFICATION?.trim())config.vars={...config.vars,GOOGLE_SITE_VERIFICATION:process.env.GOOGLE_SITE_VERIFICATION.trim()};
 config.r2_buckets = [
   ...(config.r2_buckets ?? []).filter(
     (bucket: { binding: string }) => bucket.binding !== "AUDIO",

@@ -1,4 +1,5 @@
 import handler from "vinext/server/fetch-handler";
+import {withRequestLocale} from "../lib/request-locale";
 import { maintainApplication } from "../db/maintenance";
 import { securityHeaders } from "../lib/security-headers";
 import { guardReadRequest, type ReadLimitEnv } from "../lib/read-guard";
@@ -20,6 +21,7 @@ export default {
     env: Cloudflare.Env & ReadLimitEnv,
     ctx: ExecutionContext,
   ) {
+    request=withRequestLocale(request);
     const denied = await guardReadRequest(request, env);
     if (denied) return securityHeaders(denied);
     const cacheKey = publicReadCacheKey(request);

@@ -38,7 +38,7 @@ export function Home() {
     () => true,
     () => false,
   );
-  const { t } = useI18n();
+  const { t,locale } = useI18n();
   const session = useAuthSession();
   const [auth, setAuth] = useState(false);
   const [contribute, setContribute] = useState(false);
@@ -547,6 +547,7 @@ export function Home() {
           <span className="brand-dot">.</span>
         </a>
         <p>{t("Mit Neugier gemacht. Für alle, die Sprache verbindet.")}</p>
+        <a href={locale==="de"?"/spiele":"/en/games"}>{t("Spielanleitungen")}</a>
         <a href={site.repository} target="_blank" rel="noreferrer">
           {t("Öffentlicher Code")} <ExternalLink size={14} />
         </a>

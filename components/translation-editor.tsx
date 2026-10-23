@@ -48,6 +48,7 @@ export function TranslationEditor({
     version.current = revision;
   }, [revision]);
   const target = otherLocale(sourceLocale);
+  const FieldsContainer = compact ? "details" : "div";
   const hasTranslation = fields.some((field) => translation[field.key]?.trim());
   useEffect(() => {
     const controller = new AbortController();
@@ -222,7 +223,7 @@ export function TranslationEditor({
           </div>
         </div>
       )}
-      <details open={!compact}>
+      <FieldsContainer>
         {compact && (
           <summary>
             {t("Zweite Sprachfassung")} · {target.toUpperCase()}
@@ -242,7 +243,7 @@ export function TranslationEditor({
             />
           </label>
         ))}
-      </details>
+      </FieldsContainer>
       {hasTranslation && (
         <label className="translation-review">
           <input

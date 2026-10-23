@@ -186,6 +186,7 @@ test("song contributions save optional albums and reviewed bilingual hints", asy
   await dialog.locator('[name="challenge.artist"]').fill("Testinterpret");
   await dialog.locator('[name="challenge.album"]').fill("Testalbum");
   await dialog.locator('[name="hint"]').fill("Ein Lied über Fernweh.");
+  await dialog.locator('.inline-hint-translation summary').click();
   await dialog
     .getByLabel("Tipp fürs Spiel · Englisch", { exact: true })
     .fill("A song about wanderlust.");

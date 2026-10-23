@@ -157,6 +157,7 @@ test("idiom hints and highlighted words survive editing and keep the submitted o
     .fill("Da liegt der Hund **begraben**.");
   await expect(dialog.locator(".phrase-preview strong")).toHaveText("begraben");
   await dialog.locator('[name="hint"]').fill("Ein Hinweis auf die Ursache.");
+  await dialog.locator('.inline-hint-translation summary').click();
   await dialog
     .getByLabel("Tipp fürs Spiel · Englisch", { exact: true })
     .fill("A clue to the cause.");

@@ -3,6 +3,31 @@ import {act,createGame,viewGame} from '../../lib/game';
 import type {RoomAction} from '../../lib/content';
 import {extraSeeds} from '../../lib/extra-seeds';
 
+test('inline hint suggestions require explicit acceptance and discard stale previews',async({page})=>{
+ await page.route('**/api/auth/get-session**',r=>r.fulfill({json:{session:{id:'qa',userId:'qa'},user:{id:'qa',name:'QA',email:'qa@example.invalid'}}}));
+ await page.route('**/api/admin/access',r=>r.fulfill({json:{isAdmin:false}}));
+ await page.route('**/api/audio',r=>r.fulfill({json:{available:false}}));
+ await page.route('**/api/entries/duplicates?*',r=>r.fulfill({json:{duplicate:null}}));
+ const requests:unknown[]=[];
+ await page.route('**/api/translations',r=>{if(r.request().method()==='GET')return r.fulfill({json:{available:true}});requests.push(r.request().postDataJSON());return r.fulfill({json:{translation:{hint:'A small hint.'}}});});
+ await page.goto('/');await expect(page.getByRole('link',{name:'Meine Beiträge',exact:true})).toBeVisible();
+ await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();
+ const d=page.getByRole('dialog'),inline=d.locator('.inline-hint-translation');
+ await d.locator('[name="hint"]').fill('Ein kleiner Tipp.');
+ await inline.getByRole('button',{name:'Übersetzung vorschlagen',exact:true}).click();
+ await expect(inline.locator('.answer-translation-preview')).toBeVisible();
+ await inline.locator('summary').click();
+ await expect(inline.getByLabel('Tipp fürs Spiel · Englisch',{exact:true})).toHaveValue('');
+ await inline.getByRole('button',{name:'Vorschlag übernehmen',exact:true}).click();
+ await expect(d.getByRole('textbox',{name:'Tipp fürs Spiel · Englisch',exact:true})).toHaveValue('A small hint.');
+ expect(requests[0]).toMatchObject({sourceLocale:'de',texts:{hint:'Ein kleiner Tipp.'}});
+ await inline.getByRole('button',{name:'Übersetzung vorschlagen',exact:true}).click();
+ await expect(inline.locator('.answer-translation-preview')).toBeVisible();
+ await d.locator('[name="hint"]').fill('Ein anderer Tipp.');
+ await expect(inline.locator('.answer-translation-preview')).toHaveCount(0);
+ expect(await d.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+});
+
 test('dialect hints are opt-in, survive polling, reset for each round and support both UI languages',async({page})=>{
  const host={id:crypto.randomUUID(),name:'QA Hint',tokenHash:'qa-only',score:0},game=createGame('TIPPXX',host,'de','dialect-detective');
  const entries=extraSeeds.filter(entry=>entry.kind==='dialect').map((entry,index)=>({...entry,hint:`Ein kleiner Hinweis ${index}.`}));
@@ -25,9 +50,8 @@ test('the contribution editor offers optional bilingual hints for idioms and dia
  await page.route('**/api/auth/get-session**',route=>route.fulfill({json:null}));await page.route('**/api/audio',route=>route.fulfill({json:{available:false}}));await page.route('**/api/translations',route=>route.fulfill({json:{available:false}}));await page.route('**/api/regions',route=>route.fulfill({json:{regions:{}}}));await page.route('**/api/entries/duplicates?*',route=>route.fulfill({json:{duplicate:null}}));
  const ready=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));await page.goto('/');await ready;await page.locator('.header').getByRole('button',{name:'Beitragen',exact:true}).click();
  const dialog=page.getByRole('dialog');await expect(dialog.locator('[name="hint"]')).toBeVisible();
- await expect(dialog.getByText('Sprache deiner Erklärung: Deutsch',{exact:false})).toBeVisible();
  await expect(dialog.getByRole('combobox',{name:'Sprache deiner Erklärung'})).toHaveCount(0);
- await dialog.locator('[name="hint"]').fill('Eine Redewendung.');await expect(dialog.getByLabel('Tipp fürs Spiel · Englisch',{exact:true})).toBeVisible();
+ await dialog.locator('[name="hint"]').fill('Eine Redewendung.');await dialog.locator('.inline-hint-translation summary').click();await expect(dialog.getByLabel('Tipp fürs Spiel · Englisch',{exact:true})).toBeVisible();
  await dialog.getByRole('combobox').first().click();await page.getByRole('option',{name:'Dialekt',exact:true}).click();
  await expect(dialog.locator('[name="hint"]')).toBeVisible();await expect(dialog.locator('[name="hint"]')).not.toHaveAttribute('required','');await dialog.locator('[name="hint"]').fill('Ein Körperteil.');
  await expect(dialog.getByLabel('Tipp fürs Spiel · Englisch',{exact:true})).toBeVisible();

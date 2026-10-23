@@ -236,7 +236,7 @@ export const english: Record<string, string> = {
   "Bitte mindestens Text oder Audio auswählen.":"Please select at least text or audio.",
   "Sprache, Lösungen und optionale Hinweise ergänzt du weiterhin unten.":"Add the language, solutions and optional notes below.",
   "Sprache deiner Erklärung":"Language of your explanation",
-  "Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.":"Original expressions stay unchanged. This language applies to your explanations, examples and notes.",
+  "Sie folgt automatisch deiner aktuellen Oberflächensprache. Originalausdrücke bleiben unverändert.":"It follows your current interface language automatically. Original expressions stay unchanged.",
   "Übersetzung ins":"Translation into",
   "Deutsche":"German",
   "Englische":"English",

@@ -1,5 +1,4 @@
 "use client";
-import { Select } from "./select";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
 import {
@@ -15,7 +14,6 @@ export type TranslationField = {
 };
 export function TranslationEditor({
   sourceLocale,
-  setSourceLocale,
   fields,
   getSource,
   translation,
@@ -25,7 +23,6 @@ export function TranslationEditor({
   setReviewed,
 }: {
   sourceLocale: Locale;
-  setSourceLocale: (locale: Locale) => void;
   fields: TranslationField[];
   getSource: () => TranslationTexts;
   translation: Partial<TranslationTexts>;
@@ -91,25 +88,12 @@ export function TranslationEditor({
       className="translation-editor"
       aria-label={t("Übersetzung ergänzen")}
     >
-      <label>
-        {t("Sprache deiner Erklärung")}
-        <Select
-          value={sourceLocale}
-          onValueChange={(value) => {
-            setSourceLocale(value as Locale);
-            onChange({});
-            setReviewed(false);
-            setMachine(false);
-            setError("");
-          }}
-        >
-          <option value="de">{t("Deutsch")}</option>
-          <option value="en">{t("Englisch")}</option>
-        </Select>
-      </label>
       <p className="form-note">
+        <strong>
+          {t("Sprache deiner Erklärung")}: {t(sourceLocale === "de" ? "Deutsch" : "Englisch")}
+        </strong>{" "}
         {t(
-          "Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.",
+          "Sie folgt automatisch deiner aktuellen Oberflächensprache. Originalausdrücke bleiben unverändert.",
         )}
       </p>
       <h3>

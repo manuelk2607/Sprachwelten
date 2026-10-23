@@ -173,9 +173,9 @@ export function ContributeDialog({
       setOpening(false);
     }
   };
-  const [sourceLocale, setSourceLocale] = useState<Locale>(
-    initialEntry?.sourceLocale ?? locale,
-  );
+  // New explanations follow the active interface language. Existing entries
+  // retain their stored source language while they are edited.
+  const sourceLocale: Locale = initialEntry?.sourceLocale ?? locale;
   const [translation, setTranslation] = useState<Partial<TranslationTexts>>(
     initialEntry?.translations?.[
       (initialEntry.sourceLocale ?? "de") === "de" ? "en" : "de"
@@ -231,7 +231,7 @@ export function ContributeDialog({
   useEffect(()=>{if(!draftDirty||initialEntry||pendingDraft)return;const timer=setTimeout(persistDraft,700);return()=>clearTimeout(timer);});
   useEffect(()=>{if(initialEntry)return;const save=()=>persistDraft();window.addEventListener('pagehide',save);return()=>{window.removeEventListener('pagehide',save);const current=draftRef.current;if(current.dirty&&!current.pending)try{localStorage.setItem(draftKey(current.owner),JSON.stringify(current.snapshot));}catch{/* Keep the form usable. */}};},[initialEntry]);
   useEffect(()=>{if(!restoreFields||!formRef.current)return;for(const name of draftFieldNames){const control=formRef.current.elements.namedItem(name);if(control instanceof HTMLInputElement||control instanceof HTMLTextAreaElement)control.value=restoreFields.fields[name]??'';}queueMicrotask(()=>setRestoreFields(null));},[restoreFields]);
-  function restoreDraft(){if(!pendingDraft)return;const d=pendingDraft;setKind(d.kind);setPhrase(d.phrase);setSense(d.sense);setLanguage(d.language);setRegionId(d.regionId);setContextId(d.contextId);setSourceLocale(d.sourceLocale);setTranslation(d.translation);setReviewed(d.reviewed);setMedia(d.media);setChallenge(draftChallenge(d.challenge,initialChallenge(d.kind)));setRestoreFields(d);setPendingDraft(null);setDraftDirty(true);setDraftNotice(d.media.audio?'Textentwurf wiederhergestellt. Bitte die Aufnahme erneut hinzufügen.':'Entwurf wiederhergestellt.');}
+  function restoreDraft(){if(!pendingDraft)return;const d=pendingDraft;setKind(d.kind);setPhrase(d.phrase);setSense(d.sense);setLanguage(d.language);setRegionId(d.regionId);setContextId(d.contextId);setTranslation(d.translation);setReviewed(d.reviewed);setMedia(d.media);setChallenge(draftChallenge(d.challenge,initialChallenge(d.kind)));setRestoreFields(d);setPendingDraft(null);setDraftDirty(true);setDraftNotice(d.media.audio?'Textentwurf wiederhergestellt. Bitte die Aufnahme erneut hinzufügen.':'Entwurf wiederhergestellt.');}
   function discardDraft(){try{localStorage.removeItem(draftKey(draftOwner));}catch{}setPendingDraft(null);setDraftDirty(false);setDraftNotice('');}
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -696,10 +696,6 @@ export function ContributeDialog({
         {(literalRequired || hintsRelevant) && (
           <TranslationEditor
             sourceLocale={sourceLocale}
-            setSourceLocale={(value) => {
-              setSourceLocale(value);
-              sourceChanged();
-            }}
             fields={literalRequired ? fields : [hintField]}
             getSource={() =>
               literalRequired

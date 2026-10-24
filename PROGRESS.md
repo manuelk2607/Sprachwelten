@@ -44,12 +44,21 @@ Antwortvalidierung erkennt nun Unicode-/Leerraum-Dubletten und benennt das genau
 Zusätzlich erledigt: Sicherheitsupdates Zod 4.6.6, Undici 7.30.1 und fast-uri 3.1.9,
 einschließlich transitiver Pins. Vollständiges Audit wieder bestanden; keine weitere Ausnahme.
 
-Nächster Schritt: GitHub und Veröffentlichung mit Live-Prüfung. `.clinerules` ist
-inhaltlich mit der Datei aus dem Original-Checkout abgeglichen und liegt zum Commit bereit.
+Abgeschlossen: Code `d3703d1`, einschließlich unveränderter `.clinerules`, auf `main`.
+GitHub-CI [40123041398](https://github.com/manuelk2607/Sprachwelten/actions/runs/40123041398)
+erfolgreich. Worker-Version `b677b53b-6b33-4f88-b983-d8bf0947c1a4` veröffentlicht.
+Cloudflare verzögerte den Upload mit Retry-After; der automatische Wiederholungsversuch war erfolgreich.
 
 Verifikation: 149 Unit-Tests, Typprüfung, Lint, Übersetzungsabdeckung, Audit und
 Produktions-Build bestanden. Auch mit den finalen Sicherheitsupdates sind alle
 114 vollständigen Desktop-/Mobil-Browserprüfungen bestanden.
-Kontingent-Zwischenstand: 46 % genutzt (Start 2 %); keine weiteren Pakete,
-nur Veröffentlichung und Abschlussprüfung.
+Live: 30 öffentliche DE/EN-Seiten, Sitemap, Google-Tag, zwei Vorschaubilder,
+drei private noindex-Seiten, 404-Seiten, Tabu-Ausschluss und anonyme Auth-/Admin-Gates
+geprüft; Desktop/Mobil ohne Laufzeitfehler oder Überlauf. Keine Live-Schreibtests.
+Echte Anmeldung mit Passwort und echte AI-Übersetzungen wurden nicht ausgeführt.
+
+Kontingent: Start 2 %, bei 46 % keine weiteren Pakete begonnen. Nach Veröffentlichung
+und Schlussprüfung meldet die kontoweite Anzeige 64 %. Der Zielrahmen wurde damit laut
+Anzeige überschritten; die geteilte Nutzung kann nicht exakt diesem Chat zugeordnet werden.
+Nächste Aufgaben stehen in `docs/quality-review-2026-10-24.md`.
 Blocker: keine.

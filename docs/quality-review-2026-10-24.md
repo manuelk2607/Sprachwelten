@@ -50,7 +50,10 @@ Spielvarianten oder zusätzlichen Einstellungen.
 Pro Paket wurden Typprüfung, Lint, Übersetzungsabdeckung sowie gezielte Tests
 ausgeführt. Die Schlussprüfung umfasst Unit-Tests, vollständige Desktop-/Mobil-
 Regressionen, Abhängigkeitsaudit, Produktions-Build und öffentliche Live-Prüfungen.
-Die endgültigen Ergebnisse und Veröffentlichungskennung stehen in `PROGRESS.md`.
+Ergebnis: 149 Unit-Tests, 114 Desktop-/Mobil-Browserprüfungen und alle übrigen
+Checks bestanden; GitHub-CI ebenfalls erfolgreich. Die Live-Prüfung umfasst 30
+öffentliche Seiten, SEO-Endpunkte, private Zugriffsschranken und den Beitragsdialog
+auf Desktop/Mobil. Veröffentlichungskennung und Kontingentstatus stehen in `PROGRESS.md`.
 
 Keine Datenbankmigration, Produktionsdatenänderung oder neue Berechtigung war
 für diese Pakete erforderlich. Die bestehende exakt begrenzte `braces`-

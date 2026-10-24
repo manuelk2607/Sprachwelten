@@ -237,6 +237,7 @@ export const english: Record<string, string> = {
   "Sprache, Lösungen und optionale Hinweise ergänzt du weiterhin unten.":"Add the language, solutions and optional notes below.",
   "Sprache deiner Erklärung":"Language of your explanation",
   "Sie folgt automatisch deiner aktuellen Oberflächensprache. Originalausdrücke bleiben unverändert.":"It follows your current interface language automatically. Original expressions stay unchanged.",
+  "Die Sprache wird beim Öffnen des Formulars übernommen. Gespeicherte Beiträge und Entwürfe behalten ihre Ursprungssprache.":"The language is taken from your preference when opening the form. Saved contributions and drafts keep their original language.",
   "Übersetzung ins":"Translation into",
   "Deutsche":"German",
   "Englische":"English",

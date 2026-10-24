@@ -4,6 +4,7 @@ import { useI18n, type Locale } from "@/lib/i18n";
 import {
   otherLocale,
   textsOf,
+  translationFields,
   type TranslationTexts,
 } from "@/lib/content-translations";
 import { useAuthSession } from "@/lib/auth/provider";
@@ -38,15 +39,18 @@ export function TranslationEditor({
   const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [machine, setMachine] = useState(false);
-  const [preview, setPreview] = useState<{
-    revision: number;
+  const [suggestion, setSuggestion] = useState<{
+    snapshot: string;
     texts: TranslationTexts;
   } | null>(null);
-  const version = useRef(revision);
+  const snapshot=JSON.stringify([sourceLocale,revision,fields.map(field=>field.key),translation,session?.user?.id]);
+  const version = useRef(snapshot);
+  const request = useRef<AbortController|null>(null);
+  const preview=suggestion?.snapshot===snapshot ? suggestion : null;
   useEffect(() => {
-    version.current = revision;
-  }, [revision]);
+    version.current = snapshot;
+  }, [snapshot]);
+  useEffect(()=>()=>request.current?.abort(),[]);
   const target = otherLocale(sourceLocale);
   const FieldsContainer = compact ? "details" : "div";
   const hasTranslation = fields.some((field) => translation[field.key]?.trim());
@@ -54,19 +58,25 @@ export function TranslationEditor({
     const controller = new AbortController();
     fetch("/api/translations", { signal: controller.signal })
       .then((r) => r.json() as Promise<{ available: boolean }>)
-      .then((data) => setAvailable(data.available === true))
-      .catch(() => setAvailable(false));
+      .then((data) => {if(!controller.signal.aborted)setAvailable(data.available === true);})
+      .catch(() => {if(!controller.signal.aborted)setAvailable(false);});
     return () => controller.abort();
   }, []);
   async function suggest() {
     const current = version.current;
+    const source=getSource();
+    const texts=textsOf(Object.fromEntries(fields.map(field=>[field.key,source[field.key]])));
+    const controller=new AbortController();
+    request.current?.abort();request.current=controller;
     setBusy(true);
     setError("");
+    setSuggestion(null);
     try {
       const response = await fetch("/api/translations", {
         method: "POST",
+        signal:controller.signal,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceLocale, texts: getSource() }),
+        body: JSON.stringify({ sourceLocale, texts }),
       });
       const result = (await response.json()) as {
         translation: TranslationTexts;
@@ -77,21 +87,18 @@ export function TranslationEditor({
         throw new Error(
           "Dein Ausgangstext hat sich geändert. Bitte die Übersetzung erneut erstellen.",
         );
-      if (compact) {
-        setPreview({ revision: current, texts: result.translation });
-        return;
-      }
-      onChange(result.translation);
-      setReviewed(false);
-      setMachine(true);
+      const parsed=translationFields.safeParse(result.translation);
+      if(!parsed.success || fields.some(field=>texts[field.key]&&!parsed.data[field.key]?.trim()))throw new Error("Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.");
+      setSuggestion({ snapshot: current, texts:parsed.data });
     } catch (error) {
+      if(controller.signal.aborted)return;
       setError(
         error instanceof Error
           ? error.message
           : "Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.",
       );
     } finally {
-      setBusy(false);
+      if(request.current===controller)setBusy(false);
     }
   }
   return (
@@ -111,7 +118,7 @@ export function TranslationEditor({
               {t(sourceLocale === "de" ? "Deutsch" : "Englisch")}
             </strong>{" "}
             {t(
-              "Sie folgt automatisch deiner aktuellen Oberflächensprache. Originalausdrücke bleiben unverändert.",
+              "Die Sprache wird beim Öffnen des Formulars übernommen. Gespeicherte Beiträge und Entwürfe behalten ihre Ursprungssprache.",
             )}
           </p>
           <h3>
@@ -132,7 +139,7 @@ export function TranslationEditor({
           busy ||
           available !== true ||
           !session?.user ||
-          (compact && !fields.some((field) => getSource()[field.key]?.trim()))
+          !fields.some((field) => getSource()[field.key]?.trim())
         }
         onClick={() => void suggest()}
       >
@@ -159,14 +166,7 @@ export function TranslationEditor({
           )}
         </p>
       )}
-      {machine && hasTranslation && (
-        <p role="status" className="form-note">
-          {t(
-            "Automatischer Übersetzungsvorschlag: Bitte Bedeutung und kulturelle Feinheiten prüfen und bei Bedarf korrigieren.",
-          )}
-        </p>
-      )}
-      {compact && preview?.revision === revision && (
+      {preview && (
         <div className="answer-translation-preview">
           {fields.map((field) => (
             <label key={field.key}>
@@ -177,7 +177,7 @@ export function TranslationEditor({
                 rows={2}
                 value={preview.texts[field.key]}
                 onChange={(event) =>
-                  setPreview({
+                  setSuggestion({
                     ...preview,
                     texts: {
                       ...preview.texts,
@@ -194,10 +194,11 @@ export function TranslationEditor({
               className="button outline small"
               disabled={fields.some(
                 (field) =>
-                  !preview.texts[field.key]?.trim() ||
+                  (getSource()[field.key]?.trim() && !preview.texts[field.key]?.trim()) ||
                   preview.texts[field.key].length > field.max,
               )}
               onClick={() => {
+                if(version.current!==preview.snapshot)return;
                 onChange({
                   ...translation,
                   ...Object.fromEntries(
@@ -207,8 +208,8 @@ export function TranslationEditor({
                     ]),
                   ),
                 });
-                setReviewed(true);
-                setPreview(null);
+                setReviewed(false);
+                setSuggestion(null);
               }}
             >
               {t("Vorschlag übernehmen")}
@@ -216,7 +217,7 @@ export function TranslationEditor({
             <button
               type="button"
               className="button outline small"
-              onClick={() => setPreview(null)}
+              onClick={() => setSuggestion(null)}
             >
               {t("Verwerfen")}
             </button>
@@ -233,6 +234,7 @@ export function TranslationEditor({
           <label key={field.key}>
             {t(field.label)} · {t(target === "de" ? "Deutsch" : "Englisch")}
             <textarea
+              name={"translation."+field.key}
               value={translation[field.key] ?? ""}
               maxLength={field.max}
               rows={field.key === "meaning" || field.key === "body" ? 3 : 2}
@@ -247,6 +249,7 @@ export function TranslationEditor({
       {hasTranslation && (
         <label className="translation-review">
           <input
+            name="translationReviewed"
             type="checkbox"
             checked={reviewed}
             required

@@ -26,7 +26,7 @@ import {
   type ContentKind,
 } from "@/lib/content";
 import { contexts } from "@/lib/quiz-categories";
-import { textsOf, type TranslationTexts } from "@/lib/content-translations";
+import { textsOf, translationKeys, type TranslationTexts } from "@/lib/content-translations";
 import { TranslationEditor, type TranslationField } from "./translation-editor";
 import { AudioInput } from "./audio-input";
 import { LanguagePicker } from "./language-picker";
@@ -185,7 +185,7 @@ export function ContributeDialog({
   };
   // New explanations follow the active interface language. Existing entries
   // retain their stored source language while they are edited.
-  const sourceLocale: Locale = initialEntry?.sourceLocale ?? locale;
+  const [sourceLocale,setSourceLocale] = useState<Locale>(initialEntry ? initialEntry.sourceLocale ?? "de" : locale);
   const [translation, setTranslation] = useState<Partial<TranslationTexts>>(
     initialEntry?.translations?.[
       (initialEntry.sourceLocale ?? "de") === "de" ? "en" : "de"
@@ -220,9 +220,10 @@ export function ContributeDialog({
     { key: "example", label: "Beispielsatz", max: 600 },
     { key: "culturalNote", label: "Kultureller Hinweis", max: 1000 },
   ];
-  const sourceChanged = () => {
+  const sourceChanged = (event?: React.FormEvent<HTMLElement>) => {
+    const name=(event?.target as HTMLInputElement|undefined)?.name as keyof TranslationTexts|undefined;
     setRevision((value) => value + 1);
-    setTranslation(value => hintsRelevant ? {hint:value.hint} : {});
+    setTranslation(value => name && translationKeys.includes(name) ? {...value,[name]:""} : hintsRelevant ? {hint:value.hint} : {});
     setReviewed(false);
   };
   const getSource = () =>
@@ -358,6 +359,8 @@ export function ContributeDialog({
     setLanguage(d.language);
     setRegionId(d.regionId);
     setContextId(d.contextId);
+    setSourceLocale(d.sourceLocale);
+    setRevision(value=>value+1);
     setTranslation(d.translation);
     setReviewed(d.reviewed);
     setMedia(d.media);

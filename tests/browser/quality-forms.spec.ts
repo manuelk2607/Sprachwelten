@@ -14,6 +14,34 @@ async function setup(page:Page,signedIn=false){
  return page.getByRole('dialog');
 }
 
+test('searchable selectors announce the active option and allow Tab, Shift+Tab and Escape',async({page})=>{
+ const d=await setup(page),trigger=d.getByRole('combobox').first();
+ await trigger.click();
+ const search=d.getByRole('combobox',{name:'Auswahl durchsuchen',exact:true});
+ await expect(search).toBeFocused();await search.fill('Zungenknoten');
+ await search.press('ArrowDown');
+ const active=await search.getAttribute('aria-activedescendant');expect(active).toBeTruthy();
+ await expect(page.locator('[id="'+active+'"]')).toHaveAttribute('role','option');
+ await search.press('Enter');await expect(d.locator('[name=kind]')).toHaveValue('tongue_twister');
+ await expect(trigger).toBeFocused();
+ await trigger.click();await page.keyboard.press('Escape');await expect(trigger).toBeFocused();
+ await trigger.click();await page.keyboard.press('Tab');await expect(trigger).not.toBeFocused();
+ await expect(page.getByRole('listbox')).toHaveCount(0);
+ await trigger.click();await page.keyboard.press('Shift+Tab');await expect(d.getByRole('button',{name:'Schließen',exact:true})).toBeFocused();
+});
+
+test('language and dark mode stay usable when browser storage is blocked',async({page})=>{
+ await page.addInitScript(()=>{Storage.prototype.getItem=()=>{throw new DOMException('Blocked','SecurityError');};Storage.prototype.setItem=()=>{throw new DOMException('Blocked','SecurityError');};});
+ const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+ const d=await setup(page);await d.getByRole('button',{name:'Schließen',exact:true}).click();
+ await page.getByRole('button',{name:'EN',exact:true}).click();
+ await expect(page.locator('html')).toHaveAttribute('lang','en');
+ const before=await page.locator('html').getAttribute('data-theme');
+ await page.locator('.theme-toggle').click();
+ await expect(page.locator('html')).not.toHaveAttribute('data-theme',before!);
+ expect(errors).toEqual([]);
+});
+
 test('restoring a German draft in an English interface preserves both language versions when publishing',async({page})=>{
  let d=await setup(page),saved:ReturnType<typeof entryInput.parse>|undefined;
  await d.getByRole('combobox').first().click();await page.getByRole('option',{name:'Wort',exact:true}).click();

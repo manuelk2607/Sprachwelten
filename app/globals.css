@@ -103,6 +103,8 @@ html{scroll-padding-top:calc(var(--site-header-height,100px) + 16px)}
 @media(max-width:600px){.finished-actions{display:flex;flex-direction:column}.finished-actions .prepare-next{order:-1;min-height:60px}.finished-actions .button{width:100%}}
 /* Reviewed suggestions stay beside the answer they belong to. */
 .answer-translation-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .5rem; }
+.learning-review{margin-top:1.5rem;padding:1.25rem;border:1px solid var(--line);border-radius:14px;min-width:0}.learning-review h2{font-size:1.5rem}.learning-review details{padding:.85rem 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.learning-review summary{cursor:pointer;font-weight:600}.learning-review .translation-review{display:flex;gap:.6rem;align-items:center;margin:1rem 0}.learning-review input[type=checkbox]{width:18px;height:18px}.learning-review p{margin:.65rem 0}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 .inline-hint-translation{padding:0;border:0;background:transparent;gap:.65rem}.inline-hint-translation details{min-width:0}.inline-hint-translation summary{cursor:pointer;color:var(--muted);font-size:.85rem}.inline-hint-translation details[open]>label{margin-top:.65rem}.inline-hint-translation .button{max-width:100%;white-space:normal}
 .answer-translation-preview { padding: .8rem; margin-top: .6rem; border: 1px solid var(--line, #dedbd3); border-radius: .6rem; }
 .phrase-preview { overflow-wrap: anywhere; }

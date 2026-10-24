@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Game } from "./game";
-import { GameError } from "./game";
+import { GameError } from "./game-error";
 export const reportReasons = {
   answer: "Antwort oder Aufgabe stimmt nicht",
   translation: "Übersetzung unklar oder falsch",

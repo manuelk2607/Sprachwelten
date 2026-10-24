@@ -66,6 +66,7 @@ export function Select({
     );
   const trigger = useRef<HTMLButtonElement>(null),
     popup = useRef<HTMLDivElement>(null),
+    list = useRef<HTMLDivElement>(null),
     search = useRef<HTMLInputElement>(null);
   const [position, setPosition] = useState({
     left: 0,
@@ -110,7 +111,7 @@ export function Select({
     place();
     el.showPopover();
     if (options.length > 8) search.current?.focus();
-    else el.focus();
+    else list.current?.focus();
     const toggle = (e: Event) => {
       if ((e as ToggleEvent).newState === "closed") setOpen(false);
     };
@@ -138,8 +139,13 @@ export function Select({
       return;
     }
     if (e.key === "Tab") {
+      e.preventDefault();
+      const root=trigger.current?.closest('dialog')??document;
+      const focusable=Array.from(root.querySelectorAll<HTMLElement>('a[href],button,input,textarea,select,summary,[tabindex]')).filter(el=>el.tabIndex>=0&&!el.matches(':disabled')&&!popup.current?.contains(el)&&el.getClientRects().length>0);
+      const index=focusable.indexOf(trigger.current!);
+      const next=focusable[index+(e.shiftKey?-1:1)];
       setOpen(false);
-      trigger.current?.focus();
+      (next??trigger.current)?.focus();
       return;
     }
     if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) {
@@ -182,6 +188,7 @@ export function Select({
         aria-label={label}
         aria-expanded={open}
         aria-controls={id + "-list"}
+        aria-activedescendant={open&&filtered[active]?id+"-option-"+active:undefined}
         aria-haspopup="listbox"
         aria-required={required}
         disabled={disabled}
@@ -220,6 +227,11 @@ export function Select({
           {options.length > 8 && (
             <input
               ref={search}
+              role="combobox"
+              aria-expanded="true"
+              aria-controls={id+"-list"}
+              aria-autocomplete="list"
+              aria-activedescendant={filtered[active]?id+"-option-"+active:undefined}
               aria-label={t("Auswahl durchsuchen")}
               placeholder={t("Auswahl durchsuchen")}
               value={query}
@@ -230,6 +242,8 @@ export function Select({
             />
           )}
           <div
+            ref={list}
+            tabIndex={-1}
             id={id + "-list"}
             role="listbox"
             aria-label={label ?? selected?.text}

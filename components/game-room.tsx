@@ -1,4 +1,5 @@
 "use client";
+import {LearningReview} from './learning-review';
 import {TabooRound} from "./taboo-round";
 import {RoundReportButton} from "./round-report";
 import {PhraseText} from "./phrase-text";
@@ -1049,6 +1050,7 @@ export function GameRoom({ code }: { code: string }) {
                   )}
                 </>
               )}
+              <LearningReview room={room}/>
               {token&&room.roundNumber>0&&["reveal","finished"].includes(room.phase)&&<RoundReportButton key={room.matchId+":"+room.roundNumber} room={room} token={token}/>}
             </section>
             <aside className="players-panel">

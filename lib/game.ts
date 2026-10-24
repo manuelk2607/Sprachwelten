@@ -120,14 +120,8 @@ export type Game = {
   tabooLanguages?: string[];
   taboo?: TabooState;
 };
-export class GameError extends Error {
-  constructor(
-    message: string,
-    public status = 409,
-  ) {
-    super(message);
-  }
-}
+export {GameError} from './game-error';
+import {GameError} from './game-error';
 export function createGame(
   code: string,
   player: Player,

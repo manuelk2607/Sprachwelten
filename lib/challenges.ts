@@ -3,6 +3,9 @@ import {isRegisteredLanguage} from './language-codes';
 export const bilingual=z.object({de:z.string().trim().max(300),en:z.string().trim().max(300)}).refine(v=>!!(v.de||v.en),'Bitte mindestens eine Sprachfassung angeben.');
 export type Bilingual=z.infer<typeof bilingual>;
 export const challengeText=(v:Bilingual,locale:'de'|'en')=>v[locale]||v[locale==='de'?'en':'de'];
+// Preserve meaningful punctuation (e.g. C# / C++), but reject visually identical
+// answers written with different Unicode forms or spacing.
+export const quizChoiceIdentity=(value:string)=>value.normalize('NFKC').toLocaleLowerCase().replace(/\s+/gu,' ').trim();
 export const normalizedAnswer=(s:string)=>s.normalize('NFKC').toLocaleLowerCase().replace(/[\p{P}\p{S}]/gu,' ').replace(/\s+/gu,' ').trim();
 const language=z.string().refine(isRegisteredLanguage,'Bitte eine Sprache aus dem geprüften Register wählen.');
 const cell=z.number().int().min(0).max(8);

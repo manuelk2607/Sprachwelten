@@ -26,9 +26,30 @@ invalidiert und erst nach Vorschau übernommen. Unabhängige Tipptexte bleiben e
 verspätete Antworten nach Zieltextänderungen werden verworfen. Review bestätigt nur
 explizit geprüfte Fassungen. Fehlerfelder haben jetzt stabile Formularnamen.
 
-Nächster Schritt: Tastaturbedienung/Barrierefreiheit und ein Lernrückblick auf tatsächlich
-aufgelöste Quizfragen. Anschließend Performance-/Validierungskontrolle.
+Paket 2 umgesetzt: Auswahllisten haben korrekt fokussierte Listen bzw. Suchfelder
+mit aktiver Option für Screenreader; Tab/Shift+Tab verlassen die Liste, Escape kehrt
+zum Auslöser zurück. Sprach-/Theme-Wechsel funktionieren bei blockiertem Browser-Speicher.
+Reduzierte Bewegung wird berücksichtigt. 38 Desktop-/Mobilprüfungen bestanden.
 
-Verifikation: Typprüfung, Lint, Übersetzungsabdeckung und 22 gezielte Desktop-/Mobiltests bestanden.
-Kontingent-Zwischenstand: 22 % genutzt (Start 2 %).
+Paket 3 umgesetzt: Persönlicher Lernrückblick nach Quizpartien mit Fehlerfilter,
+korrekten Antworten und Erklärungen. Nur bereits selbst beantwortete/aufgelöste
+Aufgaben werden pro Spieler und Partie gespeichert; maximal zehn, 24 Stunden,
+ausschließlich im aktuellen Browser-Tab. Neuladen, Sprachwechsel und Rematch geprüft.
+Keine Datenbankänderung und kein Einfluss auf Punkte oder verdeckte Lösungen.
+
+Paket 4: Spiel-Fehlerklasse vom Engine-Modul getrennt. Der Browser-Meldebaustein
+schrumpfte von 638.839 auf 390 Byte (ungepackt, gleiches Buildverfahren).
+Antwortvalidierung erkennt nun Unicode-/Leerraum-Dubletten und benennt das genaue Feld.
+
+Zusätzlich erledigt: Sicherheitsupdates Zod 4.6.6, Undici 7.30.1 und fast-uri 3.1.9,
+einschließlich transitiver Pins. Vollständiges Audit wieder bestanden; keine weitere Ausnahme.
+
+Nächster Schritt: GitHub und Veröffentlichung mit Live-Prüfung. `.clinerules` ist
+inhaltlich mit der Datei aus dem Original-Checkout abgeglichen und liegt zum Commit bereit.
+
+Verifikation: 149 Unit-Tests, Typprüfung, Lint, Übersetzungsabdeckung, Audit und
+Produktions-Build bestanden. Auch mit den finalen Sicherheitsupdates sind alle
+114 vollständigen Desktop-/Mobil-Browserprüfungen bestanden.
+Kontingent-Zwischenstand: 46 % genutzt (Start 2 %); keine weiteren Pakete,
+nur Veröffentlichung und Abschlussprüfung.
 Blocker: keine.

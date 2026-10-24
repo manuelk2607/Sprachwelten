@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {presentations,type Presentation} from './content-media';
-import {challengeSchema,challengeTypes} from './challenges';
+import {challengeSchema,challengeTypes,quizChoiceIdentity} from './challenges';
 import { isRegisteredLanguage } from './language-codes';
 import type { LanguageNames } from './language-label';
 import { categoryId, categoryLabel } from './quiz-categories';
@@ -57,7 +57,7 @@ function contentSchema(requireLiteral:boolean){return entryFields.superRefine((i
     if(presentation==='audio'&&!target)ctx.addIssue({code:'custom',path:['challenge','target'],message:'Bitte das geheime Suchwort zur Aufnahme ergänzen.'});
   }
   if(input.challenge?.type==='friends'&&input.challenge.otherLanguage===input.language)ctx.addIssue({code:'custom',path:['challenge'],message:'Bitte zwei verschiedene Sprachen wählen.'});
-  if(input.challenge?.type==='relay'||input.challenge?.type==='academic'||input.challenge?.type==='joke'||input.challenge?.type==='meaning'||input.challenge?.type==='outsider')for(const locale of ['de','en'] as const){const values=input.challenge.choices.map(v=>(v[locale]||v[locale==='de'?'en':'de']).trim().toLocaleLowerCase());if(new Set(values).size!==4)ctx.addIssue({code:'custom',path:['challenge'],message:'Antworten müssen verschieden sein.'});}
+  if(input.challenge?.type==='relay'||input.challenge?.type==='academic'||input.challenge?.type==='joke'||input.challenge?.type==='meaning'||input.challenge?.type==='outsider')for(const locale of ['de','en'] as const){const seen=new Set<string>();input.challenge.choices.forEach((value,index)=>{const language=value[locale]?locale:locale==='de'?'en':'de',key=quizChoiceIdentity(value[language]);if(seen.has(key))ctx.addIssue({code:'custom',path:['challenge','choices',index,language],message:'Antworten müssen verschieden sein.'});seen.add(key);});}
   if(input.challenge?.type==='loan'&&input.challenge.originLanguage===input.language)ctx.addIssue({code:'custom',path:['challenge','originLanguage'],message:'Gebersprache und heutige Sprache müssen verschieden sein.'});
   if(input.translation&&Object.values(input.translation).some(value=>value.trim())&&!input.translationReviewed)ctx.addIssue({code:'custom',path:['translationReviewed'],message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
   if (input.kind === 'dialect' && !categoryId('region',input.regionId??input.region)) ctx.addIssue({code:'custom',path:['regionId'],message:'Bitte eine Region aus der Liste wählen.'});

@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test';
+import {act,createGame,viewGame} from '../../lib/game';
+import {seedEntries} from '../../lib/seeds';
+import type {RoomAction} from '../../lib/content';
+test('finished quizzes offer a personal review, a mistakes filter and refresh-safe history without future answers',async({page})=>{
+ const host={id:crypto.randomUUID(),name:'QA',tokenHash:'qa',score:0},game=createGame('REVIEW',host,'de','meaning-quiz');game.totalRounds=2;act(game,host.id,{action:'start'},seedEntries);
+ await page.addInitScript(()=>localStorage.setItem('sprachwelten-room:REVIEW','a'.repeat(64)));
+ await page.route('**/api/auth/get-session**',r=>r.fulfill({json:null}));
+ await page.route('**/api/rooms/REVIEW',r=>{if(r.request().method()==='POST')act(game,host.id,r.request().postDataJSON() as RoomAction,seedEntries);return r.fulfill({json:{room:viewGame(game,host.id)}});});
+ await page.goto('/room/REVIEW');
+ await expect(page.getByRole('region',{name:'Dein Lernrückblick',exact:true})).toHaveCount(0);
+ const wrong=game.round!.options.find(o=>!o.solution)!;await page.locator('.options .option').nth(game.round!.options.findIndex(o=>o.id===wrong.id)).click();
+ await page.getByRole('button',{name:'Nächste Runde',exact:true}).click();
+ const right=game.round!.options.find(o=>o.solution)!;await page.locator('.options .option').nth(game.round!.options.findIndex(o=>o.id===right.id)).click();
+ await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();
+ let review=page.getByRole('region',{name:'Dein Lernrückblick',exact:true});
+ await expect(review).toContainText('1 / 2');await expect(review.locator('details')).toHaveCount(2);
+ await review.getByRole('checkbox',{name:'Nur falsche Antworten',exact:true}).check();await expect(review.locator('details')).toHaveCount(1);
+ await review.locator('summary').click();await expect(review).toContainText(wrong.text);
+ await page.reload();review=page.getByRole('region',{name:'Dein Lernrückblick',exact:true});await expect(review.locator('details')).toHaveCount(2);
+ await page.getByRole('button',{name:'EN',exact:true}).click();await expect(page.getByRole('region',{name:'Your learning review',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Prepare next game',exact:true}).click();await expect(page.getByRole('region',{name:'Your learning review',exact:true})).toHaveCount(0);
+});

@@ -25,7 +25,17 @@ appears, or before adding any feature that accepts user-defined glob patterns.
 The raw npm audit therefore still reports this advisory and its dependent
 packages. It must not be described as a vulnerability-free dependency tree.
 
-## Read limits and cache
+## Security maintenance 2026-10-24
+
+Updated Zod to 4.6.6 and constrained all transitive copies to that direct version
+to address [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+Pinned compatible transitive security updates for Undici 7.30.1 and fast-uri 3.1.9;
+the parent packages currently pin vulnerable older releases. These address the
+Undici EventSource/SRI/content-encoding advisories and fast-uri normalization
+advisories identified by the full audit on this date. The existing exception
+is not broadened. Keep these pins until the parent packages support patched versions.
+
+## Read limits and cache behavior
 
 Public database-backed read endpoints are limited at the Worker before the
 framework/database handler. Room reads have an aggregate hashed-IP allowance

@@ -5,6 +5,11 @@ import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Dein Lernrückblick':'Your learning review',
+  'richtig beantwortet':'answered correctly',
+  'Wiederhole die bereits aufgelösten Begriffe. Der Rückblick bleibt nach dem Neuladen in diesem Tab erhalten.':'Review the expressions already revealed. Your review survives reloading in this tab.',
+  'Nur falsche Antworten':'Incorrect answers only',
+  'Alles richtig beantwortet!':'Every answer correct!',
   ...improvementTranslations,
   'Album':'Album',
   'Album anzeigen':'Show album',

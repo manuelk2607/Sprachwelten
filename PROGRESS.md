@@ -47,6 +47,85 @@ Eine manuelle Löschung in Neon Auth ist nötig, solange dieser Verwaltungsfehle
 Die generierte lokale Zugangsdaten-Datei wurde entfernt;
 eine vom Nutzer angelegte `.env.auth-test.local` bleibt unverändert.
 
+## Bereinigter Aufgabenbestand – Analyse 25. Oktober 2026
+
+Diese Liste ist der aktuelle Arbeitsvorrat. Ältere Abschnitte in dieser Datei und
+historische Formulierungen in Audits dokumentieren abgeschlossene Meilensteine,
+nicht neue Arbeit.
+
+### P0 – kritisch
+
+- **Keine bestätigte P0-Störung.** Die veröffentlichten Spiel-, Anmelde-,
+  Berechtigungs- und Übersetzungswege haben in den zuletzt dokumentierten
+  Prüfungen funktioniert.
+
+### P1 – wichtig
+
+- **Temporäres QA-Konto bereinigen** *(bestätigt, Betrieb/Neon, niedrig nach
+  Zugriffsklärung)*: Das oben genannte, normale Testkonto muss in Neon Auth
+  gelöscht werden. App-Endpunkt und CLI/Connector konnten es wegen eines
+  Verwaltungsfehlers nicht entfernen; vorher keine weiteren Testkonten anlegen.
+- **Wiederholbare isolierte Integrationsumgebung festlegen** *(bestätigte
+  Testlücke, Qualitätssicherung, mittel)*: Repositorytests und Live-Auth-Test
+  existieren, laufen aber nicht in der GitHub-CI und benötigen separat verwaltete
+  Testzugänge bzw. eine isolierte Neon-Umgebung. Dokumentierten, bereinigbaren
+  Ablauf für Auth, Rechte, Beiträge und Spiel-Persistenz einrichten.
+- **E-Mail-Verifizierung Ende-zu-Ende prüfen** *(bestätigte Abdeckungslücke,
+  Auth, niedrig bis mittel)*: Die OTP-Oberfläche ist implementiert; Zustellung,
+  Ablauf und bestätigte E-Mail wurden bisher nicht mit einem echten Testpostfach
+  validiert.
+
+### P2 – Erweiterung mit klarer Voraussetzung
+
+- **Regionale Inhalte redaktionell freigeben** *(bestätigt, Inhalte, hoch)*:
+  Die sechs geprüften Dialekt-Starterkarten besitzen Quellenkontexte, bleiben
+  aber ausdrücklich als `needsSpecialistReview` markiert. Herkunft,
+  Bedeutungsvarianten, Nutzungsgebiete und gleich plausible Ablenker müssen für
+  diese sowie weitere Starter- und Community-Inhalte fachlich geprüft werden.
+- **Echte Schwierigkeitsstufen erst nach Datenbasis aktivieren** *(bestätigt
+  unvollständig vorbereitet, Inhalte/Spielengine, hoch)*: Die nachvollziehbare
+  Bereitschaftsprüfung existiert, aber weder gespeicherte redaktionelle Stufen
+  noch UI/Pool-Auswahl. Voraussetzung sind je Kategorie, Sprache und Stufe
+  mindestens 20 eindeutige, redaktionell freigegebene Beiträge mit Begründung,
+  Quelle und Prüfdatum; keine Heuristik nach Textlänge verwenden.
+- **`braces`-Ausnahme erneut bewerten** *(bestätigte Wartungsaufgabe,
+  Abhängigkeiten, niedrig)*: Für GHSA-vfj7-8cjw-p6xm gibt es laut
+  `docs/security.md` noch keinen Upstream-Fix. Bei nächstem Toolchain-Update
+  oder einer korrigierten Version Audit und Lockfile erneut prüfen.
+
+### P3 – optional bzw. erst bei Bedarf
+
+- **Dokumentation bereinigen** *(bestätigt, Dokumentation, niedrig)*:
+  `docs/spielideen-und-sprachraum.md` beschreibt inzwischen implementierte
+  Spielideen noch als offen; ältere Performance-Notizen nennen die inzwischen
+  verpflichtende, grüne Lint-CI als Restarbeit. README und Roadmap auf aktuelle
+  Spielmodi und Beitragsarten abgleichen.
+- **Produktionsmetriken vor Skalierungsarbeit erheben** *(vermutete
+  Verbesserung, Performance, mittel)*: Push-Ereignisse, weitergehende
+  Missbrauchslimits oder Übersetzungs-Koaleszierung erst bei gemessener
+  Latenz/Last entscheiden. Die aktuelle Polling- und Cache-Strategie hat keinen
+  dokumentierten Produktionsengpass.
+- **Search-Console-Indexierung beobachten** *(externe Betriebsaufgabe, SEO,
+  niedrig)*: Sitemap, robots.txt und Metadaten sind live; nach Ablauf des
+  Google-Kontingents die Start- und Spielübersicht erneut zur Indexierung
+  einreichen und den Status beobachten.
+- **Sprachraum nur bei neuer Produktentscheidung** *(bewusst zurückgestellt,
+  Produkt, hoch)*: Echtzeit-Audio ist nicht implementiert und wegen Kosten,
+  Moderation und Datenschutz bewusst kein aktueller Backlog-Punkt. Aktuell sind
+  WhatsApp/Discord die gewählte Ergänzung.
+
+### Als offen dokumentiert, aber bereits erledigt
+
+- Audio- und Satzbauaufgaben im persönlichen Lernrückblick sind implementiert
+  und getestet; keine neue Aufgabe.
+- Reale Passwortanmeldung, Sitzung, Rollenprüfung und begrenzte Workers-AI-
+  Antworten wurden in Produktion geprüft; keine neue Fehlerbehebung offen.
+- Die globale Lint-Prüfung ist Teil der erfolgreichen GitHub-CI; ältere
+  Performance-Notizen hierzu sind historisch.
+- Die in der Ideen-Roadmap genannten Spielrichtungen Gaming-Sprache,
+  Jugendwörter und akademisch/alltäglich sind als Modi vorhanden; nur die
+  Dokumentation ist veraltet.
+
 Ziel: belegte Schwächen priorisiert verbessern, bestehende Inhalte und Rechte erhalten,
 testen, veröffentlichen und die vorhandenen `.clinerules` mit versionieren.
 

@@ -4,7 +4,8 @@
 
 Ausgangspunkt `31c9065`, sauberer Feature-Branch. Gezielte Pakete statt Gesamtaudit:
 1. Echte Auth-/Berechtigungsprüfungen und begrenzter, ausdrücklich freigegebener AI-Test;
-   keine Testkontenrechte oder Datenbankänderungen. Lokale Testzugangsdaten stehen noch aus.
+   keine Testkontenrechte oder Schemaänderungen. Ein separates normales Testkonto wurde
+   nach Rückfrage vom Nutzer gewünscht und ohne Adminrechte über die reguläre Anmeldung angelegt.
 2. Persönlichen Rückblick um Audioquizze und Satzbau ergänzen, verdeckte Lösungen schützen.
 3. Regionale Quellenprüfung und redaktionelle Voraussetzungen für Schwierigkeitsstufen.
 4. Relevante Regressionen, Gesamtchecks, Commit und Veröffentlichung bei bestandenen Prüfungen.
@@ -15,13 +16,36 @@ AI-Freigabe: höchstens vier Anfragen, insgesamt maximal 500 Quellzeichen.
 Pakete abgeschlossen: Audioquiz-/Satzbau-Rückblick, begrenzte AI-Wartezeit,
 echter HTTPS-Auth-/AI-Testlauf vorbereitet, sechs regionale Quellenkontexte,
 redaktionelle Voraussetzungen für Schwierigkeitsstufen. Keine Datenbankänderungen.
-Echte anonyme Produktions-Gates bestanden; positive Anmeldung/AI bleibt ohne lokale
-Testzugangsdaten offen. Keine KI-Kosten verursacht. Details im aktualisierten Bericht.
+Echte Produktionsprüfungen bestanden: Passwortanmeldung, Sitzung im zweiten Client,
+eigene Beiträge, Admin-Sperre für normales Mitglied, Herkunft/Validierung, Abmeldung
+und Zurückweisung alter Cookies. Echte AI DE→EN/EN→DE und Cache-Wiederverwendung
+bestanden: vier HTTP-Anfragen, höchstens vier Modellaufrufe, 190 Quellzeichen insgesamt.
+Keine Vorschläge veröffentlicht; nur die regulären AI-Cache-/Verbrauchseinträge erstellt.
 
 Geprüft: 155 Unit-Tests, Typprüfung, Lint, Übersetzungen, Audit, Produktions-Build.
 Browser: 117/118 im Gesamtlauf; ein zeitüberschrittener bestehender Desktopfall
 bestand gezielt wiederholt auf Desktop und Mobil (2/2). Neue Rückblickfälle bestanden.
-Bei 79 % kontoweiter Nutzung keine weiteren Pakete begonnen; Abschluss/Veröffentlichung folgt.
+Bei 79 % kontoweiter Nutzung keine weiteren Entwicklungspakete begonnen.
+
+Code-Commit `f9ffe5c6206b0c7c5c9e724ccf55be1f655de8c5` auf GitHub `main` gepusht.
+Bestehender Worker erfolgreich veröffentlicht: Version
+`1939f9fb-efe9-4043-b0e2-fd2c729f370c`, bestehende Secrets/Bindings erhalten.
+Live: DE-/EN-Startseite, Spielübersicht, Sitemap und robots.txt jeweils HTTP 200;
+anonyme Auth-/Berechtigungsprüfung nach Veröffentlichung erneut bestanden.
+Keine Migrationen, keine produktiven Beitragsänderungen oder Rechtevergaben.
+GitHub-CI: https://github.com/manuelk2607/Sprachwelten/actions/runs/40179261017
+vollständig erfolgreich, einschließlich aller 118 Desktop-/Mobilfälle.
+
+Noch offen: Entfernen ausschließlich des temporären Testkontos
+`d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7` (Anzeigename „QA Sprachwelten – temporärer Integrationstest“).
+Alle Testsitzungen wurden abgemeldet; das Konto hat keine Beiträge und keine Adminrechte.
+Selbstlöschung über die App ist nicht vorhanden (404). Neon-Connector und lokales
+Neon-CLI melden bei der Kontolöschung „branch not found“, obwohl Projekt, Zweig und
+Auth-Konfiguration über dieselben Zugänge erfolgreich gelesen werden können.
+Die Webkonsole verlangt eine erneute Anmeldung; keine fremden Konten/Projekte geändert.
+Eine manuelle Löschung in Neon Auth ist nötig, solange dieser Verwaltungsfehler besteht.
+Die generierte lokale Zugangsdaten-Datei wurde entfernt;
+eine vom Nutzer angelegte `.env.auth-test.local` bleibt unverändert.
 
 Ziel: belegte Schwächen priorisiert verbessern, bestehende Inhalte und Rechte erhalten,
 testen, veröffentlichen und die vorhandenen `.clinerules` mit versionieren.

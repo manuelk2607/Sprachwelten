@@ -81,12 +81,19 @@ Ausgangsstand `31c9065`; die bereits abgeschlossenen Pakete wurden beibehalten.
   ist auf zwei neue DE↔EN-Anfragen und zwei Cache-Wiederholungen begrenzt, höchstens
   vier Modellaufrufe und insgesamt unter 500 Quellzeichen. Keine neuen Konten, Rechte
   oder Beiträge. Anleitung: [live-auth-ai-tests.md](live-auth-ai-tests.md).
-- **Echte Produktionsprüfung bisher:** anonyme Sitzung, eigene Beiträge/Admin-Nutzerliste
+- **Echte Produktionsprüfung bestanden:** anonyme Sitzung, eigene Beiträge/Admin-Nutzerliste
   ohne Sitzung gesperrt, gefälschte Sitzungscookies zurückgewiesen, KI-Zugriff ohne
-  Anmeldung gesperrt. **Passwort-Login, Wiederherstellung/Abmeldung, normale Mitgliedsrechte
-  und echte Workers-AI-Ausgaben weiterhin nicht ausgeführt:** Die gewählte lokale Datei
-  `.env.auth-test.local` mit Testzugangsdaten liegt noch nicht vor. Die Kostenfreigabe
-  allein ersetzt keine authentifizierte Testsitzung. Es wurden keine Modellaufrufe verbraucht.
+  Anmeldung gesperrt. Nach Nutzerwunsch wurde ein separates normales Testkonto mit
+  zufälligen Zugangsdaten und reservierter, nicht zustellbarer Testadresse angelegt.
+  Passwortanmeldung, Sitzungswiederherstellung in einem zweiten Client, Zugriff auf
+  eigene Beiträge, Admin-Sperre für normale Mitglieder, fremde Herkunft und fehlerhafte
+  Übersetzungsanfragen wurden real geprüft. Abmeldung und Replay alter Cookies nach
+  Ablauf des lokalen Sitzungscaches wurden ebenfalls zurückgewiesen.
+  **Echte Workers AI:** DE→EN „The cat is sleeping on the couch.“ und EN→DE
+  „Der Hund wartet außerhalb des Hauses.“; beide exakten Wiederholungen kamen aus
+  dem Cache. Vier HTTP-Anfragen, höchstens vier Modellaufrufe, insgesamt 190 übermittelte
+  Quellzeichen. Keine Vorschläge veröffentlicht. Diese Prüfung ersetzt keine umfassende
+  KI-Qualitätsbewertung oder Mailverifikationsprüfung.
 - **KI-Fehlerfälle:** Eine nachweislich hängende Providerantwort wird nun nach einem
   gemeinsamen 15-Sekunden-Zeitbudget mit einer verständlichen, wiederholbaren Fehlermeldung
   beendet. Weitere Textteile werden nicht angefordert; Teilübersetzungen werden nicht
@@ -118,8 +125,17 @@ Desktop und Mobil (**2/2**). Alle vier neuen Rückblickfälle bestanden im Gesam
 Die UI- und Providerfehler-Tests sind weiterhin kontrollierte Fixtures; echte Tests
 werden oben gesondert ausgewiesen. Keine Datenbank-/Auth-Implementierung geändert,
 keine Produktionsmigration oder SQL-Integration gegen die Produktionsdatenbank.
+Die GitHub-CI für `f9ffe5c` bestand außerdem vollständig, einschließlich **118/118**
+Desktop-/Mobilfällen: [Prüflauf](https://github.com/manuelk2607/Sprachwelten/actions/runs/40179261017).
+Veröffentlicht unter https://sprachwelten.maki26.workers.dev/, Worker-Version
+`1939f9fb-efe9-4043-b0e2-fd2c729f370c`. Öffentliche Seiten und anonyme Zugriffssperren
+wurden nach dem Deployment real nachgeprüft.
 
-Offen bleiben: Testzugangsdaten und damit echte positive Auth-/KI-Prüfungen, regionale
-Fachbegutachtung weiterer Community-Inhalte und belastbar eingestufte Aufgabensammlungen.
+Offen bleiben: regionale Fachbegutachtung weiterer Community-Inhalte und belastbar
+eingestufte Aufgabensammlungen. Außerdem ist das temporäre Testkonto noch zu entfernen:
+Selbstlöschung in der App fehlt (404); Neon-Connector und CLI melden bei der Löschung
+„branch not found“, obwohl derselbe Zweig und seine Auth-Konfiguration abrufbar sind.
+Das Konto ist abgemeldet, hat keine Inhalte und keine Adminrechte. Seine genaue ID und
+der Verwaltungsfehler stehen in `PROGRESS.md`; die Webkonsole erfordert eine Anmeldung.
 Peer-bewertete Aussprache und kooperative Spiele erhalten weiterhin keine vorgetäuschte
 Richtig/Falsch-Lernstatistik. Veröffentlichungsstand siehe `PROGRESS.md`.

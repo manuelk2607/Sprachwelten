@@ -39,6 +39,12 @@ keine Veröffentlichung von Vorschlägen. Cache und tägliche Verbrauchszählung
 Die Ausgaben einfacher Beispielsätze werden anhand ihres Bedeutungsankers geprüft;
 das ist keine umfassende Bewertung von Dialekten oder Übersetzungsqualität.
 
+Am 25. Oktober wurden nach ausdrücklichem Nutzerwunsch einmalig zufällige Zugangsdaten
+für ein separates normales Produktions-Testkonto erzeugt. Login-/Sitzungs-/Berechtigungs-
+und begrenzte KI-Prüfungen bestanden real; siehe Qualitätsbericht. Der Testläufer selbst
+legt weiterhin keine Konten an. Die anschließende Löschung dieses einmaligen Kontos
+scheitert derzeit an einem Neon-Verwaltungsfehler; Details und Konto-ID in `PROGRESS.md`.
+
 Fehlende Zugangsdaten werden als **NOT RUN** protokolliert. Ein erfolgreicher anonymer
 Teiltest darf nicht als bestandene Passwort-/KI-Prüfung berichtet werden.
 Der erlaubte Zielhost ist fest begrenzt; es gibt keinen Zugriff auf Datenbankzugänge.

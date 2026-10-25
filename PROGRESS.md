@@ -1,5 +1,28 @@
 # Sprachwelten: Qualitätsrunde 2026-10-24
 
+## Fortsetzung 25. Oktober 2026
+
+Ausgangspunkt `31c9065`, sauberer Feature-Branch. Gezielte Pakete statt Gesamtaudit:
+1. Echte Auth-/Berechtigungsprüfungen und begrenzter, ausdrücklich freigegebener AI-Test;
+   keine Testkontenrechte oder Datenbankänderungen. Lokale Testzugangsdaten stehen noch aus.
+2. Persönlichen Rückblick um Audioquizze und Satzbau ergänzen, verdeckte Lösungen schützen.
+3. Regionale Quellenprüfung und redaktionelle Voraussetzungen für Schwierigkeitsstufen.
+4. Relevante Regressionen, Gesamtchecks, Commit und Veröffentlichung bei bestandenen Prüfungen.
+
+Startkontingent laut kontoweiter Anzeige: 40 % des Fünf-Stunden-Fensters verbraucht.
+AI-Freigabe: höchstens vier Anfragen, insgesamt maximal 500 Quellzeichen.
+
+Pakete abgeschlossen: Audioquiz-/Satzbau-Rückblick, begrenzte AI-Wartezeit,
+echter HTTPS-Auth-/AI-Testlauf vorbereitet, sechs regionale Quellenkontexte,
+redaktionelle Voraussetzungen für Schwierigkeitsstufen. Keine Datenbankänderungen.
+Echte anonyme Produktions-Gates bestanden; positive Anmeldung/AI bleibt ohne lokale
+Testzugangsdaten offen. Keine KI-Kosten verursacht. Details im aktualisierten Bericht.
+
+Geprüft: 155 Unit-Tests, Typprüfung, Lint, Übersetzungen, Audit, Produktions-Build.
+Browser: 117/118 im Gesamtlauf; ein zeitüberschrittener bestehender Desktopfall
+bestand gezielt wiederholt auf Desktop und Mobil (2/2). Neue Rückblickfälle bestanden.
+Bei 79 % kontoweiter Nutzung keine weiteren Pakete begonnen; Abschluss/Veröffentlichung folgt.
+
 Ziel: belegte Schwächen priorisiert verbessern, bestehende Inhalte und Rechte erhalten,
 testen, veröffentlichen und die vorhandenen `.clinerules` mit versionieren.
 

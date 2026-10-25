@@ -24,12 +24,23 @@ export function splitTranslationText(text:string):string[] {
   if(remainder)chunks.push(remainder);
   return chunks;
 }
-export async function requestCloudflareTranslation(texts:TranslationTexts,sourceLocale:Locale,ai:TranslationAI):Promise<TranslationTexts> {
+export async function requestCloudflareTranslation(texts:TranslationTexts,sourceLocale:Locale,ai:TranslationAI,timeoutMs=15000):Promise<TranslationTexts> {
+  const deadline=Date.now()+timeoutMs;
   const translated:Partial<TranslationTexts>={};
   for(const key of translationKeys.filter(field=>texts[field])) {
     const parts:string[]=[];
     for(const chunk of splitTranslationText(texts[key])) {
-      const response=await ai.run(translationModel,{text:chunk.trim(),source_lang:sourceLocale,target_lang:otherLocale(sourceLocale)});
+      const remaining=deadline-Date.now();
+      const timeout=()=>new GameError('Die Übersetzung dauert zu lange. Bitte später erneut versuchen oder manuell übersetzen.',503);
+      if(remaining<=0)throw timeout();
+      let timer:ReturnType<typeof setTimeout>|undefined;
+      let response:unknown;
+      try{
+        // Stop this request and all later chunks at one shared deadline. A binding
+        // call already sent may finish at the provider; do not retry it or refund
+        // the reservation, since it may still consume the account allowance.
+        response=await Promise.race([ai.run(translationModel,{text:chunk.trim(),source_lang:sourceLocale,target_lang:otherLocale(sourceLocale)}),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(timeout()),remaining);})]);
+      }finally{clearTimeout(timer);}
       const parsed=z.object({translated_text:z.string().trim().min(1)}).safeParse(response);
       if(!parsed.success)throw new GameError('Die Übersetzung ist unvollständig. Bitte erneut versuchen.',503);
       parts.push(parsed.data.translated_text);

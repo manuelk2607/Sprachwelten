@@ -4,6 +4,7 @@ import type {GameView} from '@/lib/game';
 import {useI18n} from '@/lib/i18n';
 import {useKeyedState} from '@/lib/use-keyed-state';
 import {learningKey,learningOptionText,readLearningCards,rememberLearningRound,type LearningCard} from '@/lib/learning-review';
+import {PronunciationAudio} from './pronunciation-audio';
 export function LearningReview({room}:{room:GameView}){
  const {t,locale}=useI18n(),key=learningKey(room);
  const [cards,setCards]=useKeyedState<LearningCard[]>(key,[]),[mistakes,setMistakes]=useKeyedState(key,false);
@@ -23,9 +24,10 @@ export function LearningReview({room}:{room:GameView}){
   <p className="form-note">{t('Wiederhole die bereits aufgelösten Begriffe. Der Rückblick bleibt nach dem Neuladen in diesem Tab erhalten.')}</p>
   <label className="translation-review"><input type="checkbox" checked={mistakes} onChange={event=>setMistakes(event.target.checked)}/>{t('Nur falsche Antworten')}</label>
   {!shown.length&&<p>{t('Alles richtig beantwortet!')}</p>}
-  {shown.map(card=><details key={card.round}><summary>{card.correct?'✓':'↻'} {card.phrase}</summary>
+  {shown.map(card=><details key={card.round}><summary>{card.correct?'✓':'↻'} {card.phrase||t('Audiobeitrag')}</summary>
+   <PronunciationAudio id={card.audioId}/>
    {!card.correct&&<p>{t('Deine Antwort')}: {learningOptionText(card.chosen,locale)}</p>}
-   <p><strong>{t('Richtige Antwort')}: {learningOptionText(card.answer,locale)}</strong></p>
+   <p><strong>{t(card.kind==='order'?'Eine gültige Übersetzung':'Richtige Antwort')}: {learningOptionText(card.answer,locale)}</strong></p>
    {card.explanation&&card.explanation!==learningOptionText(card.answer,locale)&&<p>{card.explanation}</p>}
   </details>)}
  </section>;

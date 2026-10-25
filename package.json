@@ -15,6 +15,7 @@
     "db:migrate": "node --env-file=.env.local --import tsx scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
     "test:integration": "node --env-file=.env.test.local --import tsx scripts/smoke.mts",
+    "test:live-auth": "node --env-file-if-exists=.env.auth-test.local --import tsx scripts/test-live-auth-ai.mts",
     "deploy:cloudflare": "node --env-file=.env.local scripts/deploy-cloudflare.mts",
     "test:browser": "playwright test",
     "check:translations": "tsx scripts/list-missing-translations.mts --check",

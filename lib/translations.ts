@@ -6,6 +6,8 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
   'Dein Lernrückblick':'Your learning review',
+  'Eine gültige Übersetzung':'One valid translation',
+  'Die Übersetzung dauert zu lange. Bitte später erneut versuchen oder manuell übersetzen.':'Translation is taking too long. Please try again later or translate it manually.',
   'richtig beantwortet':'answered correctly',
   'Wiederhole die bereits aufgelösten Begriffe. Der Rückblick bleibt nach dem Neuladen in diesem Tab erhalten.':'Review the expressions already revealed. Your review survives reloading in this tab.',
   'Nur falsche Antworten':'Incorrect answers only',

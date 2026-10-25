@@ -70,3 +70,56 @@ Audit-Ausnahme bleibt dokumentiert; siehe [security.md](security.md).
    absichtlich keine geschriebenen Lösungen zu nicht veröffentlichten Audiovorgaben.
 4. Echte Anmeldung und Workers-AI-Ausgaben separat kontrollieren. Die automatischen
    Browserprüfungen verwenden isolierte Fixtures und simulierte Übersetzungsantworten.
+
+## Fortsetzung am 25. Oktober 2026
+
+Ausgangsstand `31c9065`; die bereits abgeschlossenen Pakete wurden beibehalten.
+
+- **P0:** Ein separater echter HTTPS-Integrationstest prüft Login, Sitzungswiederherstellung,
+  geschützte Zugriffe, Herkunftsprüfung und Abmeldung samt Cookie-Replay. Zugangsdaten
+  und Cookies bleiben lokal bzw. ausschließlich im Arbeitsspeicher. Der optionale KI-Teil
+  ist auf zwei neue DE↔EN-Anfragen und zwei Cache-Wiederholungen begrenzt, höchstens
+  vier Modellaufrufe und insgesamt unter 500 Quellzeichen. Keine neuen Konten, Rechte
+  oder Beiträge. Anleitung: [live-auth-ai-tests.md](live-auth-ai-tests.md).
+- **Echte Produktionsprüfung bisher:** anonyme Sitzung, eigene Beiträge/Admin-Nutzerliste
+  ohne Sitzung gesperrt, gefälschte Sitzungscookies zurückgewiesen, KI-Zugriff ohne
+  Anmeldung gesperrt. **Passwort-Login, Wiederherstellung/Abmeldung, normale Mitgliedsrechte
+  und echte Workers-AI-Ausgaben weiterhin nicht ausgeführt:** Die gewählte lokale Datei
+  `.env.auth-test.local` mit Testzugangsdaten liegt noch nicht vor. Die Kostenfreigabe
+  allein ersetzt keine authentifizierte Testsitzung. Es wurden keine Modellaufrufe verbraucht.
+- **KI-Fehlerfälle:** Eine nachweislich hängende Providerantwort wird nun nach einem
+  gemeinsamen 15-Sekunden-Zeitbudget mit einer verständlichen, wiederholbaren Fehlermeldung
+  beendet. Weitere Textteile werden nicht angefordert; Teilübersetzungen werden nicht
+  als vollständiger Vorschlag übernommen. Bereits gesendete Provideraufrufe können dort
+  weiterlaufen und werden nicht automatisch wiederholt oder als kostenlos zurückgebucht.
+- **P1 Lernrückblick:** Audioquizze und Satzbauaufgaben werden nach ihrer Auflösung
+  aufgenommen. Audio wird nur mit bereits freigegebener Aufnahme-ID und ohne erfundenen
+  Transkripttext eingebunden; kein Vorladen. Satzbau zeigt die eigene Abgabe und eine
+  gültige Übersetzung; eine akzeptierte alternative Wortfolge bleibt korrekt.
+  Zehn Aufgaben/24 Stunden, derselbe Spieler-/Partieschlüssel und reine Tab-Speicherung
+  bleiben erhalten. Unbeantwortete/verdeckte Aufgaben werden nicht erfasst.
+- **P1 Inhalte:** Sechs regionale Startkarten mit Wörterbuch-/Fachquellen eingeordnet,
+  Herkunft von Nutzungsgebiet getrennt, regionale Varianten erläutert und als noch
+  fachlich zu prüfen markiert. Direkte Quellenlinks werden bei unveränderten Startkarten
+  ergänzt. Spätere Bearbeitungen und gespeicherte Daten bleiben erhalten. Zu „Bemme“
+  drei sachlich näherliegende falsche Bedeutungen aus demselben Brot-Wortfeld erstellt.
+  Quellen, Einschränkungen und offene Fachprüfung: [regional-content-review.md](regional-content-review.md).
+- **P2 vorbereitet:** Getestete redaktionelle Freigabeprüfung für Schwierigkeitsstufen;
+  mindestens 20 unterschiedliche geprüfte Karten pro Stufe/Kategorie/Originalsprache,
+  jeweils Quellen, Datum und Begründung. Noch keine solchen Einstufungen vorhanden,
+  daher kein sichtbarer Filter und keine automatische Klassifikation. Spielpool und
+  Speicherung werden erst nach tatsächlicher redaktioneller Freigabe erweitert.
+
+Verifikation: **155 Unit-Tests**, Typprüfung, Lint, Übersetzungsabdeckung,
+Abhängigkeitsaudit und Produktions-Build bestanden. Im vollständigen Desktop-/Mobil-Lauf
+bestanden **117/118** Fälle. Ein bestehender Desktopfall zur Bearbeitung alter Antworten
+hatte eine Zeitüberschreitung; die gezielte Wiederholung desselben Falls bestand auf
+Desktop und Mobil (**2/2**). Alle vier neuen Rückblickfälle bestanden im Gesamtlauf.
+Die UI- und Providerfehler-Tests sind weiterhin kontrollierte Fixtures; echte Tests
+werden oben gesondert ausgewiesen. Keine Datenbank-/Auth-Implementierung geändert,
+keine Produktionsmigration oder SQL-Integration gegen die Produktionsdatenbank.
+
+Offen bleiben: Testzugangsdaten und damit echte positive Auth-/KI-Prüfungen, regionale
+Fachbegutachtung weiterer Community-Inhalte und belastbar eingestufte Aufgabensammlungen.
+Peer-bewertete Aussprache und kooperative Spiele erhalten weiterhin keine vorgetäuschte
+Richtig/Falsch-Lernstatistik. Veröffentlichungsstand siehe `PROGRESS.md`.

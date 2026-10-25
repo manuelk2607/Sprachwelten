@@ -31,7 +31,7 @@ const idioms:[string,string][][]=[
 ];
 const dialects:[string,string][][]=[
  [['Eine kurze Zustimmung zu einem Vorschlag.','A brief expression of agreement with a suggestion.'],['Eine knappe Entschuldigung nach einem Missgeschick.','A brief apology after a mishap.'],['Ein Zuruf, der jemanden zur Eile antreiben soll.','A call urging someone to hurry.']],
- [['Ein kleines süßes Gebäck mit einer Füllung.','A small sweet pastry with a filling.'],['Eine Portion gebratener Kartoffeln.','A portion of fried potatoes.'],['Ein Behälter für das mitgebrachte Mittagessen.','A container for a packed lunch.']],
+ [['Ein ganzer Laib Brot, bevor er in Scheiben geschnitten wird.','A whole loaf of bread before it is sliced.'],['Ein kleines, einzeln gebackenes Brötchen.','A small, individually baked bread roll.'],['Ein durch zweites Backen getrocknetes Stück Zwieback.','A piece of rusk dried by baking it a second time.']],
  [['Ein ganzer, meist länglicher Brotlaib.','A whole, usually elongated loaf of bread.'],['Ein dünner, in der Pfanne gebackener Teigfladen.','A thin piece of dough cooked in a pan.'],['Ein süßes Blätterteiggebäck mit Füllung.','A sweet filled puff pastry.']],
  [['Ein gemeinsames, mehrgängiges Festessen.','A shared celebratory meal with several courses.'],['Eine warme Nachspeise nach dem Mittagessen.','A hot dessert after lunch.'],['Eine kleine Portion Essen zum Probieren vor dem Kauf.','A small portion offered for tasting before a purchase.']],
  [['Ein höflicher Dank für eine erhaltene Hilfe.','A polite thank-you for receiving help.'],['Ein guter Wunsch, wenn jemand niesen muss.','A good wish said when someone sneezes.'],['Eine Entschuldigung, um an jemandem vorbeizugehen.','An apology used when passing someone.']],

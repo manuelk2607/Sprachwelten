@@ -16,13 +16,23 @@ Gezielte neue Desktop-/Mobiltests: 18/18 bestanden. Vollständiger erster Browse
 120/124; zwei Erwartungen enthielten noch die alte Wortketten-Beschreibung und zwei
 bestehende mobile Formularfälle scheiterten während laufender Hot-Reloads. Die
 Beschreibung wurde korrigiert; alle 26 betroffenen Desktop-/Mobilfälle bestanden
-anschließend im ruhigen Lauf. Frische GitHub-CI vor Veröffentlichung noch ausstehend.
+anschließend im ruhigen Lauf. Die frische GitHub-CI für Code-Commit
+`211c0763dc4179e20fbec5c2481e36e3c2620057` bestand vollständig, einschließlich
+aller 124 Desktop-/Mobilfälle:
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40261732054
 
 Zwei unversionierte nummerierte Dateien waren Kopien des verworfenen KI-Prototyps.
 Sie wurden unverändert außerhalb des Repositorys in
 `../local-backups/retired-ai-prototype-20261026/` gesichert; keine Arbeit gelöscht.
-Keine Datenbankmigration nötig. Nächster Schritt: Code-Commit, Push nur nach
-`manuelk2607/Sprachwelten`, frische CI, bestehender Cloudflare-Worker, Live-Prüfung.
+Keine Datenbankmigration nötig. Code-Commit `211c076` ist auf GitHub `main`.
+Deployment-Probelauf erfolgreich, Produktionsdatenbank und Auth-Ziel geprüft.
+Echtes Deployment am 26. Oktober versucht, aber vor Veröffentlichung abgebrochen:
+Cloudflare-Zugang abgelaufen und nicht automatisch erneuerbar. Wrangler-Anmeldung
+wurde im Browser geöffnet, lief jedoch ohne Bestätigung ab. Ein frischer
+OAuth-Anmeldelink ist nötig, sobald der Nutzer ihn bestätigen kann. Bis zum erfolgreichen
+Deployment bleibt die vorherige Worker-Version produktiv. Nächster Schritt:
+Anmeldung bestätigen, `npm run deploy:cloudflare`, öffentliche Live-Seiten und
+anonyme Auth-Gates prüfen; Worker-Version und Ergebnis hier ergänzen.
 
 ## Aktueller Auftrag: Glücksrad und gemeinsame Sätze – 25. Oktober 2026
 

@@ -26,13 +26,23 @@ Sie wurden unverändert außerhalb des Repositorys in
 `../local-backups/retired-ai-prototype-20261026/` gesichert; keine Arbeit gelöscht.
 Keine Datenbankmigration nötig. Code-Commit `211c076` ist auf GitHub `main`.
 Deployment-Probelauf erfolgreich, Produktionsdatenbank und Auth-Ziel geprüft.
-Echtes Deployment am 26. Oktober versucht, aber vor Veröffentlichung abgebrochen:
-Cloudflare-Zugang abgelaufen und nicht automatisch erneuerbar. Wrangler-Anmeldung
-wurde im Browser geöffnet, lief jedoch ohne Bestätigung ab. Ein frischer
-OAuth-Anmeldelink ist nötig, sobald der Nutzer ihn bestätigen kann. Bis zum erfolgreichen
-Deployment bleibt die vorherige Worker-Version produktiv. Nächster Schritt:
-Anmeldung bestätigen, `npm run deploy:cloudflare`, öffentliche Live-Seiten und
-anonyme Auth-Gates prüfen; Worker-Version und Ergebnis hier ergänzen.
+Der erste Deploymentversuch scheiterte an abgelaufener Cloudflare-Anmeldung.
+Nach Nutzerbestätigung über die Geräteanmeldung wurde `npm run deploy:cloudflare`
+erfolgreich abgeschlossen. Produktive Worker-Version:
+`d923f030-29e4-456d-80be-01906fabe3af` unter
+https://sprachwelten.maki26.workers.dev/ (26. Oktober 2026).
+Bestehende Datenbank-/Auth-Secrets, R2, AI, Rate-Limit-Bindings, Google-Tag und
+Wartungszeitplan erhalten. Keine Migration und keine produktiven Testbeiträge.
+
+Live geprüft: DE/EN-Startseiten und die vier Anleitungsseiten beider überarbeiteten
+Modi jeweils HTTP 200 mit neuen Regeln; Sitemap und robots.txt HTTP 200.
+Anonyme eigene Beiträge, Admin-Nutzerliste und Raumzugriff liefern 401;
+fremde Origin wird vor einer Raummutation mit 403 abgewiesen. Die Multiplayer-
+Schreibtests liefen ausschließlich gegen die isolierte QA-Datenbank bzw. im
+Browser mit kontrollierten HTTP-Fixtures, nicht als produktive Spielpartien.
+Der Spielauftrag ist abgeschlossen. Weitere offene QA-/Inhalts-/Schwierigkeits-
+Aufgaben aus dem älteren Backlog stehen weiter unten; keine erneute Umsetzung
+der jetzt abgeschlossenen Spielmechaniken beginnen.
 
 ## Aktueller Auftrag: Glücksrad und gemeinsame Sätze – 25. Oktober 2026
 

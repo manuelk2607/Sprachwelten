@@ -6,6 +6,7 @@ import {newGameEntries} from '../lib/new-game-seeds';
 import {neighbors} from '../lib/challenges';
 import {gamePrompts,addEntry} from '../db/repository';
 import type {Game,GameView} from '../lib/game';
+import {awaitWheel} from './qa-wheel.mts';
 const base='http://localhost:5176',url=process.env.DATABASE_URL_UNPOOLED!;
 assert.equal(new URL(url).hostname,'ep-gentle-glitter-b9qamivx.c-7.eu-central-1.aws.neon.tech','This test is restricted to the named QA branch.');
 const sql=neon(url),rooms:string[]=[],entries:string[]=[];
@@ -35,11 +36,12 @@ try{
    }else if(mode==='word-builder'){
     const c=g.round!.entry.challenge;assert.ok(c?.type==='order');const ids=c.accepted[0].map(id=>g.round!.tiles!.find(t=>t.sourceId===id)!.id);assert.ok(!JSON.stringify(current.room).includes('accepted'));const results=await Promise.all(tokens.map(token=>request(`/api/rooms/${code}`,{action:'order',tiles:ids,...guard},token)));assert.ok(results.every(r=>r.status===200),JSON.stringify(results.map(r=>({status:r.status,error:r.error}))));current=await request(`/api/rooms/${code}`,undefined,host.token);
    }else if(mode==='tongue-twisters'){
-    for(let speaker=0;speaker<2;speaker++){const v=current.room,actor=v.pronunciation!.speaker.id,target={speakerId:actor,roundNumber:number,matchId:v.matchId};const index=g.players.findIndex(p=>p.id===actor);assert.equal((await request(`/api/rooms/${code}`,{action:'performed',...target},tokens[index])).status,200);current=await request(`/api/rooms/${code}`,{action:'rate',...target,clarity:4,accuracy:4,rhythm:4},tokens[1-index]);assert.equal(current.status,200);}
+    current.room=await awaitWheel(current.room,async action=>{const result=await request(`/api/rooms/${code}`,action,host.token);assert.equal(result.status,200);return result.room;});
+    const v=current.room,actor=v.pronunciation!.speaker.id,target={speakerId:actor,selectionId:v.pronunciation!.selection?.id,roundNumber:number,matchId:v.matchId};const index=g.players.findIndex(p=>p.id===actor);assert.equal((await request(`/api/rooms/${code}`,{action:'performed',...target},tokens[index])).status,200);current=await request(`/api/rooms/${code}`,{action:'rate',...target,clarity:4,accuracy:4,rhythm:4},tokens[1-index]);assert.equal(current.status,200);
    }else{
     assert.ok(current.room.options.every(o=>!('correct' in o)&&!('solution' in o)));const id=g.round!.options.find(o=>o.solution)!.id;const voted=await Promise.all(tokens.map(token=>request(`/api/rooms/${code}`,{action:'vote',optionId:id},token)));assert.ok(voted.every(r=>r.status===200));current=await request(`/api/rooms/${code}`,undefined,host.token);
    }
-   assert.equal(current.status,200,current.error);assert.equal(current.room.phase,'reveal',mode);assert.deepEqual(current.room.players.map(p=>p.score),mode==='tongue-twisters'?[number*4,number*4]:[number,number]);current=await request(`/api/rooms/${code}`,{action:'next'},host.token);assert.equal(current.status,200,current.error);
+   assert.equal(current.status,200,current.error);assert.equal(current.room.phase,'reveal',mode);if(mode==='tongue-twisters')assert.equal(current.room.players.reduce((sum,player)=>sum+player.score,0),number*4);else assert.deepEqual(current.room.players.map(p=>p.score),[number,number]);current=await request(`/api/rooms/${code}`,{action:'next'},host.token);assert.equal(current.status,200,current.error);
   }
   assert.equal(current.room.phase,'finished');const previous=current.room.matchId;current=await request(`/api/rooms/${code}`,{action:'restart'},host.token);assert.equal(current.status,200);assert.notEqual(current.room.matchId,previous);assert.deepEqual(current.room.players.map(p=>p.score),[0,0]);
   assert.equal((await request(`/api/rooms/${code}`,{action:'leave'},host.token)).status,200);const remaining=await request(`/api/rooms/${code}`,undefined,guest.token);assert.equal(remaining.room.hostId,guest.room.playerId);assert.ok(remaining.room.phase==='lobby'||remaining.room.phase==='voting'||remaining.room.phase==='ordering');

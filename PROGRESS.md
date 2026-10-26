@@ -1,5 +1,69 @@
 # Sprachwelten: Qualitätsrunde 2026-10-24
 
+## Abschlussprüfung 26. Oktober 2026
+
+Glücksrad und neue Wortketten sind vollständig implementiert; die letzte
+Nutzerkorrektur gilt: Buchstabenprüfung auf dem Server, Sinnprüfung durch die
+Mitspieler, keine KI-Aufrufe. Bestehende Sprach-/Audiofilter, Punkte, Rematches,
+Gastgeberwechsel und gespeicherte alte Spielrunden bleiben kompatibel. Aufgelöste
+Glücksradbewertungen bleiben auch nach einem anschließenden Austritt erhalten.
+Satzmeldungen enthalten den tatsächlich aufgebauten Satz statt nur des Startworts.
+
+Verifiziert: 167 Unit-Tests, Typprüfung, Lint, Übersetzungsprüfung, vollständiges
+Abhängigkeitsaudit (null aktuelle Befunde) und Produktions-Build. Echte isolierte
+PostgreSQL-Parallelitäts-/Persistenztests bestanden; ihre Räume sind bereinigt.
+Gezielte neue Desktop-/Mobiltests: 18/18 bestanden. Vollständiger erster Browserlauf:
+120/124; zwei Erwartungen enthielten noch die alte Wortketten-Beschreibung und zwei
+bestehende mobile Formularfälle scheiterten während laufender Hot-Reloads. Die
+Beschreibung wurde korrigiert; alle 26 betroffenen Desktop-/Mobilfälle bestanden
+anschließend im ruhigen Lauf. Frische GitHub-CI vor Veröffentlichung noch ausstehend.
+
+Zwei unversionierte nummerierte Dateien waren Kopien des verworfenen KI-Prototyps.
+Sie wurden unverändert außerhalb des Repositorys in
+`../local-backups/retired-ai-prototype-20261026/` gesichert; keine Arbeit gelöscht.
+Keine Datenbankmigration nötig. Nächster Schritt: Code-Commit, Push nur nach
+`manuelk2607/Sprachwelten`, frische CI, bestehender Cloudflare-Worker, Live-Prüfung.
+
+## Aktueller Auftrag: Glücksrad und gemeinsame Sätze – 25. Oktober 2026
+
+Ausgangspunkt `d65815c`, sauberer Feature-Branch. Der eingefügte Folgeauftrag
+priorisiert die vollständige Überarbeitung von Zungenbrechern und Wortketten.
+Zu Beginn waren keine begonnenen Implementierungen dieser Mechaniken vorhanden.
+
+Plan: (1) serverseitiges Glücksrad mit synchronisiertem Ergebnis und bestehenden
+Bewertungen, (2) gemeinsame Sätze mit Buchstabenprüfung, Peer-Abstimmung und Zeit-/Fehlerregeln,
+(3) Multiplayer-/Browserregressionen, Gesamtchecks und bestehender Worker.
+Bestehende gespeicherte Runden bleiben kompatibel.
+
+Nutzerkorrektur während der Umsetzung: Keine KI für Wortketten. Nur der passende
+Anfangsbuchstabe wird serverseitig geprüft (Endbuchstabe des vorherigen Wortes).
+Den Sinn beurteilen die Mitspieler. Die vorbereiteten KI-Dateien wurden entfernt.
+Aktuell umgesetzt: freie Worteingabe, reihum 45 Sekunden, anonyme Peer-Abstimmung
+mit strikter Mehrheit in 30 Sekunden, 1 Punkt pro angenommenem Wort, Satzabschluss,
+0 Punkte bei Ablehnung/Weitergeben/Timeout, Ende nach drei Fehlern oder 40 Wörtern.
+Solo bleibt mit eigener Beurteilung spielbar. Glücksrad und alte gespeicherte
+Runden sind kompatibel. Nächster Schritt: aktualisierte Tests und isolierte
+Persistenz-/Parallelitätsprüfung. Erster Browserstart scheiterte an der macOS-
+Prozessbeschränkung; der anschließende gezielte Browserlauf mit Freigabe bestand
+18/18 Desktop-/Mobilfälle. 11 neue Unit-Tests bestehen. Echte isolierte PostgreSQL-
+Integration bestand: konkurrierende Ziehungen/Bewertungen, konkurrierende Vorschläge
+und Mehrheitsabstimmungen, Wiederholungsschutz, ETag-Projektion, Gastgeberwechsel
+und Heartbeat-SQL. Alle erzeugten QA-Räume wurden entfernt. Keine Konten, Beiträge
+oder KI-Aufrufe angelegt. Vollständige Browserregression läuft; Build/Schlusschecks,
+Commit und Veröffentlichung folgen danach.
+
+Vorangehendes QA-Paket: Das eindeutig geprüfte temporäre Konto hat weiterhin null
+Beiträge und null Adminrechte; die autorisierte Löschung scheiterte erneut mit
+„branch not found“. Manuell: Neon-Projekt Sprachwelten → main → Auth → Users →
+UUID `d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7` und Anzeigename abgleichen → genau dieses
+Konto löschen. Keine SQL-Umgehung. Eine leere Schema-only-QA-Datenbank
+`br-quiet-snow-b9ua8at5` (qa-auth-20261025) wurde angelegt; sie läuft automatisch am
+26. Oktober 2026 um 20:00 UTC ab. Keine produktiven Datensätze kopiert.
+Das vom Nutzer erlaubte Testpostfach wurde noch nicht angelegt. Weitere P1/P2-
+Backlogarbeit bleibt zugunsten des neuen Spielauftrags zurückgestellt.
+Neu belegt: npm-Audit hat null Befunde; das bisherige braces-Advisory wurde am
+23. Oktober zurückgezogen. Die alte Ausnahme kann nach Tests entfernt werden.
+
 ## Fortsetzung 25. Oktober 2026
 
 Ausgangspunkt `31c9065`, sauberer Feature-Branch. Gezielte Pakete statt Gesamtaudit:

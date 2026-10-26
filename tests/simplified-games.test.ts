@@ -7,6 +7,7 @@ import {newGameEntries} from '../lib/new-game-seeds';
 import {entryInput} from '../lib/content';
 import {prepareMeaningEntries,meaningCategory} from '../lib/meaning-quiz';
 import {chainPrompts,edgeLetter} from '../lib/word-chain';
+import {legacyChain} from './game-fixtures';
 const player=(index:number)=>({id:crypto.randomUUID(),name:'Player '+index,tokenHash:'hash'+index,score:0});
 const entries=[...seedEntries,...newGameEntries,...communityGameEntries];
 
@@ -39,9 +40,10 @@ test('odd-word and loanword quizzes hide explanations, use one correct option an
   assert.equal(game.phase,'finished');assert.equal(game.players[0].score,2);const match=game.matchId;act(game,game.hostId,{action:'restart'},entries);assert.notEqual(game.matchId,match);assert.equal(game.phase,'lobby');act(game,game.hostId,{action:'start'},entries);assert.equal(game.phase,'voting');
  }
 });
-test('word chains enforce active turns, reject stale actions, preserve unique words and complete with ten players',()=>{
+test('legacy word chains enforce active turns, reject stale actions, preserve unique words and complete with ten players',()=>{
  for(const locale of ['de','en'] as const){
   const game=createGame('ABC234',player(1),locale,'word-chain');for(let index=2;index<=10;index++)joinGame(game,player(index));act(game,game.hostId,{action:'start'},chainPrompts());
+  legacyChain(game);
   for(let turn=0;turn<10;turn++){
    const chain=game.round!.chain!,active=chain.queue[0],view=viewGame(game,active);assert.equal(game.phase,'linking');assert.equal(view.chain!.choices.length,4);
    const wrongPlayer=game.players.find(p=>p.id!==active)!;assert.equal(viewGame(game,wrongPlayer.id).chain!.choices.length,0);
@@ -51,8 +53,9 @@ test('word chains enforce active turns, reject stale actions, preserve unique wo
   assert.equal(game.phase,'reveal');assert.deepEqual(game.players.map(p=>p.score),Array(10).fill(1));const words=game.round!.chain!.words.map(word=>word.text);assert.equal(new Set(words).size,words.length);assert.equal(words.length,11);
  }
 });
-test('a wrong chain word scores zero and host departure transfers the next turn',()=>{
+test('a wrong legacy chain word scores zero and host departure transfers the next turn',()=>{
  const game=createGame('ABC234',player(1),'de','word-chain');joinGame(game,player(2));joinGame(game,player(3));act(game,game.hostId,{action:'start'},chainPrompts());
+ legacyChain(game);
  const host=game.hostId,chain=game.round!.chain!,wrong=chain.choices.find(word=>edgeLetter(word.text,'first')!==edgeLetter(chain.words.at(-1)!.text,'last'))!;
  act(game,host,{action:'chain',wordId:wrong.id,turn:chain.turn,matchId:game.matchId!,roundNumber:1});assert.equal(game.players[0].score,0);assert.equal(chain.words.length,1);
  const next=chain.queue[0];leaveGame(game,next);assert.equal(chain.queue.length,1);assert.equal(chain.queue[0],game.players.at(-1)!.id);leaveGame(game,host);assert.equal(game.hostId,chain.queue[0]);assert.equal(game.phase,'linking');

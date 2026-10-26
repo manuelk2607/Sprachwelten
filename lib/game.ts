@@ -53,12 +53,15 @@ import {
   updateAvailability,
 } from "./game-pool";
 import { chainChoices, edgeLetter, type ChainRound } from "./word-chain";
+import { drawSpeaker, type WheelSelection } from './pronunciation-wheel';
+import {initializeSentence,advanceSentenceClock,passSentence,proposeSentence,voteSentence,requiredSentenceLetter,sentencePlayerLeft,activeSentencePlayer,type SentenceRound} from './sentence-chain';
 
 export type Phase =
   | "lobby"
   | "writing"
   | "voting"
   | "speaking"
+  | "spinning"
   | "rating"
   | "reveal"
   | "finished"
@@ -86,6 +89,7 @@ export type Option = {
 export type PronunciationRound = {
   speakerIndex: number;
   ratings: Record<string, Record<string, RatingScores>>;
+  selection?: WheelSelection;
 };
 export type Round = {
   entry: Entry;
@@ -93,6 +97,7 @@ export type Round = {
   votes: Record<string, string>;
   options: Option[];
   chain?: ChainRound;
+  sentence?: SentenceRound;
   team?: TeamRound;
   orders?: Record<string, string[]>;
   tiles?: { id: string; text: string; sourceId: string }[];
@@ -119,6 +124,8 @@ export type Game = {
   attributionCategory?: AttributionCategory;
   tabooLanguages?: string[];
   taboo?: TabooState;
+  previousSpeakerId?: string;
+  sentenceLanguage?: 'de'|'en';
 };
 export {GameError} from './game-error';
 import {GameError} from './game-error';
@@ -134,6 +141,7 @@ export function createGame(
     locale,
     mode,
     pronunciationLanguage: locale,
+    sentenceLanguage: locale,
     tabooLanguages: [locale],
     hostId: player.id,
     phase: "lobby",
@@ -179,18 +187,7 @@ function newRound(game: Game) {
     game.availableRounds = Math.max(0, game.availableRounds - 1);
   game.phase = "writing";
   if (game.mode === "word-chain") {
-    game.round.chain = {
-      queue: game.players.map(
-        (_, index) =>
-          game.players[(game.roundIndex + index) % game.players.length].id,
-      ),
-      turn: 0,
-      words: [{ text: entry.phrase }],
-      choices: [],
-      results: [],
-    };
-    chainChoices(game.round.chain, game.locale);
-    game.phase = "linking";
+    initializeSentence(game);
   } else if (
     (game.mode === "meaning-quiz" && entry.challenge?.type === "meaning") ||
     (game.mode === "word-outsider" && entry.challenge?.type === "outsider")
@@ -236,8 +233,7 @@ function newRound(game: Game) {
     );
     game.phase = "ordering";
   } else if (game.mode === "tongue-twisters") {
-    game.round.pronunciation = { speakerIndex: 0, ratings: {} };
-    game.phase = "speaking";
+    selectPronunciationSpeaker(game);
   } else if (game.mode === "joke-quiz" && entry.challenge?.type === "joke") {
     const c = entry.challenge;
     game.round.options = shuffled(
@@ -335,7 +331,9 @@ const correctOption = (game: Omit<Game, "prompts">, option: Option) =>
           : option.authorId === null;
 const rounded = (value: number) => Math.round(value * 10) / 10;
 function pronunciationResults(game: Omit<Game, "prompts">) {
-  return game.players.map((player) => {
+  const selection=game.round?.pronunciation?.selection;
+  const participants=selection?selection.players.filter(player=>player.id===selection.selectedId):game.players;
+  return participants.map((player) => {
     const ratings = Object.values(
       game.round?.pronunciation?.ratings[player.id] ?? {},
     );
@@ -433,10 +431,23 @@ function settleRatings(game: Game) {
       .filter((player) => player.id !== speaker.id)
       .every((player) => !!performance.ratings[speaker.id]?.[player.id])
   ) {
-    if (performance.speakerIndex + 1 < game.players.length) {
+    if (performance.selection) finishPronunciation(game);
+    else if (performance.speakerIndex + 1 < game.players.length) {
       performance.speakerIndex++;
       game.phase = "speaking";
     } else finishPronunciation(game);
+  }
+}
+function selectPronunciationSpeaker(game: Game) {
+  if(!game.round)return;
+  const selection=drawSpeaker(game.players,game.previousSpeakerId);
+  game.round.pronunciation={selection,speakerIndex:game.players.findIndex(player=>player.id===selection.selectedId),ratings:{}};
+  game.phase='spinning';
+}
+function advanceWheel(game: Game) {
+  const selection=game.round?.pronunciation?.selection;
+  if(game.phase==='spinning'&&selection&&Date.now()>=selection.endsAt){
+    game.phase='speaking';game.previousSpeakerId=selection.selectedId;
   }
 }
 export function leaveGame(game: Game, playerId: string) {
@@ -479,6 +490,7 @@ export function leaveGame(game: Game, playerId: string) {
   }
   const round = game.round;
   if (!round) return;
+  if(round.sentence){sentencePlayerLeft(game,playerId);return;}
   if (round.chain) {
     round.chain.queue = round.chain.queue.filter((id) => id !== playerId);
     round.chain.turn++;
@@ -504,9 +516,15 @@ export function leaveGame(game: Game, playerId: string) {
     return;
   }
   if (performance) {
+    if(performance.selection&&game.phase==='reveal')return;
     delete performance.ratings[playerId];
     for (const ratings of Object.values(performance.ratings))
       delete ratings[playerId];
+    if(performance.selection&&['spinning','speaking','rating'].includes(game.phase)){
+      if(speakerId===playerId||game.phase==='spinning')selectPronunciationSpeaker(game);
+      else{performance.speakerIndex=game.players.findIndex(player=>player.id===speakerId);settleRatings(game);}
+      return;
+    }
     if (game.phase === "speaking" || game.phase === "rating") {
       if (speakerId === playerId) {
         performance.speakerIndex = speakerIndex;
@@ -539,7 +557,15 @@ export function act(
       now - other.lastSeenAt > 120000
     )
       leaveGame(game, other.id);
+  advanceWheel(game);
+  if(action.action!=='sentence-timeout')advanceSentenceClock(game);
   if (action.action === "heartbeat") return;
+  if(action.action==='wheel-ready'){
+    const selection=game.round?.pronunciation?.selection;
+    if(game.mode!=='tongue-twisters'||!selection||action.selectionId!==selection.id||action.matchId!==game.matchId||action.roundNumber!==game.roundIndex+1)throw new GameError('Diese Eingabe gehört nicht zur aktuellen Runde.',409);
+    if(game.phase==='spinning')throw new GameError('Das Glücksrad dreht sich noch.',409);
+    return;
+  }
   if (action.action === "leave") {
     leaveGame(game, playerId);
     return;
@@ -586,6 +612,7 @@ export function act(
         throw new GameError("Diese Kategorie passt nicht zum Spiel.", 422);
       next.meaningCategory = action.meaningCategory;
     }
+    if(action.sentenceLanguage){if(next.mode!=='word-chain')throw new GameError('Dieser Sprachfilter passt nicht zum Spiel.',422);next.sentenceLanguage=action.sentenceLanguage;}
     if (prompts.length) updateAvailability(next, prompts);
     if (action.rounds !== undefined) {
       if (
@@ -702,6 +729,13 @@ export function act(
   if(action.action==="taboo")throw new GameError("Diese Aktion passt nicht zum Spiel.",422);
   const round = game.round;
   if (!round) throw new GameError("Das Spiel hat noch nicht begonnen.");
+  if(action.action==='sentence-pass'||action.action==='sentence-timeout'){
+    passSentence(game,playerId,action,action.action==='sentence-timeout');return;
+  }
+  if(action.action==='sentence-word'||action.action==='sentence-finish'){
+    proposeSentence(game,playerId,action,action.action==='sentence-word'?action.word:undefined);return;
+  }
+  if(action.action==='sentence-vote'){voteSentence(game,playerId,action,action.proposalId,action.approve);return;}
   if (action.action === "chain") {
     const chain = round.chain;
     if (game.mode !== "word-chain" || game.phase !== "linking" || !chain)
@@ -771,7 +805,7 @@ export function act(
     if (
       action.matchId !== (game.matchId ?? game.code) ||
       action.roundNumber !== game.roundIndex + 1 ||
-      action.speakerId !== speaker.id
+      action.speakerId !== speaker.id || (performance.selection && action.selectionId!==performance.selection.id)
     )
       throw new GameError(
         "Diese Bewertung gehört nicht zum aktuellen Vortrag.",
@@ -846,17 +880,31 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
   const c = round?.entry.challenge;
   const team = viewTeam(game, playerId);
   const taboo=viewTaboo(game,playerId);
-  const hidden = (!!team && !team.briefing)||!!taboo&&!taboo.card;
+  const hidden = (!!team && !team.briefing)||!!taboo&&!taboo.card||game.phase==='spinning';
   const order = c?.type === "order" ? c : null;
   const textVisible = !!round && hasText(round.entry);
   const audioVisible = !!round && hasAudio(round.entry) && !hidden;
   const performance = round?.pronunciation;
   const speaker = performance
-    ? game.players[performance.speakerIndex]
+    ? performance.selection?performance.selection.players.find(player=>player.id===performance.selection!.selectedId):game.players[performance.speakerIndex]
     : undefined;
   const activeRatings = speaker ? (performance?.ratings[speaker.id] ?? {}) : {};
   const song = game.mode === "who-said-it" && c?.type === "attribution" && c.category === "song" ? c : null;
   return {
+    sentenceLanguage:game.sentenceLanguage??game.locale,
+    sentence:round?.sentence?{
+      language:round.sentence.language,words:round.sentence.words,turn:round.sentence.turn,
+      activePlayerId:activeSentencePlayer(round.sentence),queue:round.sentence.queue,
+      deadline:round.sentence.deadline,serverNow:Date.now(),requiredLetter:requiredSentenceLetter(round.sentence),
+      proposal:round.sentence.pending?{
+        id:round.sentence.pending.id,playerId:round.sentence.pending.playerId,word:round.sentence.pending.word??null,
+        finish:round.sentence.pending.finish,hasVoted:round.sentence.pending.votes[playerId]!==undefined,
+        voteCount:game.players.filter(player=>round.sentence!.pending!.votes[player.id]!==undefined).length,
+        requiredVotes:Math.floor((game.players.length-1)/2)+1,
+      }:null,
+      voteEndsAt:round.sentence.pending?.expiresAt??null,
+      feedback:round.sentence.feedback??null,failures:round.sentence.failures,endReason:round.sentence.endReason??null,
+    }:null,
     taboo,
     tabooLanguages: game.tabooLanguages??[game.locale],
     songHelp: song && game.phase === "voting"
@@ -1038,8 +1086,9 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
             speaker: { id: speaker.id, name: speaker.name },
             speakerNumber: performance.speakerIndex + 1,
             totalSpeakers: game.players.length,
+            selection: performance.selection ? {...performance.selection,serverNow:Date.now()} : null,
             ratingCount: Object.keys(activeRatings).length,
-            requiredRatings: game.players.length - 1,
+            requiredRatings: revealed?Object.keys(activeRatings).length:game.players.length - 1,
             hasRated: !!activeRatings[playerId],
             results: revealed ? pronunciationResults(game) : [],
           }

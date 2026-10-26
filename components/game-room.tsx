@@ -1,5 +1,6 @@
 "use client";
 import {LearningReview} from './learning-review';
+import {SentenceRound} from './sentence-round';
 import {TabooRound} from "./taboo-round";
 import {RoundReportButton} from "./round-report";
 import {PhraseText} from "./phrase-text";
@@ -302,6 +303,10 @@ export function GameRoom({ code }: { code: string }) {
         body: JSON.stringify(data),
       });
       const json = (await response.json()) as { room: GameView; error: string };
+      if(response.status===409&&(data.action==='wheel-ready'||data.action==='sentence-timeout')){
+        const fresh=await fetch(`/api/rooms/${code}`,{headers:{Authorization:`Bearer ${token}`}});
+        if(fresh.ok){const current=await fresh.json() as {room:GameView};setRoom(current.room);return;}
+      }
       if (!response.ok) throw new Error(json.error);
       if (data.action === "leave") {
         leaveConfirmed.current = true;
@@ -497,7 +502,7 @@ export function GameRoom({ code }: { code: string }) {
                   </h1>
                   {room.players.length === 1 && (
                     <h2>
-                      {me?.score} / {room.totalRounds} {t("Punkte")}
+                      {me?.score}{room.mode!=='word-chain'&&<> / {room.totalRounds}</>} {t("Punkte")}
                     </h2>
                   )}
                   <p>
@@ -576,6 +581,7 @@ export function GameRoom({ code }: { code: string }) {
                           writing: "✎ Erfinden",
                           voting: "◉ Erraten",
                           speaking: "◉ Vorlesen",
+                          spinning: "◉ Glücksrad",
                           rating: "✦ Bewerten",
                           briefing: "◉ Erklären",
                           mission: "◉ Route planen",
@@ -587,7 +593,7 @@ export function GameRoom({ code }: { code: string }) {
                       )}
                     </span>
                   </div>
-                  {!room.taboo && !room.chain && (!room.team || room.phase === "reveal") && (
+                  {!room.taboo && !room.chain && !room.sentence && room.phase!=='spinning' && (!room.team || room.phase === "reveal") && (
                     <div className="prompt-card">
                       <span className="mini-label">
                         {room.attributionType
@@ -676,6 +682,7 @@ export function GameRoom({ code }: { code: string }) {
                       {room.outsider.rule}
                     </p>
                   )}
+                  {room.sentence&&<SentenceRound key={`${room.matchId}:${room.roundNumber}:${room.sentence.turn}`} room={room} busy={busy} action={action}/>}
                   {room.chain && (
                     <section className="word-chain-board">
                       <ol aria-label={t("Eure Wortkette")}>
@@ -826,7 +833,7 @@ export function GameRoom({ code }: { code: string }) {
                         </div>
                       </form>
                     ))}
-                  {(room.phase === "speaking" || room.phase === "rating") && (
+                  {(room.phase === "spinning" || room.phase === "speaking" || room.phase === "rating") && (
                     <PronunciationRound
                       room={room}
                       busy={busy}
@@ -911,7 +918,7 @@ export function GameRoom({ code }: { code: string }) {
                               </p>
                             </div>
                           )}
-                          {!room.wordOrder && !room.chain && (
+                          {!room.wordOrder && !room.chain && !room.sentence && (
                             <h2>
                               {room.mode === "who-said-it" ||
                               room.mode === "false-friends"

@@ -3,8 +3,10 @@ import {reviewFixTranslations} from './review-fix-translations';
 import {communityTranslations} from './community-translations';
 import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
+import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  ...gameRedesignTranslations,
   'Dein Lernrückblick':'Your learning review',
   'Eine gültige Übersetzung':'One valid translation',
   'Die Übersetzung dauert zu lange. Bitte später erneut versuchen oder manuell übersetzen.':'Translation is taking too long. Please try again later or translate it manually.',

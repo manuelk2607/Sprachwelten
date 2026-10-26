@@ -74,6 +74,7 @@ export const POST = (request: Request, ctx: Context) =>
               ? { pronunciationLanguage: action.pronunciationLanguage }
               : {}),
             ...(action.tabooLanguages ? {tabooLanguages:action.tabooLanguages}:{}),
+            ...(action.sentenceLanguage ? {sentenceLanguage:action.sentenceLanguage}:{}),
             ...(action.attributionCategory
               ? { attributionCategory: action.attributionCategory }
               : {}),
@@ -91,6 +92,7 @@ export const POST = (request: Request, ctx: Context) =>
           action.pronunciationLanguage,
           action.attributionCategory,
           action.tabooLanguages,
+          action.sentenceLanguage,
         ].some((value) => value !== undefined));
     if (refreshPool) {
       const { state } = await getRoom(code, false);

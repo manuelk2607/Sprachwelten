@@ -4,16 +4,18 @@ import type { GameView } from '@/lib/game';
 import type { RoomAction } from '@/lib/content';
 import { useI18n } from '@/lib/i18n';
 import { ArrowRight, CheckCircle2, Mic2 } from 'lucide-react';
+import {PronunciationWheel} from './pronunciation-wheel';
 
 export function PronunciationRound({room,busy,action}:{room:GameView;busy:boolean;action:(action:RoomAction)=>Promise<void>}) {
   const {t}=useI18n();
   const turn=room.pronunciation;
   if(!turn)return null;
+  if(room.phase==='spinning')return <PronunciationWheel room={room} busy={busy} action={action}/>;
   const speaking=room.phase==='speaking';
   const me=room.playerId===turn.speaker.id;
-  const target={speakerId:turn.speaker.id,roundNumber:room.roundNumber,matchId:room.matchId};
+  const target={speakerId:turn.speaker.id,roundNumber:room.roundNumber,matchId:room.matchId,...(turn.selection?{selectionId:turn.selection.id}:{})};
   return <section className="pronunciation-turn" aria-live="polite">
-    <div className="eyebrow"><Mic2 size={17}/>{t('VORTRAG')} {turn.speakerNumber} / {turn.totalSpeakers}</div>
+    <div className="eyebrow"><Mic2 size={17}/>{t('VORTRAG')} {!turn.selection&&<>{turn.speakerNumber} / {turn.totalSpeakers}</>}</div>
     <h2>{me?t('Du bist dran.'):turn.speaker.name+' '+t('ist dran.')}</h2>
     <p className="muted">{t(room.prompt?.presentation==='audio'?'Hört euch die Aufnahme an und sprecht sie im selben Raum oder in eurem Sprachchat nach.':'Lest den Text im selben Raum oder in eurem Sprachchat vor. Sprecht so klar und flüssig, wie ihr könnt.')}</p>
     {speaking?(me?<button className="button primary full" disabled={busy} onClick={()=>action({action:'performed',...target})}>{t('Vortrag beendet – bewerten')}<ArrowRight size={17}/></button>:<p className="waiting">{t('Hört zu. Danach könnt ihr die Aussprache bewerten.')}</p>):me?<div className="waiting"><CheckCircle2 size={26}/><h3>{t('Die anderen bewerten deinen Vortrag.')}</h3><p>{turn.ratingCount} / {turn.requiredRatings} {t(turn.requiredRatings===1?'Bewertung abgegeben':'Bewertungen abgegeben')}</p></div>:turn.hasRated?<div className="waiting"><CheckCircle2 size={26}/><h3>{t('Danke für deine Bewertung.')}</h3><p>{turn.ratingCount} / {turn.requiredRatings} {t(turn.requiredRatings===1?'Bewertung abgegeben':'Bewertungen abgegeben')}</p></div>:<form key={`${room.roundNumber}:${turn.speaker.id}`} className="form-stack rating-form" onSubmit={event=>{

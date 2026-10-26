@@ -74,6 +74,7 @@ export function RoomForm({
             pronunciationLanguage:
               data.get("pronunciationLanguage") ?? undefined,
             attributionCategory: data.get("attributionCategory") ?? undefined,
+            sentenceLanguage:data.get('sentenceLanguage')??undefined,
           }),
         },
       );
@@ -192,6 +193,7 @@ export function RoomForm({
           />
         )}
         {!join&&mode==="taboo"&&<LanguageSetPicker value={tabooLanguages} onChange={setTabooLanguages} disabled={busy}/>}
+        {!join&&mode==='word-chain'&&<label>{t('Sprache des gemeinsamen Satzes')}<Select name="sentenceLanguage" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
         {!join && mode === "who-said-it" && (
           <label>
             {t("Kategorie")}

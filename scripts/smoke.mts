@@ -4,6 +4,7 @@ import { neon } from "@neondatabase/serverless";
 import { gamePrompts } from "../db/repository";
 import { textsOf } from "../lib/content-translations";
 import { translationCacheKey } from "../lib/translation-service";
+import {awaitWheel} from './qa-wheel.mts';
 const base = process.env.TEST_BASE_URL ?? "http://localhost:5176";
 assert.ok(
   process.env.TEST_DATABASE_HOST,
@@ -670,14 +671,17 @@ try {
     speechTokens[0],
   );
   assert.equal(current.status, 200);
+  const speechScores=[0,0,0];
   for (let round = 0; round < 5; round++) {
-    for (let speaker = 0; speaker < 3; speaker++) {
+    current.data.room=await awaitWheel(current.data.room,async action=>{const result=await request(`/api/rooms/${code}`,action,speechTokens[0]);assert.equal(result.status,200);return result.data.room;}) as TestPayload['room'];
+    {
       const turn = current.data.room.pronunciation;
+      const speaker=current.data.room.players.findIndex(player=>player.id===turn.speaker.id);
       assert.equal(current.data.room.phase, "speaking");
-      assert.equal(turn.speakerNumber, speaker + 1);
       assert.equal(turn.results.length, 0);
       const target = {
         speakerId: turn.speaker.id,
+        selectionId:turn.selection?.id,
         roundNumber: round + 1,
         matchId: current.data.room.matchId,
       };
@@ -716,9 +720,10 @@ try {
       );
       assert.ok(rated.every((result) => result.status === 200));
       current = await request(`/api/rooms/${code}`, undefined, speechTokens[0]);
+      speechScores[speaker]+=4;
     }
     assert.equal(current.data.room.phase, "reveal");
-    assert.equal(current.data.room.pronunciation.results.length, 3);
+    assert.equal(current.data.room.pronunciation.results.length, 1);
     assert.ok(
       current.data.room.pronunciation.results.every(
         (result) =>
@@ -737,7 +742,7 @@ try {
   assert.equal(current.data.room.phase, "finished");
   assert.deepEqual(
     current.data.room.players.map((player) => player.score),
-    [20, 20, 20],
+    speechScores,
   );
   console.log(
     "PASS: auth, bilingual community contributions, fixed quiz IDs, duplicate rejection and simultaneous submissions, cached translations and binding availability, configured rounds in all five modes, concurrent votes and ratings, solo quizzes and hidden answers.",

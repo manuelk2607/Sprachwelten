@@ -1,7 +1,7 @@
 import {validateRegion} from './regions';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
-import {chainPrompts} from '@/lib/word-chain';
+import {sentencePrompts} from '@/lib/sentence-chain';
 import type {RoomPoolSettings} from '@/lib/game-pool';
 import { registeredLanguageNames } from '@/lib/language-registry';
 import { neon } from '@neondatabase/serverless';
@@ -63,7 +63,7 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff',settings:Partial<RoomPoolSettings>={}) {
   if(mode==='taboo')return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='taboo' AND language=ANY($1::text[]) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 240`,[settings.tabooLanguages??[settings.locale??'de'],(settings.playedPrompts??[]).map(p=>p.id)]) as Entry[]).map(withLanguageNames);
-  if(mode==='word-chain')return chainPrompts();
+  if(mode==='word-chain')return sentencePrompts();
   const seenIds=[...new Set([...(settings.playedPrompts??[]).map(prompt=>prompt.id),...(settings.round?[settings.round.entry.id]:[])])];
   if(mode==='meaning-quiz'){
     const kinds=settings.meaningCategory==='expression'?['idiom','dialect']:settings.meaningCategory==='gaming'?['gaming_mission']:settings.meaningCategory==='youth'?['youth_chat']:settings.meaningCategory==='academic'?['academic']:['idiom','dialect','gaming_mission','youth_chat','academic'];

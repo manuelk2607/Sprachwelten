@@ -83,7 +83,7 @@ export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({action:z.literal('taboo'),event:z.enum(['start','clue','guess','correct','skip','buzz','timeout']),text:z.string().trim().max(300).optional(),matchId:z.uuid(),roundNumber:z.number().int().min(1).max(10),cardIndex:z.number().int().min(1)}),
   z.object({ action: z.literal('start') }),
-  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','taboo','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
+  z.object({ action:z.literal('configure'),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','taboo','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),sentenceLanguage:z.enum(['de','en']).optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
   z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional(),immediate:z.boolean().optional() }),
   z.object({ action:z.literal('leave') }),
   z.object({ action:z.literal('heartbeat') }),
@@ -96,7 +96,13 @@ export const roomAction = z.discriminatedUnion('action', [
   z.object({action:z.literal('mission'),path:z.array(z.number().int().min(0).max(8)).min(1).max(31),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
   z.object({action:z.literal('order'),tiles:z.array(z.string().uuid()).min(2).max(16),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
   z.object({action:z.literal('chain'),wordId:z.string().uuid(),turn:z.number().int().min(0).max(20),roundNumber:z.number().int().min(1).max(20),matchId:z.string().uuid()}),
-  z.object({ action:z.literal('performed'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
-  ratingScores.extend({ action:z.literal('rate'),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
+  z.object({action:z.literal('sentence-word'),word:z.string().trim().min(1).max(40),turn:z.number().int().min(0).max(200),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({action:z.literal('sentence-finish'),turn:z.number().int().min(0).max(200),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({action:z.literal('sentence-pass'),turn:z.number().int().min(0).max(200),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({action:z.literal('sentence-timeout'),turn:z.number().int().min(0).max(200),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({action:z.literal('sentence-vote'),proposalId:z.uuid(),approve:z.boolean(),turn:z.number().int().min(0).max(200),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({action:z.literal('wheel-ready'),selectionId:z.uuid(),roundNumber:z.number().int().min(1).max(10),matchId:z.uuid()}),
+  z.object({ action:z.literal('performed'),selectionId:z.uuid().optional(),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
+  ratingScores.extend({ action:z.literal('rate'),selectionId:z.uuid().optional(),speakerId:z.string().uuid(),roundNumber:z.number().int().min(1).max(20),matchId:z.union([z.string().uuid(),roomCode]) }),
 ]);
 export type RoomAction = z.infer<typeof roomAction>;

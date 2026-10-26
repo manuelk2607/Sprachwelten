@@ -13,13 +13,15 @@ export async function heartbeatRoom(code:string,tokenHash:string){
     ON CONFLICT(room_code,player_id) DO UPDATE SET seen_at=excluded.seen_at
       WHERE room_presence.seen_at<now()-interval '15 seconds'
     RETURNING player_id
-  ) SELECT player_id,EXISTS(
+  ) SELECT player_id,(EXISTS(
     SELECT 1 FROM authorized a,jsonb_array_elements(a.state->'players') p
     LEFT JOIN room_presence presence ON presence.room_code=${code} AND presence.player_id=p->>'id'
     WHERE p->>'id'<>a.player_id AND
       greatest(coalesce(extract(epoch FROM presence.seen_at)*1000,0),coalesce((p->>'lastSeenAt')::numeric,0))>0 AND
       greatest(coalesce(extract(epoch FROM presence.seen_at)*1000,0),coalesce((p->>'lastSeenAt')::numeric,0))<extract(epoch FROM now()-interval '2 minutes')*1000
-  ) AS stale FROM authorized`;
+  ) OR (state->>'phase'='spinning' AND (state#>>'{round,pronunciation,selection,endsAt}')::numeric<=extract(epoch FROM now())*1000)
+    OR (state->>'phase'='linking' AND state#>'{round,sentence}' IS NOT NULL AND
+      coalesce((state#>>'{round,sentence,pending,expiresAt}')::numeric,(state#>>'{round,sentence,deadline}')::numeric)<=extract(epoch FROM now())*1000)) AS stale FROM authorized`;
   if(!row)throw new GameError('Du bist nicht Teil dieses Raums.',403);
   if(!row.stale)return null;
   let playerId='';

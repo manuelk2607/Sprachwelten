@@ -33,10 +33,30 @@ Typprüfung, Lint, Übersetzungsprüfung, Abhängigkeitsaudit und Produktions-Bu
 bestanden; keine neuen Abhängigkeiten oder KI-Kosten. Quellbasierte
 Grammatik-/Vokabelkarten sind ein A1-Einstieg, keine vollständige Sammlung aller
 Sprachen/Niveaus. Umsetzung und Betrieb: docs/learning-2026-10-26.md.
-Nächster Schritt: letzte Inhaltsprüfung/Unit-Tests, Commit, produktive Migration
-und bestehender Worker bei gültigem Zugang; anschließend Live-Smoke. Neue
-Lerninhalte und Migration bis dahin noch NICHT produktiv. Alte externe QA-/OTP-
-und redaktionelle Backlogaufgaben bleiben unverändert offen.
+Abgeschlossen: Code-Commit `c9137856cdf124370c7ebc78bd92298f1087bb7f` auf GitHub
+`main`. Migration 024 am 26. Oktober 2026 produktiv erfolgreich angewendet;
+22 neue Startmaterialien idempotent ergänzt (keine bestehenden Einträge geändert).
+Bestehender Worker erfolgreich veröffentlicht: Version
+`84edc7a0-a075-45dc-a945-06cb5c29f209` unter
+https://sprachwelten.maki26.workers.dev/lernen. Secrets, R2, AI, Rate-Limits,
+Google-Tag und Wartungszeitplan erhalten.
+
+Live: `/`, `/en`, `/lernen`, `/en/learn`, Sitemap, Lernkatalog und Spielsprachen
+HTTP 200. Pro Zielsprache elf Materialien; deutscher Grammatikfilter liefert
+genau ein Modul; Folgeseite leer statt Duplikaten; ungültige Sprache 422.
+Keine internen Autorennamen oder fremden Fortschritte im anonymen Lernkatalog.
+Eigene Beiträge/Admin-Nutzerliste anonym 401, fremde Origin bei Lernabgabe 403.
+Neue Lernseiten enthalten Canonical sowie DE/EN-Sprachalternativen.
+Keine produktiven Testkonten, Lernabgaben, Spielpartien oder KI-Aufrufe erzeugt;
+echte Schreib-/Parallelitätsprüfung ausschließlich in QA, Browserabläufe mit
+kontrollierten Antworten. GitHub-CI für Code-Commit:
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40341277913
+Beim Abschluss liefen dort noch Browserinstallation/-tests; Audit, Lint,
+Übersetzungen, Typprüfung, Unit-Tests und Build waren bereits erfolgreich.
+
+Nächste sinnvolle Arbeit: weitere redaktionell geprüfte Lernsprachen, Themen und
+Niveaus ergänzen; keine erneute Implementierung dieser Kernfunktionen. Alte
+externe QA-/OTP- und redaktionelle Backlogaufgaben bleiben unverändert offen.
 
 ## Abschlussprüfung 26. Oktober 2026
 

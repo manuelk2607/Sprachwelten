@@ -47,7 +47,7 @@ export function Select({
       return [];
     return [
       {
-        value: String(child.props.value ?? ""),
+        value: String(child.props.value ?? Children.toArray(child.props.children).join("")),
         text: Children.toArray(child.props.children).join(""),
         disabled: child.props.disabled,
       },
@@ -126,10 +126,15 @@ export function Select({
     };
   }, [open, options.length]);
   useEffect(() => {
-    if (open)
-      popup.current
-        ?.querySelector(`[data-index="${active}"]`)
-        ?.scrollIntoView({ block: "nearest" });
+    // Scroll only the popup. Scrolling every ancestor can move the dialog's
+    // trigger and make a hovered option chase the pointer in long lists.
+    if(!open||!popup.current)return;
+    const el=popup.current,option=el.querySelector<HTMLElement>(`[data-index="${active}"]`);
+    if(!option)return;
+    const r=option.getBoundingClientRect(),box=el.getBoundingClientRect();
+    const sticky=search.current?.getBoundingClientRect().height??0;
+    if(r.top<box.top+sticky+8)el.scrollTop-=box.top+sticky+8-r.top;
+    else if(r.bottom>box.bottom-8)el.scrollTop+=r.bottom-box.bottom+8;
   }, [active, open]);
   function keys(e: React.KeyboardEvent) {
     if (e.key === "Escape") {

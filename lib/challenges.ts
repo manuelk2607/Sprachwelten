@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import {isRegisteredLanguage} from './language-codes';
+import {learningChallenge} from './learning-content';
 export const bilingual=z.object({de:z.string().trim().max(300),en:z.string().trim().max(300)}).refine(v=>!!(v.de||v.en),'Bitte mindestens eine Sprachfassung angeben.');
 export type Bilingual=z.infer<typeof bilingual>;
 export const challengeText=(v:Bilingual,locale:'de'|'en')=>v[locale]||v[locale==='de'?'en':'de'];
@@ -34,9 +35,9 @@ const wordOrder=z.object({type:z.literal('order'),targetLanguage:language,source
  const ids=v.tiles.map(t=>t.id);if(new Set(ids).size!==ids.length)c.addIssue({code:'custom',message:'Jeder Baustein braucht eine eigene ID.'});
  for(const order of v.accepted)if(order.length!==ids.length||new Set(order).size!==ids.length||order.some(id=>!ids.includes(id)))c.addIssue({code:'custom',message:'Jede gültige Wortfolge muss alle Bausteine genau einmal verwenden.'});
 });
-export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,taboo,friends,wordOrder,joke,meaning,outsider,loan]);
+export const challengeSchema=z.discriminatedUnion('type',[mission,relay,academic,sound,attribution,taboo,friends,wordOrder,joke,meaning,outsider,loan,learningChallenge]);
 export type Challenge=z.infer<typeof challengeSchema>;
-export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke',word_group:'outsider',loanword:'loan',taboo:'taboo'} as const;
+export const challengeTypes={gaming_mission:'mission',youth_chat:'relay',academic:'academic',sound_pair:'sound',attribution:'attribution',false_friend:'friends',word_order:'order',joke:'joke',word_group:'outsider',loanword:'loan',taboo:'taboo',vocabulary:'learning',grammar:'learning'} as const;
 export type PronunciationCategory='both'|'twister'|'sound';
 export type AttributionCategory='both'|'person'|'song';
 export const missionTiles:Bilingual[]=[{de:'Beutekiste',en:'Loot crate'},{de:'Brücke',en:'Bridge'},{de:'Turm',en:'Tower'},{de:'Deckung',en:'Cover'},{de:'Basis',en:'Base'},{de:'Heilpunkt',en:'Healing point'},{de:'Lager',en:'Camp'},{de:'Sammelpunkt',en:'Rally point'},{de:'Ausgang',en:'Exit'}];

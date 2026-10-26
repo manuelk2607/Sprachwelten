@@ -30,9 +30,11 @@ import { AuthDialog } from "./auth-dialog";
 import { ContributeDialog } from "./contribute-dialog";
 import { EntryDialog } from "./entry-dialog";
 import { LanguagePicker } from "./language-picker";
+import {LearningDashboard} from './learning-dashboard';
+import type {ContentKind} from '@/lib/content';
 
 const subscribeToHydration = () => () => {};
-export function Home() {
+export function Home({area='play'}:{area?:'play'|'learn'}) {
   const interactive = useSyncExternalStore(
     subscribeToHydration,
     () => true,
@@ -42,6 +44,8 @@ export function Home() {
   const session = useAuthSession();
   const [auth, setAuth] = useState(false);
   const [contribute, setContribute] = useState(false);
+  const [contributionKind,setContributionKind]=useState<ContentKind>('idiom');
+  const [contributionLanguage,setContributionLanguage]=useState('de');
   const [play, setPlay] = useState(false);
   const [exploring, setExploring] = useState(false);
   const [kind, setKind] = useState("");
@@ -61,7 +65,6 @@ export function Home() {
   const [playMode, setPlayMode] = useState<PlayableGameMode>("meaning-quiz");
   const [joinCode, setJoinCode] = useState("");
   const [joinOnly, setJoinOnly] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
   const openMode = (mode: PlayableGameMode) => {
     setJoinOnly(false);
     setJoinCode("");
@@ -70,13 +73,14 @@ export function Home() {
   };
   useEffect(() => {
     const url = new URL(window.location.href);
+    if(area==='play'&&url.hash==='#entdecken'){window.location.replace((locale==='de'?'/lernen':'/en/learn')+'#entdecken');return;}
     if (url.searchParams.get("reset") && url.searchParams.get("token")) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Synchronize URL hydration or the pending state of an external request.
       setResetToken(url.searchParams.get("token")!);
       setAuth(true);
       window.history.replaceState(null, "", "/");
     }
-  }, []);
+  }, [area,locale]);
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query), 300);
     return () => clearTimeout(timer);
@@ -122,45 +126,13 @@ export function Home() {
     const t = setTimeout(() => setToast(""), 5000);
     return () => clearTimeout(t);
   }, [toast]);
-  useEffect(() => {
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const headerHeight =
-        document.querySelector<HTMLElement>(".header")?.getBoundingClientRect()
-          .height ?? 0;
-      const marker = headerHeight + 64;
-      const playTop =
-        document.getElementById("spiel-starten")?.getBoundingClientRect().top ??
-        Number.POSITIVE_INFINITY;
-      const discoverTop =
-        document.getElementById("entdecken")?.getBoundingClientRect().top ??
-        Number.POSITIVE_INFINITY;
-      const next =
-        discoverTop <= marker ? "discover" : playTop <= marker ? "play" : "";
-      setActiveSection((current) => (current === next ? current : next));
-    };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      if (frame) cancelAnimationFrame(frame);
-    };
-  }, []);
   const shownEntries = entries;
   const chooseGame = () =>
     document
       .getElementById("spiel-starten")
       ?.scrollIntoView({ behavior: "smooth" });
   const discover = () =>
-    document
-      .getElementById("entdecken")
-      ?.scrollIntoView({ behavior: "smooth" });
+    window.location.assign(locale==='de'?'/lernen':'/en/learn');
   const openExisting = async (id: string) => {
     const response = await fetch("/api/entries/" + encodeURIComponent(id));
     const data = (await response.json()) as { entry: Entry };
@@ -168,17 +140,18 @@ export function Home() {
     setContribute(false);
     setSelected(data.entry);
   };
-  const openContribute = () => setContribute(true);
+  const openContribute = () => {setContributionKind('idiom');setContributionLanguage('de');setContribute(true);};
   return (
     <>
       <Header
-        active={activeSection}
-        onDiscover={discover}
-        onPlay={chooseGame}
+        active={area==='learn'?'discover':'play'}
+        onPlay={area==='play'?chooseGame:undefined}
         onContribute={openContribute}
         onLogin={() => setAuth(true)}
       />
       <main>
+        {area==='learn'&&<LearningDashboard ready={interactive} version={refresh} login={()=>setAuth(true)} contribute={(kind,language)=>{setContributionKind(kind);setContributionLanguage(language);setContribute(true);}}/>}
+        {area==='play'&&<>
         <section className="hero">
           <div className="hero-copy">
             <div className="eyebrow">
@@ -351,6 +324,8 @@ export function Home() {
           </form>
         </section>
         <ModeCards />
+        </>}
+        {area==='learn'&&
         <section id="entdecken" className="discovery">
           <div className="section-top">
             <div>
@@ -381,6 +356,7 @@ export function Home() {
               </p>
               <button
                 className="button outline"
+                disabled={!interactive}
                 onClick={() => {
                   setOffset(0);
                   setExploring(true);
@@ -521,7 +497,7 @@ export function Home() {
               )}
             </>
           )}
-        </section>
+        </section>}
         <section className="community-band">
           <span className="community-mark">✳</span>
           <div>
@@ -570,6 +546,8 @@ export function Home() {
       )}
       {contribute && (
         <ContributeDialog
+          initialKind={contributionKind}
+          initialLanguage={contributionLanguage}
           openExisting={openExisting}
           close={() => setContribute(false)}
           saved={() => {

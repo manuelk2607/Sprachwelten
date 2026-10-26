@@ -1,5 +1,8 @@
 # Sprachwelten
 
+- Main areas are Spielen (`/`, `/en`) and Lernen (`/lernen`, `/en/learn`). Keep the old `/#entdecken` collection link compatible. Learning selects one target language; game `gameLanguages` selects registered language sets centrally, before SQL sampling and again in the engine. Word chains remain single-language; language quizzes need four languages; False Friends require both sides; word building filters the target language. Preserve legacy pronunciation/Taboo settings and clear old language sets when changing modes.
+- Vocabulary/grammar use `challenge.type='learning'` in the existing contribution, revision and moderation flows. Explicit accepted answers preserve accents/scripts/punctuation. Never expose practice answers before submission. Learning attempts are server-identity scoped, expire after 30 minutes and must be graded at most once atomically with revision/deletion checks. Persistent progress belongs only to managed accounts; guests may practise with temporary attempts. Keep the existing bounded game recap independent. Test persistence with `npm run test:learning-integration` against an explicit isolated database only. See `docs/learning-2026-10-26.md`.
+
 Sprachwelten is a separate application. Do not copy or alter code from sibling projects.
 
 Primary production is the owner’s Cloudflare Worker `sprachwelten`: https://sprachwelten.maki26.workers.dev. Publish updates with `npm run deploy:cloudflare` after building. The `.openai/hosting.json` ID refers to the earlier, separate Sites publication; do not deploy there unless the user asks. Preserve existing server secrets and the current Neon database/auth project.

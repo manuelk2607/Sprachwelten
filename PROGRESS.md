@@ -1,5 +1,43 @@
 # Sprachwelten: Qualitätsrunde 2026-10-24
 
+## Neuer Auftrag: Spielen und Lernen – 26. Oktober 2026
+
+Ausgangspunkt `b8d016c`, sauberer Feature-Branch. Neue Hauptnavigation Spielen/Lernen;
+bestehende URLs und Sammlung bleiben erhalten. Arbeitspakete: (1) strukturierte
+Lernmaterialien im bestehenden Beitragssystem, Lernübungen und kontogebundener
+Fortschritt mit Wiederholungen, (2) serverseitige Mehrsprachenauswahl samt Mengen
+und zentralen Raumeinstellungen, (3) Regressionen und Migrationsprüfung in QA.
+Lernen verwendet genau eine Zielsprache, Spiele explizite Sprachmengen. Wortketten
+bleiben wegen des gemeinsamen Satzes einsprachig; Sprachrätsel benötigen mindestens
+vier Sprachen; False Friends dürfen nur Paare aus der gesamten Auswahl verwenden.
+Keine neuen Abhängigkeiten, keine KI-Aufrufe im Lern- oder Spielablauf.
+Implementiert: getrennte DE/EN-Lernseiten und Sammlung, Lernbeiträge im vorhandenen
+Editor samt Übersetzungen/Moderation, Lernkarten, Abfragen und Wiederholungsmodell.
+Serverseitige Übungsversuche mit Eigentümerbindung, Ablauf, Revisionsschutz und
+atomarer Auswertung; Gäste üben ohne gespeicherten Fortschritt. 22 neue A1-
+Startmaterialien (DE/EN) mit Quellen vorbereitet. Mehrsprachenauswahl in Erstellung
+und Lobby samt Mengen; SQL-Filter vor Stichprobe und erneuter Engine-Filter,
+Satzbausprache und beide False-Friends-Sprachen berücksichtigt. Zwölf Lernkarten
+pro Seite, serverseitige Filter und Statistik, automatische Zielsprache neuer
+Lernbeiträge. Globale Menüauswahl folgt dem Hauptbereich statt Scrollposition.
+
+Migration 024_learning.sql ausschließlich in Schema-only-QA br-quiet-snow-b9ua8at5
+per transaktionalem, versioniertem Migrationsinhalt angewendet. Keine Produktion
+verändert. Unterbrochene lokale Arbeit zusätzlich in ../local-backups/learning-20261026
+gesichert. Echte isolierte PostgreSQL-Prüfungen bestanden: persistenter Lernstand,
+Kontentrennung, Gastschutz, parallele Abgaben, Ablauf/Revisionsschutz, Fälligkeit,
+SQL-Filter vor Kartenauswahl. Erzeugte Testdaten vollständig bereinigt.
+175/175 Unit-Tests und 134/134 Desktop-/Mobilprüfungen im vollständigen
+abschließenden Lauf bestanden.
+Typprüfung, Lint, Übersetzungsprüfung, Abhängigkeitsaudit und Produktions-Build
+bestanden; keine neuen Abhängigkeiten oder KI-Kosten. Quellbasierte
+Grammatik-/Vokabelkarten sind ein A1-Einstieg, keine vollständige Sammlung aller
+Sprachen/Niveaus. Umsetzung und Betrieb: docs/learning-2026-10-26.md.
+Nächster Schritt: letzte Inhaltsprüfung/Unit-Tests, Commit, produktive Migration
+und bestehender Worker bei gültigem Zugang; anschließend Live-Smoke. Neue
+Lerninhalte und Migration bis dahin noch NICHT produktiv. Alte externe QA-/OTP-
+und redaktionelle Backlogaufgaben bleiben unverändert offen.
+
 ## Abschlussprüfung 26. Oktober 2026
 
 Glücksrad und neue Wortketten sind vollständig implementiert; die letzte

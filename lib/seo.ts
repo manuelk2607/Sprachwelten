@@ -110,6 +110,7 @@ export const privateMetadata: Metadata = {
   robots: { index: false, follow: false },
 };
 export const sitemapEntries = () => [
+  ...['/lernen','/en/learn'].map(path=>({url:absoluteUrl(path),alternates:{languages:{de:absoluteUrl('/lernen'),en:absoluteUrl('/en/learn')}}})),
   {
     url: absoluteUrl("/"),
     alternates: { languages: { de: absoluteUrl("/"), en: absoluteUrl("/en") } },

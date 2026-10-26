@@ -40,6 +40,8 @@ export function ContributeDialog({
   saved,
   openExisting,
   initialEntry,
+  initialKind='idiom',
+  initialLanguage='de',
   editTarget = "admin",
   review,
 }: {
@@ -47,6 +49,8 @@ export function ContributeDialog({
   saved: () => void;
   openExisting: (id: string) => Promise<void>;
   initialEntry?: Entry;
+  initialKind?: ContentKind;
+  initialLanguage?:string;
   editTarget?: "admin" | "own" | "suggest";
   review?: { id: string; revision: number };
 }) {
@@ -59,9 +63,9 @@ export function ContributeDialog({
     audio: presentationOf(initialEntry ?? {}) !== "text",
   });
   const [challenge, setChallenge] = useState<Challenge | undefined>(
-    initialEntry ? initialEntry.challenge : initialChallenge("idiom"),
+    initialEntry ? initialEntry.challenge : initialChallenge(initialKind),
   );
-  const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? "idiom");
+  const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? initialKind);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sense, setSense] = useState(initialEntry?.sense ?? "");
@@ -83,7 +87,7 @@ export function ContributeDialog({
     (kind === "attribution" &&
       challenge?.type === "attribution" &&
       challenge.category === "song");
-  const [language, setLanguage] = useState(initialEntry?.language ?? "de");
+  const [language, setLanguage] = useState(initialEntry?.language ?? initialLanguage);
   const [regionId, setRegionId] = useState(initialEntry?.regionId ?? "");
   const [contextId, setContextId] = useState(initialEntry?.contextId ?? "");
   const duplicateKey = JSON.stringify([
@@ -207,6 +211,8 @@ export function ContributeDialog({
     "situation",
     "word",
     "false_friend",
+    "vocabulary",
+    "grammar",
   ].includes(kind);
   const freeRegionRelevant = ["idiom", "word"].includes(kind);
   const hintField: TranslationField = {
@@ -538,6 +544,7 @@ export function ContributeDialog({
               onValueChange={(value) => {
                 setPhrase(plainPhrase.phrase);
                 setKind(value as ContentKind);
+                if(value==='vocabulary'||value==='grammar')setMedia(current=>({...current,text:true}));
                 setChallenge(initialChallenge(value as ContentKind));
                 sourceChanged();
               }}
@@ -563,6 +570,7 @@ export function ContributeDialog({
         </div>
         <div data-field="presentation">
           <MediaChoiceInput
+            requireText={kind==='vocabulary'||kind==='grammar'}
             value={media}
             onChange={(value) => {
               setMedia(value);
@@ -574,7 +582,7 @@ export function ContributeDialog({
         {media.text && (
           <label>
             {t(
-              kind === "word" || kind === "false_friend"
+              kind === "word" || kind === "false_friend" || kind==='vocabulary'
                 ? "Wort oder kurzer Ausdruck"
                 : kind === "tongue_twister" || kind === "sound_pair"
                   ? "Satz zum Nachsprechen"
@@ -597,6 +605,7 @@ export function ContributeDialog({
                   "gaming_mission",
                   "youth_chat",
                   "loanword",
+                  "vocabulary",
                 ].includes(kind)
                   ? 1
                   : 3
@@ -842,12 +851,13 @@ export function ContributeDialog({
         ) : (
           <details
             className="source-fields optional-source-fields"
+            open={kind==='grammar'?true:undefined}
             onChange={sourceChanged}
           >
-            <summary>{t("Optionale Zusatzinformationen")}</summary>
+            <summary>{t(kind==='grammar'?"Regel und Beispiele":"Optionale Zusatzinformationen")}</summary>
             <p className="form-note">
               {t(
-                answerDriven
+                kind==='grammar'?"Erkläre die Regel und ergänze ein Beispiel. Die Übungen prüfen diese Regel mit nachvollziehbaren Lösungen.":answerDriven
                   ? "Die richtige Antwort ist bereits die Lösung. Ergänze hier nur Hintergrundwissen, wenn es wirklich hilft."
                   : kind === "tongue_twister"
                     ? "Für einen Zungenknoten genügt der Satz oder die Aufnahme. Eine Bedeutung ist nicht erforderlich."
@@ -860,9 +870,10 @@ export function ContributeDialog({
               value={initialEntry?.literal ?? ""}
             />
             <label>
-              {t("Zusätzliche Erklärung")} <span>{t("(optional)")}</span>
+              {t(kind==='grammar'?"Grammatikregel":"Zusätzliche Erklärung")} {kind!=='grammar'&&<span>{t("(optional)")}</span>}
               <textarea
                 name="meaning"
+                required={kind==='grammar'}
                 defaultValue={initialEntry?.meaning ?? ""}
                 maxLength={1500}
                 rows={3}
@@ -888,7 +899,7 @@ export function ContributeDialog({
             </label>
           </details>
         )}
-        {literalRequired && (
+        {(literalRequired||kind==='grammar') && (
           <TranslationEditor
             sourceLocale={sourceLocale}
             fields={fields}

@@ -96,12 +96,12 @@ export function Header({
             }
           }}
         >
-          {t("Spiele")}
+          {t("Spielen")}
         </a>
         <a
           className={active === "discover" ? "active" : ""}
           aria-current={active === "discover" ? "location" : undefined}
-          href="/#entdecken"
+          href={locale==='de'?'/lernen':'/en/learn'}
           onClick={(e) => {
             if (onDiscover) {
               e.preventDefault();
@@ -109,7 +109,7 @@ export function Header({
             }
           }}
         >
-          {t("Entdecken")}
+          {t("Lernen")}
         </a>
       </nav>
       <div className="header-actions">

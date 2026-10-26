@@ -4,9 +4,11 @@ import {modeInfo} from './modes';
 import {categoryId} from './quiz-categories';
 import {normalizedAnswer} from './challenges';
 import {prepareMeaningEntries} from './meaning-quiz';
+import {matchesGameLanguages} from './game-languages';
 
-export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'pronunciationLanguage' | 'attributionCategory' | 'tabooLanguages'|'sentenceLanguage'>;
+export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'pronunciationLanguage' | 'attributionCategory' | 'tabooLanguages'|'sentenceLanguage'|'gameLanguages'>;
 export const poolKey = (game: PoolSettings) => JSON.stringify([game.mode, game.locale,
+  game.gameLanguages?[...game.gameLanguages].sort():null,
   game.mode === 'meaning-quiz' ? game.meaningCategory ?? 'all' : null,
   game.mode === 'tongue-twisters' ? game.pronunciationCategory ?? 'both' : null,
   game.mode === 'tongue-twisters' ? game.pronunciationLanguage ?? '' : null,
@@ -25,7 +27,7 @@ export function promptIdentity(entry: Entry) {
 
 export function playablePrompts(game: PoolSettings, prompts: Entry[]) {
   const candidates = game.mode === 'meaning-quiz'
-    ? prepareMeaningEntries(prompts, game.locale, game.meaningCategory ?? 'all') : prompts;
+    ? prepareMeaningEntries(prompts.filter(e=>matchesGameLanguages(game.mode,e,game.gameLanguages)), game.locale, game.meaningCategory ?? 'all') : prompts.filter(e=>matchesGameLanguages(game.mode,e,game.gameLanguages));
   const eligible = candidates.filter(entry =>
     (game.mode === 'meaning-quiz' ? true : game.mode === 'word-chain' ? entry.language === (game.sentenceLanguage??game.locale)
       : game.mode === 'tongue-twisters'
@@ -34,8 +36,8 @@ export function playablePrompts(game: PoolSettings, prompts: Entry[]) {
     && (game.mode !== 'who-said-it' || !game.attributionCategory || game.attributionCategory === 'both' || entry.challenge?.type === 'attribution' && entry.challenge.category === game.attributionCategory)
     && (game.mode !== 'dialect-detective' || categoryId('region', entry.regionId ?? entry.region))
     && (game.mode !== 'everyday-language' || categoryId('context', entry.contextId ?? entry.context)));
-  const languageEligible=game.mode==='taboo'?eligible.filter(entry=>(game.tabooLanguages??[game.locale]).includes(entry.language)):eligible;
-  const filtered=game.mode==='tongue-twisters'&&game.pronunciationLanguage?languageEligible.filter(entry=>entry.language===game.pronunciationLanguage):languageEligible;
+  const languageEligible=game.mode==='taboo'?eligible.filter(entry=>(game.gameLanguages??game.tabooLanguages??[game.locale]).includes(entry.language)):eligible;
+  const filtered=game.mode==='tongue-twisters'&&!game.gameLanguages&&game.pronunciationLanguage?languageEligible.filter(entry=>entry.language===game.pronunciationLanguage):languageEligible;
   return [...new Map(filtered.map(entry => [promptIdentity(entry), entry])).values()];
 }
 

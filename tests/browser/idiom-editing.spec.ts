@@ -68,6 +68,7 @@ test("new idioms submit canonical text and show bold words and translated hints 
     .click();
   await expect.poll(() => saved?.phrase).toBe(entry.phrase);
   expect(saved?.phraseMarkup).toBe(entry.phraseMarkup);
+  await page.goto('/lernen');
   await page
     .getByRole("button", { name: "Sammlung öffnen", exact: true })
     .click();

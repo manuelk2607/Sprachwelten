@@ -1,5 +1,5 @@
 'use client';
-import {LanguageSetPicker} from './language-set-picker';
+import {GameLanguagePicker} from './game-language-picker';
 import {useI18n} from '@/lib/i18n';
 import type {GameView} from '@/lib/game';
 import type {RoomAction} from '@/lib/content';
@@ -7,15 +7,13 @@ import {familyFor,gameFamilies} from '@/lib/game-families';
 import {meaningCategories,type MeaningCategory} from '@/lib/meaning-categories';
 import {modeInfo} from '@/lib/modes';
 import {Select} from './select';
-import {LanguagePicker} from './language-picker';
 
 type Configuration=Extract<RoomAction,{action:'configure'}>;
 export function RoomSettings({room,disabled,configure}:{room:GameView;disabled:boolean;configure:(action:Configuration)=>void}) {
   const {t}=useI18n(),family=familyFor(room.mode);
   return <div className="form-stack room-settings">
     <label>{t('Spielmodus')}<Select disabled={disabled} value={family.id} onValueChange={mode=>configure({action:'configure',mode:mode as Configuration['mode']})}>{gameFamilies.map(item=><option key={item.id} value={item.id}>{t(item.title)}</option>)}</Select></label>
-    {room.mode==='tongue-twisters'&&<><LanguagePicker label="Sprache der Zungenbrecher" value={room.pronunciationLanguage} onChange={pronunciationLanguage=>configure({action:'configure',pronunciationLanguage})} disabled={disabled} allowAll preserveSelectionWhileSearching/><p className="form-note">{t('Gilt für Texte und Aufnahmen in beiden Kategorien. Mit „Alle Sprachen“ werden die Sprachen gemischt.')}</p></>}
-    {room.mode==='taboo'&&<LanguageSetPicker value={room.tabooLanguages} onChange={tabooLanguages=>configure({action:'configure',tabooLanguages})} disabled={disabled}/>}
+    {room.mode!=='word-chain'&&<GameLanguagePicker mode={room.mode} value={room.gameLanguages??(room.mode==='tongue-twisters'&&room.pronunciationLanguage?[room.pronunciationLanguage]:room.mode==='taboo'?room.tabooLanguages:undefined)} onChange={gameLanguages=>configure({action:'configure',gameLanguages})} disabled={disabled} meaningCategory={room.mode==='meaning-quiz'?room.meaningCategory:undefined} pronunciationCategory={room.mode==='tongue-twisters'?room.pronunciationCategory:undefined} attributionCategory={room.mode==='who-said-it'?room.attributionCategory:undefined}/>}
     {room.mode==='word-chain'&&<label>{t('Sprache des gemeinsamen Satzes')}<Select value={room.sentenceLanguage} disabled={disabled} onValueChange={value=>configure({action:'configure',sentenceLanguage:value as 'de'|'en'})}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
     <div className="room-settings-row">
     {family.modes.length>1&&<label>{t('Kategorie')}<Select disabled={disabled} value={room.mode} onValueChange={mode=>configure({action:'configure',mode:mode as Configuration['mode']})}>{family.modes.map(mode=><option key={mode} value={mode}>{t(modeInfo(mode).title)}</option>)}</Select></label>}

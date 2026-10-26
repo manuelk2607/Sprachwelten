@@ -64,6 +64,8 @@ export const POST = (request: Request, ctx: Context) =>
       ...(action.action === "configure"
         ? {
             ...(action.mode ? { mode: action.mode } : {}),
+            ...(action.mode&&action.mode!==game.mode?{gameLanguages:undefined}:{}),
+            ...(action.gameLanguages?{gameLanguages:action.gameLanguages}:{}),
             ...(action.meaningCategory
               ? { meaningCategory: action.meaningCategory }
               : {}),
@@ -71,7 +73,7 @@ export const POST = (request: Request, ctx: Context) =>
               ? { pronunciationCategory: action.pronunciationCategory }
               : {}),
             ...(action.pronunciationLanguage !== undefined
-              ? { pronunciationLanguage: action.pronunciationLanguage }
+              ? { pronunciationLanguage: action.pronunciationLanguage,...(!action.gameLanguages?{gameLanguages:undefined}:{}) }
               : {}),
             ...(action.tabooLanguages ? {tabooLanguages:action.tabooLanguages}:{}),
             ...(action.sentenceLanguage ? {sentenceLanguage:action.sentenceLanguage}:{}),
@@ -87,6 +89,7 @@ export const POST = (request: Request, ctx: Context) =>
       (action.action === "configure" &&
         [
           action.mode,
+          action.gameLanguages,
           action.meaningCategory,
           action.pronunciationCategory,
           action.pronunciationLanguage,

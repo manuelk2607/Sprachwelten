@@ -17,8 +17,10 @@ test("every current game has reciprocal DE/EN guides and a unique public-only si
     [...currentModeIds].sort(),
   );
   const pages = sitemapEntries();
-  assert.equal(pages.length, 30);
-  assert.equal(new Set(pages.map((p) => p.url)).size, 30);
+  assert.equal(pages.length, 32);
+  assert.equal(new Set(pages.map((p) => p.url)).size, 32);
+  assert.ok(pages.some(p=>p.url.endsWith('/lernen')));
+  assert.ok(pages.some(p=>p.url.endsWith('/en/learn')));
   for (const page of pages)
     assert.ok(!/\/api\/|\/room\/|\/admin|\/me(?:\/|$)/.test(page.url));
   for (const locale of ["de", "en"] as const)

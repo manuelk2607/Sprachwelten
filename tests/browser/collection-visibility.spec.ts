@@ -11,7 +11,7 @@ test("discovery excludes the Taboo filter in DE and EN while contributions still
   const ready = page.waitForResponse((r) =>
     r.url().includes("/api/auth/get-session"),
   );
-  await page.goto("/");
+  await page.goto("/lernen");
   await ready;
   await page
     .getByRole("button", { name: "Sammlung öffnen", exact: true })

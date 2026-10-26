@@ -1,6 +1,7 @@
 import {initializeTaboo,actTaboo,viewTaboo,tabooPlayerLeft,type TabooState} from "./taboo-game";
 import { hasText, hasAudio, presentationOf } from "./content-media";
 import { songTitle } from "./attribution";
+import {gameLanguagesInput} from './game-languages';
 import {
   initializeTeam,
   settleTeam,
@@ -121,6 +122,7 @@ export type Game = {
   meaningCategory?: MeaningCategory;
   pronunciationCategory?: PronunciationCategory;
   pronunciationLanguage?: string;
+  gameLanguages?:string[];
   attributionCategory?: AttributionCategory;
   tabooLanguages?: string[];
   taboo?: TabooState;
@@ -292,9 +294,9 @@ function newRound(game: Game) {
           ? prepareLanguageQuiz(
               entry.phrase,
               entry.language,
-              Object.keys(languages),
+              game.gameLanguages??Object.keys(languages),
             ).options
-          : prepareChoices(entry.language, Object.keys(languages))
+          : prepareChoices(entry.language, game.gameLanguages??Object.keys(languages))
         : prepareChoices(
             target ?? "",
             categoryKind === "region" ? regionIds : contextIds,
@@ -583,6 +585,12 @@ export function act(
     if (action.mode && !currentModeIds.includes(action.mode))
       throw new GameError("Dieses Spiel ist nicht verfügbar.", 422);
     const next = { ...game, mode: action.mode ?? game.mode };
+    if(action.mode&&action.mode!==game.mode)next.gameLanguages=undefined;
+    if(action.gameLanguages){
+      const parsed=gameLanguagesInput.safeParse(action.gameLanguages);
+      if(!parsed.success||next.mode==='word-chain'||next.mode==='language-quiz'&&parsed.data.length<4)throw new GameError('Wähle eine gültige Sprachauswahl; das Sprachenquiz benötigt mindestens vier Sprachen.',422);
+      next.gameLanguages=parsed.data;
+    }
     if(action.tabooLanguages){if(next.mode!=="taboo")throw new GameError("Dieser Sprachfilter passt nicht zum Spiel.",422);const parsed=tabooLanguagesInput.safeParse(action.tabooLanguages);if(!parsed.success)throw new GameError("Bitte eine Sprache aus der Liste wählen.",422);next.tabooLanguages=parsed.data;}
     if (action.pronunciationCategory) {
       if (next.mode !== "tongue-twisters")
@@ -601,6 +609,7 @@ export function act(
           422,
         );
       next.pronunciationLanguage = language.data;
+      if(!action.gameLanguages)next.gameLanguages=undefined;
     }
     if (action.attributionCategory) {
       if (next.mode !== "who-said-it")
@@ -953,6 +962,7 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
     team,
     pronunciationCategory: game.pronunciationCategory ?? "both",
     pronunciationLanguage: game.pronunciationLanguage ?? "",
+    gameLanguages:game.gameLanguages,
     attributionCategory: game.attributionCategory ?? "both",
     challengeFallback: c ? challengeHasFallback(c, game.locale) : false,
     attributionType: c?.type === "attribution" ? c.category : null,

@@ -26,7 +26,7 @@ export function I18nProvider({
     const routeLocale =
       path === "/en" || path.startsWith("/en/")
         ? "en"
-        : path === "/spiele" || path.startsWith("/spiele/")
+        : path === "/lernen" || path === "/spiele" || path.startsWith("/spiele/")
           ? "de"
           : null;
     const parameter = new URLSearchParams(window.location.search).get("lang");

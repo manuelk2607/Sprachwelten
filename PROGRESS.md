@@ -63,7 +63,16 @@ Verifiziert: 22 bestehende relevante Desktop-/Mobilfälle sowie alle vier neuen
 Fälle bestanden; Typprüfung, Lint und erneuter Produktions-Build erfolgreich.
 Der erste neue Testlauf klickte vor Abschluss der Hydration; die Fixtures warten
 jetzt ausdrücklich auf die Sitzungserkennung. Kein Anwendungsfehler in diesen
-vier anfänglichen Timeouts. Veröffentlichung der Nachkorrektur folgt.
+vier anfänglichen Timeouts. Nachkorrektur-Commit
+`40c9d371f69d43a9fd8a48d33fb36e1e6d2a6f68` auf GitHub `main` und erfolgreich
+veröffentlicht; endgültige Worker-Version
+`3dac8c16-bbd4-48a2-96a8-a3f29efb60a2` unter
+https://sprachwelten.maki26.workers.dev/lernen.
+Erneute Live-Prüfung: DE/EN-Lernseiten, Sitemap und robots.txt 200; zehn kanonische
+Vokabeln pro Richtung mit richtigen Beispielen, private Bereiche 401, ungültiges
+Paar 422 und fremde Origin 403. Keine weiteren Datenmigrationen nötig.
+Neue CI: https://github.com/manuelk2607/Sprachwelten/actions/runs/40475900146
+Beim Abschluss noch laufend; alle relevanten lokalen Prüfungen bestanden.
 Details: docs/vocabulary-notebooks-2026-10-27.md.
 Vorherige CI für `c913785` ist inzwischen vollständig erfolgreich.
 
@@ -71,7 +80,9 @@ Verbleibend: redaktionell geprüfte weitere Sprachpaare/Themen/Niveaus und expli
 Bestätigung unbekannter älterer Vokabelpaare. Die Kernfunktionen nicht erneut
 implementieren. Ältere externe OTP-/QA- und redaktionelle Backlogpunkte bleiben
 unverändert offen. QA-Migrationsfixtures sind ausschließlich synthetisch und
-laufen mit der oben genannten temporären Datenbank ab.
+laufen mit der oben genannten temporären Datenbank ab. Nächster konkreter Schritt
+ist die redaktionelle Erweiterung bestätigter Lerninhalte; keine offene
+Veröffentlichung oder Migration aus diesem Auftrag.
 
 ## Neuer Auftrag: Spielen und Lernen – 26. Oktober 2026
 

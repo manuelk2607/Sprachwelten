@@ -36,7 +36,9 @@ ausdrückliche Sprachbestätigung. Ein Datenbankindex verhindert neue umgekehrte
 Duplikate derselben bestätigten Bedeutung, auch bei parallelen Einreichungen.
 
 Neue Installationen verwenden `canonicalLearningSeeds`: zehn bestätigte Paare und
-zwei Grammatikmodule. Der historische Export bleibt als Migrationsfixture erhalten.
+die zwei ursprünglichen Grammatikmodule. `seed-learning.mts` ergänzt außerdem zwei
+weitere quellengeprüfte Module aus `additionalGrammarSeeds` (be sowie sein/haben,
+je vier Aufgaben); der historische Export bleibt als Migrationsfixture erhalten.
 Der Seed-Befehl überschreibt weiterhin keine existierenden Beiträge.
 
 ## Oberfläche und Beiträge

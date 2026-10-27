@@ -41,3 +41,9 @@ noch automatisch vergebene Stufen. Die Freigabeprüfung ist vorbereitet und gete
 noch nicht an Spielpool, Speicherung oder Raumkonfiguration angeschlossen.
 Vor dieser nächsten Ausbaustufe: fachliche Prüfung, genügend eingestufte Karten,
 separate Migration/Verwaltung, dann durchgängige Pool-/Rematch-/UI-Tests.
+
+Abgleich 27. Oktober: weiterhin keine fachlichen Freigaben oder automatisch
+vergebenen Stufen. Die Bereitschaftsprüfung berücksichtigt nur aktuelle,
+widerspruchsfreie Bewertungen, echte Kalenderdaten und explizite Zustimmung;
+eine spätere zurückgezogene Freigabe kann nicht durch einen alten positiven
+Eintrag überstimmt werden. Grammatik-/CEFR-Lernniveaus sind davon getrennt.

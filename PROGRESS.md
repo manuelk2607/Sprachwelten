@@ -59,14 +59,27 @@ Eigene erzeugte Daten/Räume bereinigt. Ziel `br-odd-king-b90o8w3l`, Host
 Browserprüfungen verwenden kontrollierte HTTP-Antworten; keine echten KI-Aufrufe.
 QA-Managed-Auth/OTP ausdrücklich nicht als bestanden ausweisen.
 
-## Veröffentlichung – laufender Abschluss
+## Veröffentlichung – abgeschlossen
 
-Alle Codeprüfungen bestanden. Produktionsziel `sprachspiel`/Migration 025 bestätigt;
-vor Ergänzung 22 Lernbeiträge, beide neuen IDs noch frei. Keine neue Schema-
-Migration nötig. Nächster Schritt: geprüften Code committen, ausschließlich zwei
-neue Grammatikmodule idempotent ergänzen, bestehenden Worker veröffentlichen und
-öffentliche Lern-/SEO-/Zugriffsschutz-Endpunkte live prüfen. Dann Commit/Worker-Version
-hier nachtragen. Vorherige stabile Version: `3dac8c16-bbd4-48a2-96a8-a3f29efb60a2`.
+Code-Commit `67d07216736cfa9d71521153d652cc3d80bb6719` auf GitHub `main`.
+Vollständige CI erfolgreich, einschließlich 183 Unit- und 140 Browserfällen:
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40518439741
+Der neue isolierte Workflow wurde ohne QA-Konfiguration ausdrücklich übersprungen
+(nicht bestanden): https://github.com/manuelk2607/Sprachwelten/actions/runs/40518439666
+
+Produktionsziel `sprachspiel`/Migration 025 bestätigt. Genau zwei neue Grammatikmodule
+transaktional/idempotent ergänzt; beide IDs zurückgegeben. Jetzt vier Grammatikmodule,
+weiterhin alle 20 bisherigen Vokabelkarten einschließlich zehn Gegenkarten-Verweisen.
+Keine bestehende Karte überschrieben, keine neue Schema-Migration nötig.
+Worker erfolgreich veröffentlicht, Version `5168180b-d783-42c5-ac04-21873604cae2`.
+Bestehende Secrets, Auth-Ziel, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
+
+Live bestätigt: Spielelinks DE/EN korrekt; neue Grammatikmodule mit jeweils vier
+Aufgaben und korrekter Antwortsprache; reine Grammatikthemen, kein anonymer
+Lernfortschritt/Autorenname. Beide Vokabelrichtungen unverändert zehn Karten und
+`no-store`. Sitemap 32 Seiten, robots.txt 200; private Hefte/Adminliste anonym 401,
+fremde Origin bei Heftmutation 403. Keine produktiven Testpartien, Testabgaben,
+Testhefte, neuen Konten oder KI-Aufrufe erzeugt. Keine Veröffentlichung mehr offen.
 
 ## Verbleibend und extern blockiert
 

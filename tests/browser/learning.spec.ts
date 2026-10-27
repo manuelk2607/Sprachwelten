@@ -2,6 +2,27 @@ import { test, expect, type Page } from "@playwright/test";
 import { canonicalLearningSeeds } from "../../lib/learning-seeds";
 import { vocabularyDirection, type Notebook } from "../../lib/vocabulary";
 import { draftKey } from "../../lib/contribution-draft";
+async function navigateReady(page:Page,path:string){
+  const ready=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));
+  await page.goto(path);
+  await ready;
+}
+
+test('the game collection link opens the localized game overview rather than answer discovery', async ({ page }) => {
+  await fixtures(page);
+  for (const [path, label, target] of [
+    ['/lernen', 'Zur Spielesammlung', '/#spiele'],
+    ['/en/learn', 'Browse the game collection', '/en#spiele'],
+  ]) {
+    await page.goto(path);
+    const link = page.getByRole('link', { name: label, exact: true });
+    await expect(link).toHaveAttribute('href', target);
+    await link.click();
+    await expect(page).toHaveURL(new RegExp(target.replace('/', '\\/') + '$'));
+    await expect(page.locator('#spiele')).toBeVisible();
+    await expect(page.locator('#entdecken')).toHaveCount(0);
+  }
+});
 
 for (const learningDraft of [true, false]) {
   test(`restoring a ${learningDraft ? 'learning' : 'game'} draft selects its own form and submission route`, async ({ page }) => {
@@ -236,7 +257,7 @@ test("Play and Learn stay separate with independent language pairs, legacy colle
   page,
 }) => {
   await fixtures(page);
-  await page.goto("/");
+  await navigateReady(page,"/");
   await expect(
     page.getByRole("button", { name: "Sammlung öffnen", exact: true }),
   ).toHaveCount(0);
@@ -285,7 +306,7 @@ test("personal notebooks support creation, adding selected words, moving, editin
   page,
 }) => {
   const { books, items } = await fixtures(page, true);
-  await page.goto("/lernen");
+  await navigateReady(page,"/lernen");
   await expect(page.locator(".learning-card")).toHaveCount(10);
   await expect(
     page.getByRole("link", { name: "Meine Beiträge", exact: true }),
@@ -354,7 +375,7 @@ test("selected writing practice retains its word selection and flashcards reveal
   page,
 }) => {
   const { practice } = await fixtures(page, true);
-  await page.goto("/lernen");
+  await navigateReady(page,"/lernen");
   await expect(page.locator(".learning-card")).toHaveCount(10);
   await page.locator(".learning-card input[type=checkbox]").first().check();
   await page

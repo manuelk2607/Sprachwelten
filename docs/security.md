@@ -10,20 +10,19 @@ React, React DOM and the RSC decoder are kept on the same patched release.
 The decoder is a production dependency. `fflate` is overridden to its compatible
 patched 0.7.5 release because a transitive font dependency pins an older version.
 
-## Unpatched tooling advisory
+## Former tooling exception removed on 2026-10-27
 
-As reviewed on 2026-10-19, braces 3.0.3 has no fixed published release for
+The former braces 3.0.3 exception concerned
 [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
-Its recursive glob processing is used by the toolchain with repository-owned
-file patterns. No application endpoint accepts glob patterns or passes user
-content to braces, micromatch or fast-glob.
+GitHub withdrew that advisory on 2026-10-23 because it is not practically
+exploitable. The current full npm audit no longer reports it. This is an upstream
+withdrawal, not a claim that a new braces release fixed the issue.
 
-The audit policy accepts only that exact advisory, dependency and affected range;
-it does not ignore the propagated package names or any other/new advisory.
-Review this exception when upgrading the toolchain, when a patched release
-appears, or before adding any feature that accepts user-defined glob patterns.
-The raw npm audit therefore still reports this advisory and its dependent
-packages. It must not be described as a vulnerability-free dependency tree.
+The audit policy now contains **no accepted advisories**. Any reintroduced,
+tooling or runtime finding fails CI. Repository-owned file globs remain separate
+from user content; no application endpoint forwards contributed text to glob
+parsers. Existing dependency versions need no speculative replacement for this
+withdrawn advisory. The complete installed tree is still audited on every run.
 
 ## Security maintenance 2026-10-24
 

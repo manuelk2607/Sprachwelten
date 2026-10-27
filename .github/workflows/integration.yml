@@ -1,0 +1,51 @@
+name: Isolated integration
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: isolated-qa
+  cancel-in-progress: false
+jobs:
+  integration:
+    if: vars.NEON_QA_ENABLED == 'true'
+    environment: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Require a separate QA project and empty template
+        env:
+          QA_PROJECT: ${{ vars.NEON_QA_PROJECT_ID }}
+          QA_TEMPLATE: ${{ vars.NEON_QA_TEMPLATE_BRANCH }}
+        run: |
+          node --input-type=module -e 'import assert from "node:assert/strict";import{appendFileSync}from"node:fs";assert.ok(process.env.QA_PROJECT&&process.env.QA_PROJECT!=="calm-tooth-60944868");assert.match(process.env.QA_TEMPLATE??"",/^br-[a-z0-9-]+$/);appendFileSync(process.env.GITHUB_ENV,"QA_EXPIRES_AT="+new Date(Date.now()+3600000).toISOString()+"\n");'
+      - name: Create expiring branch from the empty QA template
+        id: branch
+        uses: neondatabase/create-branch-action@fb620d43d4c565abaf088b848a4e28e5c4ea4d9c # v6
+        with:
+          project_id: ${{ vars.NEON_QA_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_QA_API_KEY }}
+          parent_branch: ${{ vars.NEON_QA_TEMPLATE_BRANCH }}
+          branch_name: qa-${{ github.run_id }}-${{ github.run_attempt }}
+          branch_type: default
+          database: sprachspiel
+          role: neondb_owner
+          expires_at: ${{ env.QA_EXPIRES_AT }}
+          get_auth_url: true
+      - name: Migrations, persistence, permissions and managed Auth
+        run: npm run qa:integration -- --migrate-empty --auth
+        env:
+          QA_DATABASE_APPROVED: '1'
+          TEST_DATABASE_HOST: ${{ steps.branch.outputs.db_host }}
+          TEST_NEON_BRANCH: ${{ steps.branch.outputs.branch_id }}
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+          DATABASE_URL_UNPOOLED: ${{ steps.branch.outputs.db_url }}
+          NEON_AUTH_BASE_URL: ${{ steps.branch.outputs.auth_url }}

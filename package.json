@@ -6,6 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "qa:integration": "node --import tsx scripts/qa-integration.mts",
     "dev": "node scripts/run-framework.mts dev",
     "build": "node scripts/run-framework.mts build",
     "start": "node --import ./scripts/sites-env.mts ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",

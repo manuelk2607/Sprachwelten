@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { reviewDependencyAudit } from "../scripts/audit-policy";
-test("the full dependency audit accepts only the exact unpatched glob advisory and blocks runtime or new advisories", () => {
+test("the full dependency audit has no exceptions and blocks runtime, tooling or reintroduced advisories", () => {
   const glob = {
     dependency: "braces",
     title: "Glob recursion",
@@ -21,8 +21,8 @@ test("the full dependency audit accepts only the exact unpatched glob advisory a
       "react-server-dom-webpack": { via: [runtime] },
     },
   });
-  assert.deepEqual(result.accepted, [glob]);
-  assert.deepEqual(result.blocked, [runtime]);
+  assert.deepEqual(result.accepted, []);
+  assert.deepEqual(result.blocked, [glob, runtime]);
   assert.equal(
     reviewDependencyAudit({
       vulnerabilities: {

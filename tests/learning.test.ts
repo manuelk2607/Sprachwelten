@@ -5,6 +5,7 @@ import {
   learningChallenge,
   gradeLearning,
   scheduleLearning,
+  learningPrompt,
 } from "../lib/learning-content";
 import { learningSeeds } from "../lib/learning-seeds";
 import {
@@ -16,6 +17,13 @@ import { createGame, act, viewGame } from "../lib/game";
 import { playablePrompts, poolKey } from "../lib/game-pool";
 import { extraSeeds } from "../lib/extra-seeds";
 import { newGameEntries } from "../lib/new-game-seeds";
+test('legacy gap translations retain a visible authored gap and grading preserves target-language case distinctions',()=>{
+  const q=learningChallenge.parse(learningSeeds[0].challenge).questions[0];
+  assert.equal(learningPrompt({...q,exercise:'gap',prompt:{de:'Ich ___ hier.',en:'Fill in the missing verb.'}},'en'),'Ich ___ hier.');
+  assert.equal(learningPrompt({...q,exercise:'writing',prompt:{de:'Schreibe.',en:'Write.'}},'en'),'Write.');
+  assert.equal(gradeLearning({...q,answerLanguage:'tr',answers:['ışık']},'IŞIK'),true);
+  assert.equal(gradeLearning({...q,answerLanguage:'tr',answers:['ışık']},'İŞİK'),false);
+});
 test("all learning starter cards have valid structured tasks and no unreviewed generated translations", () => {
   assert.equal(learningSeeds.length, 22);
   for (const entry of learningSeeds) {

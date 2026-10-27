@@ -8,6 +8,7 @@ import {
 } from "../db/learning-repository";
 import { learningSeeds } from "../lib/learning-seeds";
 import { entryInput } from "../lib/content";
+import {additionalGrammarSeeds} from '../lib/grammar-seeds';
 const host = process.env.TEST_DATABASE_HOST,
   branch = process.env.TEST_NEON_BRANCH;
 assert.ok(
@@ -92,6 +93,22 @@ try {
   const changed = await startLearning(owner, true, filter, "de", false);
   await sql`UPDATE content_entries SET revision=revision+1 WHERE id=${entry.id}`;
   await assert.rejects(() => answerLearning(owner, changed.id, "apple", "de"));
+  const grammar=await addEntry(entryInput.parse({kind:'grammar',phrase:'QA Turkish '+crypto.randomUUID(),language:'tr',meaning:'A target-language case exercise.',challenge:{type:'learning',domain:'grammar',level:'A1',topic:{de:topic,en:topic},questions:[{id:'case',exercise:'writing',prompt:{de:'Schreibe das Wort klein.',en:'Write in lower case.'},answers:['ışık'],choices:[],explanation:{de:'Türkisch unterscheidet I und İ.',en:'Turkish distinguishes I and İ.'}}]}}),owner,'QA');
+  ids.push(grammar.id);
+  const grammarFilter={language:'tr',domain:'grammar' as const,topic};
+  const grammarTask=await startLearning(owner,true,grammarFilter,'de',false);
+  assert.equal(grammarTask.answerLanguage,'tr');
+  assert.equal((await answerLearning(owner,grammarTask.id,'IŞIK','de')).correct,true);
+  assert.equal((await learningCatalog(grammarFilter,owner)).entries.length,1);
+  const englishGrammar=await learningCatalog({language:entry.language,domain:'grammar'},owner);
+  assert.ok(!englishGrammar.topics.some(t=>t.de===topic),'Vocabulary topics must not appear as grammar filters.');
+  for(const material of additionalGrammarSeeds){
+    assert.equal(material.challenge?.type,'learning');
+    const added=await addEntry(entryInput.parse({...material,phrase:'QA '+crypto.randomUUID(),challenge:{...material.challenge,topic:{de:topic,en:topic}}}),owner,'QA');ids.push(added.id);
+    const task=await startLearning(owner,true,{language:material.language,domain:'grammar',topic},'en',false);
+    const [own]=await sql`SELECT question FROM learning_attempts WHERE id=${task.id} AND owner_id=${owner}`;
+    assert.equal((await answerLearning(owner,task.id,own.question.answers[0],'en')).correct,true);
+  }
   for (const language of ["en", "de"]) {
     const card = await addEntry(
       entryInput.parse({

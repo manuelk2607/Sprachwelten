@@ -23,4 +23,8 @@ test('difficulty gates require enough distinct, explicitly reviewed and sourced 
  for(const subset of [records.slice(1),records.map(entry=>({...entry,entryId:'duplicate'})),records.map(entry=>({...entry,reviewed:false})),records.map(entry=>({...entry,reviewedAt:'2999-01-01'})),records.map(entry=>({...entry,sources:[]})),records.map(entry=>({...entry,rationale:''}))])assert.deepEqual(readyDifficultyLevels(subset,'dialect','de'),[]);
  assert.deepEqual(readyDifficultyLevels(records,'dialect','en'),[]);assert.deepEqual(readyDifficultyLevels(records,'idiom','de'),[]);
  assert.deepEqual(readyDifficultyLevels([],'dialect','de'),[]);
+ assert.deepEqual(readyDifficultyLevels(records.map(r=>({...r,reviewedAt:'2026-02-31'})),'dialect','de'),[]);
+ const conflicting=records.map(r=>({...r,level:'advanced' as const}));
+ assert.deepEqual(readyDifficultyLevels([...records,...conflicting],'dialect','de'),[]);
+ assert.deepEqual(readyDifficultyLevels([...records,...records.map(r=>({...r,reviewed:false,reviewedAt:'2026-10-25'}))],'dialect','de'),[]);
 });

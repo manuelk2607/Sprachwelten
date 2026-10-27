@@ -24,7 +24,7 @@ export function LearningHub({
     source: string,
   ) => void;
 }) {
-  const { t } = useI18n(),
+  const { t, locale } = useI18n(),
     [source, setSource] = useState("de"),
     [target, setTarget] = useState("en"),
     [tab, setTab] = useState<"vocabulary" | "grammar">("vocabulary");
@@ -70,7 +70,7 @@ export function LearningHub({
             )}
           </p>
         </div>
-        <a className="text-link" href="#entdecken">
+        <a className="text-link" href={(locale === 'de' ? '/' : '/en') + '#spiele'}>
           {t("Zur Spielesammlung")}
         </a>
       </div>

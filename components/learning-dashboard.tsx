@@ -11,7 +11,7 @@ import { localizedTexts, translationStatus } from "@/lib/content-translations";
 import { isRegisteredLanguage } from "@/lib/language-codes";
 import { languageLabel } from "@/lib/language-label";
 const topicKey = (topic: { de: string; en: string }) => topic.de || topic.en;
-type Task = { id: string; exercise: string; prompt: string; choices: string[] };
+type Task = { id: string; exercise: string; prompt: string; choices: string[]; answerLanguage?:string };
 type Result = {
   correct: boolean;
   answers: string[];
@@ -394,6 +394,9 @@ export function LearningDashboard({
                   {t("Deine Antwort")}
                   <input
                     autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    lang={task.answerLanguage ?? language}
                     maxLength={300}
                     required
                     disabled={busy}

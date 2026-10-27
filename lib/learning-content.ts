@@ -117,3 +117,12 @@ export const learningText = (
   text: { de: string; en: string },
   locale: "de" | "en",
 ) => text[locale] || text[locale === "de" ? "en" : "de"];
+
+export function learningPrompt(question: LearningQuestion, locale: 'de'|'en') {
+  const preferred=learningText(question.prompt,locale);
+  // Legacy translations can omit the gap marker. Use the valid authored prompt
+  // rather than asking a gap question whose gap is invisible.
+  if(question.exercise==='gap'&&!preferred.includes('___'))
+    return Object.values(question.prompt).find(text=>text.includes('___')) ?? preferred;
+  return preferred;
+}

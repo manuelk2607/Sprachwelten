@@ -75,10 +75,11 @@ try {
       3,
     );
     assert.equal(migrated.find((r) => r.question_id === "vocab-de")?.lapses, 1);
-  }
   const aliases =
     await sql`SELECT count(*)::int AS n FROM content_entries WHERE canonical_vocabulary_id IS NOT NULL`;
   assert.equal(aliases[0].n, 10, "Known starter aliases preserve their rows.");
+    console.log('PASS: historical migration fixtures and copied directional progress.');
+  } else console.log('NOT RUN: optional historical migration fixtures are absent; core repository checks remain independent.');
   const entry = await addEntry(material, owner, "Private name");
   ids.push(entry.id);
   const input = {
@@ -229,7 +230,7 @@ try {
   await changeNotebookItems(owner,holder.id,holder.revision,'remove',unavailable.unavailableIds);
   assert.equal((await listNotebooks(owner)).find(n=>n.id===holder.id)?.count,0);
   console.log(
-    "PASS: known-card migration and old progress preserved, owner isolation, notebook CRUD/moves, incompatible directions, atomic grading, guarded flashcards, per-direction SRS, membership revocation and canonical reverse uniqueness.",
+    "PASS: owner isolation, notebook CRUD/moves, incompatible directions, atomic grading, guarded flashcards, per-direction SRS, membership revocation and canonical reverse uniqueness.",
   );
 } finally {
   await sql`DELETE FROM vocabulary_notebooks WHERE owner_id=ANY(${[owner, other]}) AND id=ANY(${books})`;

@@ -5,6 +5,7 @@ import {
   gradeLearning,
   type LearningQuestion,
   learningText,
+  learningPrompt,
 } from "@/lib/learning-content";
 import type { Entry } from "@/lib/content";
 import { publicEntry } from "@/lib/content-public";
@@ -49,8 +50,8 @@ export async function learningCatalog(
   // The catalogue is a deliberate lesson view; solutions are never included in
   // the practice projection until this owner's attempt has been submitted.
   const units = await sql.query(
-    `SELECT DISTINCT challenge->'topic' AS topic,challenge->>'level' AS level FROM content_entries WHERE deleted_at IS NULL AND kind IN ('vocabulary','grammar') AND language=$1 ORDER BY level LIMIT 200`,
-    [filter.language],
+    `SELECT DISTINCT challenge->'topic' AS topic,challenge->>'level' AS level FROM content_entries WHERE deleted_at IS NULL AND kind IN ('vocabulary','grammar') AND language=$1 AND ($2='' OR kind=$2) ORDER BY level LIMIT 200`,
+    [filter.language, filter.domain ?? ''],
   );
   return {
     entries: entries.map(publicEntry),
@@ -79,7 +80,7 @@ export async function startLearning(
     [ownerId],
   );
   const rows = await sql.query(
-    `SELECT e.id,e.revision,e.phrase,e.kind,q.value AS question FROM content_entries e CROSS JOIN LATERAL jsonb_array_elements(coalesce(e.challenge->'questions','[]'::jsonb)) q(value) LEFT JOIN learning_progress p ON p.owner_id=$1 AND p.entry_id=e.id AND p.question_id=q.value->>'id' AND p.revision=e.revision WHERE e.deleted_at IS NULL AND e.kind IN ('vocabulary','grammar') AND e.language=$2 AND ($3='' OR e.kind=$3) AND ($4='' OR e.challenge->>'level'=$4) AND ($5='' OR e.challenge->'topic'->>'de'=$5 OR e.challenge->'topic'->>'en'=$5) AND ($6=false OR p.due_at<=now()) ORDER BY CASE WHEN p.due_at<=now() THEN 0 WHEN p.entry_id IS NULL THEN 1 ELSE 2 END,p.due_at NULLS FIRST,random() LIMIT 1`,
+    `SELECT e.id,e.revision,e.phrase,e.kind,e.language,q.value AS question FROM content_entries e CROSS JOIN LATERAL jsonb_array_elements(coalesce(e.challenge->'questions','[]'::jsonb)) q(value) LEFT JOIN learning_progress p ON p.owner_id=$1 AND p.entry_id=e.id AND p.question_id=q.value->>'id' AND p.revision=e.revision WHERE e.deleted_at IS NULL AND e.kind IN ('vocabulary','grammar') AND e.language=$2 AND ($3='' OR e.kind=$3) AND ($4='' OR e.challenge->>'level'=$4) AND ($5='' OR e.challenge->'topic'->>'de'=$5 OR e.challenge->'topic'->>'en'=$5) AND ($6=false OR p.due_at<=now()) ORDER BY CASE WHEN p.due_at<=now() THEN 0 WHEN p.entry_id IS NULL THEN 1 ELSE 2 END,p.due_at NULLS FIRST,random() LIMIT 1`,
     [
       ownerId,
       filter.language,
@@ -97,7 +98,7 @@ export async function startLearning(
         : "Für diese Auswahl sind noch keine Lernaufgaben vorhanden.",
       404,
     );
-  const question = row.question as LearningQuestion,
+  const question: LearningQuestion = {...row.question as LearningQuestion, answerLanguage: (row.question as LearningQuestion).answerLanguage ?? String(row.language)},
     id = crypto.randomUUID();
   // Replace an abandoned question atomically; another tab receives a stale-
   // attempt error rather than sharing or overwriting an answer.
@@ -121,9 +122,10 @@ export async function startLearning(
   return {
     id,
     exercise: question.exercise,
-    prompt: learningText(question.prompt, locale),
+    prompt: learningPrompt(question, locale),
     choices,
     kind: row.kind,
+    answerLanguage: question.answerLanguage,
   };
 }
 export const notebookAttemptMembership=(alias:string)=>`(${alias}.notebook_id IS NULL OR EXISTS(SELECT 1 FROM vocabulary_notebooks n JOIN vocabulary_notebook_items i ON i.notebook_id=n.id WHERE n.id=${alias}.notebook_id AND n.owner_id=${alias}.owner_id AND i.entry_id=${alias}.entry_id))`;

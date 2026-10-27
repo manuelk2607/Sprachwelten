@@ -1,6 +1,6 @@
 # Sprachwelten: Qualitätsrunde 2026-10-24
 
-## Aktueller Auftrag: Vokabelhefte und Sprachrichtungen – 26. Oktober 2026
+## Abschluss: Vokabelhefte und Sprachrichtungen – 27. Oktober 2026
 
 Ausgangspunkt `931ee63`, sauberer Branch `feature/learning-notebooks-20261026`.
 Plan: (1) bestätigte Sprachpaare mit optionaler Rückrichtung und getrennte Spiel-/
@@ -15,10 +15,10 @@ explizite, richtungsgebundene Sprachpaare mit geprüfter Rückrichtung; getrennt
 Beitragsformulare/POST-Routen, Spielesammlung und eigene Beitragsübersichten.
 Private Hefte mit Revisionen, Mitgliedschaften, atomarem Verschieben, Auswahlübungen,
 Schreibabfragen und aufdeckbaren Karteikarten; Fortschritt je Konto/Wort/Richtung.
-179 Unit-Tests, Typprüfung und Lint bestanden. Neue PostgreSQL-Integration bestand
+Neue PostgreSQL-Integration bestand
 in isolierter QA: Mandantentrennung, CRUD, Verschieben, Sprachrichtung, doppelte
 Abgaben, Kartenaufdeckung, Lernstände, Entzug der Heftzuordnung, umgekehrte Dubletten.
-025 ausschließlich in QA angewendet. Dort zuerst 22 historische Startkarten und
+025 zunächst ausschließlich in QA angewendet. Dort zuerst 22 historische Startkarten und
 zwei synthetische Lernstände angelegt; Revision startet tatsächlich bei 0 (nicht 1).
 Die Zuordnung wurde entsprechend korrigiert und separat erneut getestet. Zehn
 kanonische Paare, zehn erhaltene Verweise und kopierte Richtungs-Lernstände geprüft;
@@ -36,10 +36,42 @@ die zehn neuen Lernfälle nach letzten Korrekturen zusätzlich erfolgreich gepr�
 Aktuelles Sprachpaar wird auch im Menü-Beitragsformular übernommen. Quellen,
 Credits und Zugriff auf die vorhandene Bearbeitungs-/Vorschlagsfunktion bleiben
 bei Vokabelkarten sichtbar. Entfernte/geänderte Wörter können aus eigenen Heften
-bereinigt werden, ohne Lernstände zu löschen. Nächster Schritt: letzter QA-Lauf,
-Commit, produktive Migration und Veröffentlichung. Produktion noch unverändert.
+bereinigt werden, ohne Lernstände zu löschen.
+
+Code-Commit `cf9d731c5ffb47084709a2b70440d9c07558a42e` ist auf GitHub `main`.
+Die vollständige CI bestand, einschließlich aller 134 Desktop-/Mobilfälle:
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40426667585
+Migration `025_vocabulary_notebooks.sql` produktiv transaktional angewendet und
+im Migrationsregister bestätigt. Alle 20 bisherigen Vokabeleinträge und beide
+Grammatikmodule erhalten; zehn kanonische Paare und zehn bestehende Gegenkarten
+mit Verweisen bestätigt. Bestehender Cloudflare-Worker erfolgreich veröffentlicht,
+Version `943d40d2-ed2c-43bc-b5aa-d6661640d2cd`.
+Secrets, Auth-Ziel, R2, AI, Rate-Limits, Google-Tag und Wartungszeitplan erhalten.
+
+Live: `/lernen` und `/en/learn` HTTP 200. Beide Sprachrichtungen liefern genau
+zehn eindeutige Karten mit denselben kanonischen IDs; Beispiele passen zur
+jeweiligen Zielsprache. Keine internen Autoren-/Kontofelder, Cache-Control
+`no-store`. Anonyme Hefte/Admin-Nutzerliste 401, identisches Sprachpaar 422,
+fremde Origin bei Heftmutation 403. Keine produktiven Testkonten, Lernabgaben,
+Hefte oder KI-Aufrufe erzeugt. Echte Schreib-/Parallelitätsprüfungen ausschließlich
+in isolierter PostgreSQL-QA; Browserabläufe mit kontrollierten HTTP-Antworten.
+
+Abschließende Nachkorrektur: explizit wiederhergestellte Entwürfe bestimmen den
+Spiel-/Lernbereich anhand ihrer Beitragsart, damit Formular und Einreichungsroute
+zusammenpassen. Zwei neue Desktop-/Mobilfälle prüfen beide Wechselrichtungen.
+Verifiziert: 22 bestehende relevante Desktop-/Mobilfälle sowie alle vier neuen
+Fälle bestanden; Typprüfung, Lint und erneuter Produktions-Build erfolgreich.
+Der erste neue Testlauf klickte vor Abschluss der Hydration; die Fixtures warten
+jetzt ausdrücklich auf die Sitzungserkennung. Kein Anwendungsfehler in diesen
+vier anfänglichen Timeouts. Veröffentlichung der Nachkorrektur folgt.
 Details: docs/vocabulary-notebooks-2026-10-27.md.
 Vorherige CI für `c913785` ist inzwischen vollständig erfolgreich.
+
+Verbleibend: redaktionell geprüfte weitere Sprachpaare/Themen/Niveaus und explizite
+Bestätigung unbekannter älterer Vokabelpaare. Die Kernfunktionen nicht erneut
+implementieren. Ältere externe OTP-/QA- und redaktionelle Backlogpunkte bleiben
+unverändert offen. QA-Migrationsfixtures sind ausschließlich synthetisch und
+laufen mit der oben genannten temporären Datenbank ab.
 
 ## Neuer Auftrag: Spielen und Lernen – 26. Oktober 2026
 

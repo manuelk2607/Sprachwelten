@@ -43,7 +43,6 @@ export function ContributeDialog({
   initialKind='idiom',
   initialLanguage='de',
   initialTranslationLanguage,
-  area,
   editTarget = "admin",
   review,
 }: {
@@ -54,13 +53,11 @@ export function ContributeDialog({
   initialKind?: ContentKind;
   initialLanguage?:string;
   initialTranslationLanguage?:string;
-  area?:'play'|'learn';
   editTarget?: "admin" | "own" | "suggest";
   review?: { id: string; revision: number };
 }) {
   const { t, locale } = useI18n();
   const session = useAuthSession();
-  const contributionArea=initialEntry?(['vocabulary','grammar'].includes(initialEntry.kind)?'learn':'play'):area??(['vocabulary','grammar'].includes(initialKind)?'learn':'play');
   const formRef = useRef<HTMLFormElement>(null);
   const validation = useFormErrors(formRef);
   const [media, setMedia] = useState<MediaChoice>({
@@ -71,6 +68,7 @@ export function ContributeDialog({
     initialEntry ? initialEntry.challenge : (()=>{const c=initialChallenge(initialKind);return c?.type==='learning'&&initialKind==='vocabulary'&&initialTranslationLanguage?{...c,vocabulary:{translationLanguage:initialTranslationLanguage,termAlternatives:[],translationAlternatives:[],reversible:false,context:{de:'',en:''}},questions:[]}:c;})(),
   );
   const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? initialKind);
+  const contributionArea = ['vocabulary', 'grammar'].includes(kind) ? 'learn' : 'play';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sense, setSense] = useState(initialEntry?.sense ?? "");

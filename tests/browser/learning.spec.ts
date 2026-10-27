@@ -1,6 +1,45 @@
 import { test, expect, type Page } from "@playwright/test";
 import { canonicalLearningSeeds } from "../../lib/learning-seeds";
 import { vocabularyDirection, type Notebook } from "../../lib/vocabulary";
+import { draftKey } from "../../lib/contribution-draft";
+
+for (const learningDraft of [true, false]) {
+  test(`restoring a ${learningDraft ? 'learning' : 'game'} draft selects its own form and submission route`, async ({ page }) => {
+    await fixtures(page);
+    const entry = canonicalLearningSeeds[0];
+    await page.addInitScript(({ key, draft }) => localStorage.setItem(key, JSON.stringify({...draft, updatedAt: Date.now()})), {
+      key: draftKey('guest'),
+      draft: {
+        version: 1, updatedAt: Date.now(), kind: learningDraft ? 'vocabulary' : 'tongue_twister',
+        phrase: learningDraft ? entry.phrase : 'Fischers Fritz fischt frische Fische.',
+        sense: '', language: learningDraft ? entry.language : 'de', regionId: '', contextId: '',
+        sourceLocale: 'de', translation: {}, reviewed: false, media: { text: true, audio: false },
+        fields: { literal: learningDraft ? entry.literal : '', example: entry.example, sourceUrl: entry.sourceUrl },
+        challenge: learningDraft ? entry.challenge : undefined,
+      },
+    });
+    let endpoint = '';
+    for (const path of ['/api/entries', '/api/learning/entries'])
+      await page.route(`**${path}`, route => {
+        endpoint = new URL(route.request().url()).pathname;
+        return route.fulfill({ status: 201, json: { entry: { id: crypto.randomUUID() } } });
+      });
+    const ready = page.waitForResponse(response => response.url().includes('/api/auth/get-session'));
+    await page.goto(learningDraft ? '/' : '/lernen');
+    await ready;
+    await page.locator('.header').getByRole('button', { name: 'Beitragen', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Entwurf wiederherstellen', exact: true }).click();
+    await expect(dialog.locator('[name="kind"]')).toHaveValue(learningDraft ? 'vocabulary' : 'tongue_twister');
+    await expect(dialog.locator('[name="phrase"]')).toHaveValue(learningDraft ? entry.phrase : 'Fischers Fritz fischt frische Fische.');
+    await dialog.getByRole('combobox').first().click();
+    await expect(page.getByRole('option', { name: learningDraft ? 'Redewendung' : 'Vokabel', exact: true })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await dialog.getByRole('button', { name: 'Beitrag veröffentlichen', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    expect(endpoint).toBe(learningDraft ? '/api/learning/entries' : '/api/entries');
+  });
+}
 async function fixtures(page: Page, signedIn = false) {
   const books: Notebook[] = [
     {

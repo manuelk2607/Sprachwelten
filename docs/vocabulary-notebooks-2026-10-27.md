@@ -54,6 +54,9 @@ bietet keine Spielarten; die Spielesammlung zeigt keine Vokabel-/Grammatikbeitr�
 Die Administration und bestehende Bearbeitungs-/Vorschlagsrechte bleiben erhalten.
 Die Wortpaarübersetzung und native Beispielsätze werden nicht als bloße
 Oberflächentexte automatisch umübersetzt.
+Ein ausdrücklich wiederhergestellter Entwurf öffnet den zu seiner Beitragsart
+gehörenden Formularbereich und verwendet dessen Einreichungsroute, auch wenn
+der Entwurf im jeweils anderen Hauptbereich wiederhergestellt wurde.
 
 ## Üben und Fortschritt
 
@@ -94,3 +97,13 @@ Veröffentlichungsstand werden in `PROGRESS.md` festgehalten.
 Weitere fachliche Inhalte und die Prüfung unbekannter älterer Sprachpaare bleiben
 redaktionelle Aufgaben. Es gibt keine automatische, möglicherweise falsche
 Freigabe mehrdeutiger oder nicht bestätigter Rückübersetzungen.
+
+Veröffentlicht am 27. Oktober 2026: Code `cf9d731`, Migration 025 erfolgreich in
+Produktion; 20 historische Vokabelkarten (davon zehn Gegenkarten-Verweise) und zwei
+Grammatikmodule erhalten. 180 Unit-Tests, vollständige CI und 134 Desktop-/Mobilfälle
+bestanden. Echte isolierte PostgreSQL-Tests bestätigen Daten-/Kontentrennung,
+Parallelität und Migration; Live-Prüfungen bestätigen beide Richtungen und die
+anonymen Zugriffssperren. Keine produktiven Testhefte/-abgaben oder KI-Aufrufe.
+Die Entwurfsnachkorrektur besteht zusätzlich in vier neuen Desktop-/Mobilfällen;
+22 weitere betroffene Browserfälle, Typprüfung, Lint und Build ebenfalls erfolgreich.
+Endgültige Worker-Version und Nachkorrektur-Commit stehen in `PROGRESS.md`.

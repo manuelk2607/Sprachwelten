@@ -42,6 +42,8 @@ export function ContributeDialog({
   initialEntry,
   initialKind='idiom',
   initialLanguage='de',
+  initialTranslationLanguage,
+  area,
   editTarget = "admin",
   review,
 }: {
@@ -51,11 +53,14 @@ export function ContributeDialog({
   initialEntry?: Entry;
   initialKind?: ContentKind;
   initialLanguage?:string;
+  initialTranslationLanguage?:string;
+  area?:'play'|'learn';
   editTarget?: "admin" | "own" | "suggest";
   review?: { id: string; revision: number };
 }) {
   const { t, locale } = useI18n();
   const session = useAuthSession();
+  const contributionArea=initialEntry?(['vocabulary','grammar'].includes(initialEntry.kind)?'learn':'play'):area??(['vocabulary','grammar'].includes(initialKind)?'learn':'play');
   const formRef = useRef<HTMLFormElement>(null);
   const validation = useFormErrors(formRef);
   const [media, setMedia] = useState<MediaChoice>({
@@ -63,7 +68,7 @@ export function ContributeDialog({
     audio: presentationOf(initialEntry ?? {}) !== "text",
   });
   const [challenge, setChallenge] = useState<Challenge | undefined>(
-    initialEntry ? initialEntry.challenge : initialChallenge(initialKind),
+    initialEntry ? initialEntry.challenge : (()=>{const c=initialChallenge(initialKind);return c?.type==='learning'&&initialKind==='vocabulary'&&initialTranslationLanguage?{...c,vocabulary:{translationLanguage:initialTranslationLanguage,termAlternatives:[],translationAlternatives:[],reversible:false,context:{de:'',en:''}},questions:[]}:c;})(),
   );
   const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? initialKind);
   const [busy, setBusy] = useState(false);
@@ -140,6 +145,7 @@ export function ContributeDialog({
         ...(challenge?.type === "order"
           ? { targetLanguage: challenge.targetLanguage }
           : {}),
+        ...(challenge?.type==='learning'&&challenge.vocabulary?{translationLanguage:challenge.vocabulary.translationLanguage,literal:String(formRef.current?.querySelector<HTMLInputElement>('[name="literal"]')?.value??'')}:{})
       });
       fetch("/api/entries/duplicates?" + query, { signal: controller.signal })
         .then(async (response) => {
@@ -221,9 +227,9 @@ export function ContributeDialog({
     max: 300,
   };
   const fields: TranslationField[] = [
-    { key: "literal", label: "Wörtliche Übersetzung", max: 300 },
+    ...(kind==='vocabulary'?[]:[{ key: "literal" as const, label: "Wörtliche Übersetzung", max: 300 }]),
     { key: "meaning", label: "Bedeutung oder Erklärung", max: 1500 },
-    { key: "example", label: "Beispielsatz", max: 600 },
+    ...(kind==='vocabulary'?[]:[{ key: "example" as const, label: "Beispielsatz", max: 600 }]),
     { key: "culturalNote", label: "Kultureller Hinweis", max: 1000 },
   ];
   const sourceChanged = (event?: React.FormEvent<HTMLElement>) => {
@@ -433,7 +439,7 @@ export function ContributeDialog({
             : editTarget === "own"
               ? "/api/me/entries/" + initialEntry.id
               : "/api/admin/entries/" + initialEntry.id
-          : "/api/entries";
+          : contributionArea==='learn'?'/api/learning/entries':"/api/entries";
       const response = await fetch(endpoint, {
         method: initialEntry && editTarget !== "suggest" ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -488,14 +494,14 @@ export function ContributeDialog({
             ? "Verbesserung vorschlagen"
             : initialEntry
               ? "Beitrag bearbeiten"
-              : "Ein Stück Sprache teilen.",
+              : contributionArea==='learn'?"Lernbeitrag teilen":"Ein Stück Sprache teilen.",
       )}
       close={close}
       wide
     >
       <p className="muted">
         {t(
-          "Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.",
+          contributionArea==='learn'?"Teile ein bestätigtes Sprachpaar oder eine Grammatikregel. Lernbeiträge bleiben von Spielaufgaben getrennt.":"Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.",
         )}
       </p>
       {!initialEntry && !session?.user && (
@@ -549,7 +555,7 @@ export function ContributeDialog({
                 sourceChanged();
               }}
             >
-              {Object.entries(kindLabels).map(([id, label]) => (
+              {Object.entries(kindLabels).filter(([id])=>['vocabulary','grammar'].includes(id)===(contributionArea==='learn')).map(([id, label]) => (
                 <option key={id} value={id}>
                   {t(label)}
                 </option>
@@ -808,11 +814,11 @@ export function ContributeDialog({
         {literalRequired ? (
           <fieldset className="source-fields" onChange={sourceChanged}>
             <legend>
-              {t("Deine Erklärung")} ·{" "}
+              {t(kind==='vocabulary'?"Übersetzung und Zusatzinformationen":"Deine Erklärung")} ·{" "}
               {t(sourceLocale === "de" ? "Deutsch" : "Englisch")}
             </legend>
             <label>
-              {t("Wörtliche Übersetzung")} <span>{t("(erforderlich)")}</span>
+              {t(kind==='vocabulary'?"Übersetzung in der gewählten Sprache":"Wörtliche Übersetzung")} <span>{t("(erforderlich)")}</span>
               <input
                 required
                 minLength={1}

@@ -158,7 +158,7 @@ export function Header({
         )}
         {session?.user ? (
           <>
-            <a href="/me" className="button small outline">
+            <a href={active==='discover'?'/me?area=learn':"/me"} className="button small outline">
               {t("Meine Beiträge")}
             </a>
             {admin && (

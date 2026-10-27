@@ -1,5 +1,6 @@
 import {improvementTranslations} from './improvement-translations';
 import {learningTranslations} from './learning-translations';
+import {notebookTranslations} from './notebook-translations';
 import {reviewFixTranslations} from './review-fix-translations';
 import {communityTranslations} from './community-translations';
 import {newGameTranslations} from './new-game-translations';
@@ -7,6 +8,7 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  ...notebookTranslations,
   ...learningTranslations,
   ...gameRedesignTranslations,
   'Dein Lernrückblick':'Your learning review',

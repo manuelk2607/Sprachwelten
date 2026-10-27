@@ -7,6 +7,7 @@ import {
 } from "@/lib/learning-content";
 import { Select } from "./select";
 import { BilingualField } from "./bilingual-field";
+import {VocabularyFields} from './vocabulary-fields';
 export const emptyLearningQuestion = (): LearningQuestion => ({
   id: crypto.randomUUID().slice(0, 8),
   exercise: "writing",
@@ -52,6 +53,9 @@ export function LearningEditor({
           ))}
         </Select>
       </label>
+      {value.domain==='vocabulary'&&<VocabularyFields value={value.vocabulary} onChange={vocabulary=>onChange({...value,vocabulary,questions:[]})}/>}
+      {value.domain==='vocabulary'&&value.vocabulary&&<p className="form-note">{t('Abfragen werden aus dem bestätigten Sprachpaar erstellt. Du musst keine zweite Spielaufgabe ausfüllen.')}</p>}
+      {(value.domain==='grammar'||!value.vocabulary)&&<>
       <p className="form-note">
         {t(
           "Gib eindeutige Lösungen und eine hilfreiche Rückmeldung an. Weitere richtige Schreibweisen werden ausdrücklich als Alternativen hinterlegt.",
@@ -155,6 +159,7 @@ export function LearningEditor({
           {t("Weitere Übung")}
         </button>
       )}
+      </>}
     </div>
   );
 }

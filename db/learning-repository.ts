@@ -126,15 +126,22 @@ export async function startLearning(
     kind: row.kind,
   };
 }
+export const notebookAttemptMembership=(alias:string)=>`(${alias}.notebook_id IS NULL OR EXISTS(SELECT 1 FROM vocabulary_notebooks n JOIN vocabulary_notebook_items i ON i.notebook_id=n.id WHERE n.id=${alias}.notebook_id AND n.owner_id=${alias}.owner_id AND i.entry_id=${alias}.entry_id))`;
+export async function revealVocabulary(owner:string,id:string,locale:'de'|'en'){
+ const rows=await database().query(`UPDATE learning_attempts a SET revealed_at=coalesce(revealed_at,now()) WHERE a.id=$1 AND a.owner_id=$2 AND a.practice_mode='flashcard' AND a.consumed_at IS NULL AND a.expires_at>now() AND ${notebookAttemptMembership('a')} AND EXISTS(SELECT 1 FROM content_entries e WHERE e.id=a.entry_id AND e.revision=a.revision AND e.deleted_at IS NULL) RETURNING a.question`,[id,owner]);
+ if(!rows.length)throw new GameError('Diese Lernkarte ist nicht mehr verfügbar.',409);
+ const question=rows[0].question as LearningQuestion;return {answers:question.answers,explanation:learningText(question.explanation,locale)};
+}
 export async function answerLearning(
   ownerId: string,
   id: string,
   answer: string,
   locale: "de" | "en",
+  remembered?:boolean,
 ) {
   const sql = database();
   const [attempt] = await sql.query(
-    `SELECT a.* FROM learning_attempts a JOIN content_entries e ON e.id=a.entry_id AND e.revision=a.revision AND e.deleted_at IS NULL WHERE a.id=$1 AND a.owner_id=$2 AND a.consumed_at IS NULL AND a.expires_at>now()`,
+    `SELECT a.* FROM learning_attempts a JOIN content_entries e ON e.id=a.entry_id AND e.revision=a.revision AND e.deleted_at IS NULL WHERE a.id=$1 AND a.owner_id=$2 AND a.consumed_at IS NULL AND a.expires_at>now() AND ${notebookAttemptMembership('a')}`,
     [id, ownerId],
   );
   if (!attempt)
@@ -142,10 +149,11 @@ export async function answerLearning(
       "Diese Übung ist abgelaufen oder wurde bereits beantwortet. Starte eine neue Aufgabe.",
       409,
     );
-  const question = attempt.question as LearningQuestion,
-    correct = gradeLearning(question, answer);
+  const question=attempt.question as LearningQuestion;
+  if(remembered!==undefined&&(attempt.practice_mode!=='flashcard'||!attempt.revealed_at))throw new GameError('Bitte die Lernkarte zuerst aufdecken.',422);
+  const correct=remembered??gradeLearning(question,answer);
   const rows = await sql.query(
-    `WITH claimed AS (UPDATE learning_attempts a SET consumed_at=now(),correct=$3 WHERE a.id=$1 AND a.owner_id=$2 AND a.consumed_at IS NULL AND a.expires_at>now() AND EXISTS(SELECT 1 FROM content_entries e WHERE e.id=a.entry_id AND e.revision=a.revision AND e.deleted_at IS NULL) RETURNING a.*), saved AS (INSERT INTO learning_progress(owner_id,entry_id,question_id,revision,streak,lapses,attempts,due_at) SELECT owner_id,entry_id,question_id,revision,CASE WHEN $3 THEN 1 ELSE 0 END,CASE WHEN $3 THEN 0 ELSE 1 END,1,now()+CASE WHEN $3 THEN interval '1 day' ELSE interval '10 minutes' END FROM claimed WHERE persistent ON CONFLICT(owner_id,entry_id,question_id) DO UPDATE SET revision=EXCLUDED.revision,streak=CASE WHEN $3 THEN CASE WHEN learning_progress.revision=EXCLUDED.revision THEN least(learning_progress.streak+1,8) ELSE 1 END ELSE 0 END,lapses=learning_progress.lapses+CASE WHEN $3 THEN 0 ELSE 1 END,attempts=learning_progress.attempts+1,updated_at=now(),due_at=now()+CASE WHEN NOT $3 THEN interval '10 minutes' WHEN learning_progress.revision<>EXCLUDED.revision THEN interval '1 day' ELSE (ARRAY[1,3,7,14,30,60,120,180])[least(learning_progress.streak+1,8)]*interval '1 day' END RETURNING due_at) SELECT id,(SELECT due_at FROM saved LIMIT 1) AS "dueAt" FROM claimed`,
+    `WITH claimed AS (UPDATE learning_attempts a SET consumed_at=now(),correct=$3 WHERE a.id=$1 AND a.owner_id=$2 AND a.consumed_at IS NULL AND a.expires_at>now() AND ${notebookAttemptMembership('a')} AND EXISTS(SELECT 1 FROM content_entries e WHERE e.id=a.entry_id AND e.revision=a.revision AND e.deleted_at IS NULL) RETURNING a.*), saved AS (INSERT INTO learning_progress(owner_id,entry_id,question_id,revision,streak,lapses,attempts,due_at) SELECT owner_id,entry_id,question_id,revision,CASE WHEN $3 THEN 1 ELSE 0 END,CASE WHEN $3 THEN 0 ELSE 1 END,1,now()+CASE WHEN $3 THEN interval '1 day' ELSE interval '10 minutes' END FROM claimed WHERE persistent ON CONFLICT(owner_id,entry_id,question_id) DO UPDATE SET revision=EXCLUDED.revision,streak=CASE WHEN $3 THEN CASE WHEN learning_progress.revision=EXCLUDED.revision THEN least(learning_progress.streak+1,8) ELSE 1 END ELSE 0 END,lapses=learning_progress.lapses+CASE WHEN $3 THEN 0 ELSE 1 END,attempts=learning_progress.attempts+1,updated_at=now(),due_at=now()+CASE WHEN NOT $3 THEN interval '10 minutes' WHEN learning_progress.revision<>EXCLUDED.revision THEN interval '1 day' ELSE (ARRAY[1,3,7,14,30,60,120,180])[least(learning_progress.streak+1,8)]*interval '1 day' END RETURNING due_at) SELECT id,(SELECT due_at FROM saved LIMIT 1) AS "dueAt" FROM claimed`,
     [id, ownerId, correct],
   );
   if (!rows.length)

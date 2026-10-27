@@ -1,5 +1,46 @@
 # Sprachwelten: Qualitätsrunde 2026-10-24
 
+## Aktueller Auftrag: Vokabelhefte und Sprachrichtungen – 26. Oktober 2026
+
+Ausgangspunkt `931ee63`, sauberer Branch `feature/learning-notebooks-20261026`.
+Plan: (1) bestätigte Sprachpaare mit optionaler Rückrichtung und getrennte Spiel-/
+Lernbeiträge, (2) persönliche Hefte, Verwaltung und gezielte Übungen mit gemeinsamem
+persönlichem Fortschritt pro Wort/Lernrichtung, (3) mobile Oberfläche, Regressionen,
+Migration in isolierter QA und Veröffentlichung bei bestandenen Prüfungen.
+Keine automatische Ableitung einer Übersetzungssprache aus der UI-/Erklärungssprache.
+Alte Materialien/Fortschritte bleiben erhalten; nur unveränderte bekannte Startkarten
+werden explizit zugeordnet, umgekehrte Kopien referenzieren dieselbe Vokabel.
+Schema und Eindeutigkeitsindizes vor Änderung per Neon-MCP geprüft. Implementiert:
+explizite, richtungsgebundene Sprachpaare mit geprüfter Rückrichtung; getrennte
+Beitragsformulare/POST-Routen, Spielesammlung und eigene Beitragsübersichten.
+Private Hefte mit Revisionen, Mitgliedschaften, atomarem Verschieben, Auswahlübungen,
+Schreibabfragen und aufdeckbaren Karteikarten; Fortschritt je Konto/Wort/Richtung.
+179 Unit-Tests, Typprüfung und Lint bestanden. Neue PostgreSQL-Integration bestand
+in isolierter QA: Mandantentrennung, CRUD, Verschieben, Sprachrichtung, doppelte
+Abgaben, Kartenaufdeckung, Lernstände, Entzug der Heftzuordnung, umgekehrte Dubletten.
+025 ausschließlich in QA angewendet. Dort zuerst 22 historische Startkarten und
+zwei synthetische Lernstände angelegt; Revision startet tatsächlich bei 0 (nicht 1).
+Die Zuordnung wurde entsprechend korrigiert und separat erneut getestet. Zehn
+kanonische Paare, zehn erhaltene Verweise und kopierte Richtungs-Lernstände geprüft;
+originale Einträge/Lernstände erhalten. Eigentliche Integrationstestdaten bereinigt;
+markierte Migrationsfixtures bleiben bis zur abschließenden QA-Prüfung erhalten.
+Fortgesetzt am 27. Oktober: alte QA ist planmäßig abgelaufen. Neue reine Schema-
+QA `br-odd-king-b90o8w3l` / Host `ep-withered-sky-b936cqzb.c-7.eu-central-1.aws.neon.tech`
+läuft bis 27. Oktober 20:00 UTC. Vollständige Migration 025 auf frischem 024-Schema
+mit eigenen historischen Fixtures erfolgreich; Notebook- und bestehende Lern-
+Integration erneut bestanden. Keine produktiven Datensätze kopiert. Zusätzlich
+native Beispiele je Richtung und sichere mobile Dialogbedienung korrigiert.
+180 Unit-Tests, Typprüfung, Lint, Übersetzungsprüfung, Abhängigkeitsaudit und
+Produktions-Build bestanden. 134/134 Desktop-/Mobilfälle im Gesamtlauf bestanden;
+die zehn neuen Lernfälle nach letzten Korrekturen zusätzlich erfolgreich geprüft.
+Aktuelles Sprachpaar wird auch im Menü-Beitragsformular übernommen. Quellen,
+Credits und Zugriff auf die vorhandene Bearbeitungs-/Vorschlagsfunktion bleiben
+bei Vokabelkarten sichtbar. Entfernte/geänderte Wörter können aus eigenen Heften
+bereinigt werden, ohne Lernstände zu löschen. Nächster Schritt: letzter QA-Lauf,
+Commit, produktive Migration und Veröffentlichung. Produktion noch unverändert.
+Details: docs/vocabulary-notebooks-2026-10-27.md.
+Vorherige CI für `c913785` ist inzwischen vollständig erfolgreich.
+
 ## Neuer Auftrag: Spielen und Lernen – 26. Oktober 2026
 
 Ausgangspunkt `b8d016c`, sauberer Feature-Branch. Neue Hauptnavigation Spielen/Lernen;

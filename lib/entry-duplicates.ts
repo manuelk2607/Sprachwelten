@@ -4,12 +4,13 @@ import { contentKinds, type EntryInput } from './content';
 import { categoryId } from './quiz-categories';
 
 export type ExistingEntry={id:string;phrase:string};
-export type EntryIdentity=Pick<EntryInput,'kind'|'phrase'|'language'>&Partial<Pick<EntryInput,'regionId'|'contextId'>>&{sense?:string;audioHash?:string;attributionCategory?:'person'|'song';targetLanguage?:string;otherLanguage?:string;otherWord?:string};
+export type EntryIdentity=Pick<EntryInput,'kind'|'phrase'|'language'>&Partial<Pick<EntryInput,'regionId'|'contextId'|'challenge'|'literal'>>&{translationLanguage?:string;sense?:string;audioHash?:string;attributionCategory?:'person'|'song';targetLanguage?:string;otherLanguage?:string;otherWord?:string};
 export const duplicateLookupInput=z.object({
   sense:z.string().trim().max(160).default(''),
   kind:z.enum(contentKinds),
   phrase:z.string().trim().min(1).max(1500),
   language:z.string().max(30).refine(isRegisteredLanguage),
+  translationLanguage:z.string().max(30).refine(isRegisteredLanguage).optional(),literal:z.string().trim().max(300).optional(),
   regionId:z.string().max(40).optional(),
   contextId:z.string().max(40).optional(),
   attributionCategory:z.enum(['person','song']).optional(),targetLanguage:z.string().refine(isRegisteredLanguage).optional(),otherLanguage:z.string().refine(isRegisteredLanguage).optional(),otherWord:z.string().trim().min(1).max(100).optional(),

@@ -36,19 +36,26 @@ export function LearningDashboard({
   login,
   ready,
   version,
+  targetLanguage,
+  onlyGrammar=false,
+  embedded=false,
 }: {
   contribute: (kind: "vocabulary" | "grammar", language: string) => void;
   login: () => void;
   ready: boolean;
   version: number;
+  targetLanguage?:string;
+  onlyGrammar?:boolean;
+  embedded?:boolean;
 }) {
   const { t, locale } = useI18n(),
     session = useAuthSession();
-  const [language, setLanguage] = useState("en"),
-    [domain, setDomain] = useState(""),
+  const [savedLanguage, setLanguage] = useState("en"),
+    [domainChoice, setDomain] = useState(""),
     [level, setLevel] = useState(""),
     [topic, setTopic] = useState(""),
     [refresh, setRefresh] = useState(0);
+  const language=targetLanguage??savedLanguage,domain=onlyGrammar?'grammar':domainChoice;
   const key = JSON.stringify([
     language,
     domain,
@@ -77,12 +84,12 @@ export function LearningDashboard({
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sprachwelten-learning-language");
-      if (saved && isRegisteredLanguage(saved)) {
+      if (!targetLanguage&&saved && isRegisteredLanguage(saved)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore a non-sensitive browser preference once.
         setLanguage(saved);
       }
     } catch {}
-  }, []);
+  }, [targetLanguage]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -197,7 +204,8 @@ export function LearningDashboard({
     }
   }
   return (
-    <section className="learning-dashboard" aria-labelledby="learning-title">
+    <section className={embedded?"grammar-dashboard":"learning-dashboard"} aria-label={t(onlyGrammar?"Grammatik & Übungen":"Lernen")}>
+      {!embedded&&<>
       <div className="section-top">
         <div>
           <div className="eyebrow">{t("DEINE SPRACHE. DEIN TEMPO.")}</div>
@@ -234,8 +242,9 @@ export function LearningDashboard({
           ))}
         </div>
       )}
+      </>}
       <div className="learning-filters">
-        <LanguagePicker
+        {!embedded&&<LanguagePicker
           label="Zielsprache"
           value={language}
           disabled={busy || !ready}
@@ -246,15 +255,15 @@ export function LearningDashboard({
               localStorage.setItem("sprachwelten-learning-language", value);
             } catch {}
           }}
-        />
-        <label>
+        />}
+        {!onlyGrammar&&<label>
           {t("Lernbereich")}
           <Select value={domain} disabled={busy} onValueChange={setDomain}>
             <option value="">{t("Alles")}</option>
             <option value="vocabulary">{t("Vokabeln")}</option>
             <option value="grammar">{t("Grammatik")}</option>
           </Select>
-        </label>
+        </label>}
         <label>
           {t("Lernniveau")}
           <Select value={level} disabled={busy} onValueChange={setLevel}>
@@ -332,13 +341,13 @@ export function LearningDashboard({
         >
           {t("Fällige Aufgaben wiederholen")}
         </button>
-        <button
+        {!onlyGrammar&&<button
           className="button outline"
           disabled={!ready || busy}
           onClick={() => contribute("vocabulary", language)}
         >
           {t("Vokabel beitragen")}
-        </button>
+        </button>}
         <button
           className="button outline"
           disabled={!ready || busy}

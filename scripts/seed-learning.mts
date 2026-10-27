@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { entryInput } from "../lib/content";
-import { learningSeeds } from "../lib/learning-seeds";
+import { canonicalLearningSeeds as learningSeeds } from "../lib/learning-seeds";
 const url = process.env.DATABASE_URL_UNPOOLED;
 if (!url) throw new Error("DATABASE_URL_UNPOOLED fehlt.");
 const sql = neon(url);

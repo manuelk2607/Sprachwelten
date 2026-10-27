@@ -221,3 +221,11 @@ learningSeeds.push(
     "https://www.deutschakademie.de/online-deutschkurs/deutsche-grammatik/wortarten/verben/deutsche-zeitformen/praesens/",
   ),
 );
+// Fresh installations store each confirmed pair once. The historical export
+// above remains available for compatibility and migration regression fixtures.
+export const canonicalLearningSeeds:Entry[]=learningSeeds.filter(entry=>entry.kind==='grammar'||entry.language==='en').map(entry=>{
+ if(entry.kind!=='vocabulary'||entry.challenge?.type!=='learning')return entry;
+ const mirror=learningSeeds.find(e=>e.kind==='vocabulary'&&e.language==='de'&&e.phrase===entry.literal&&e.literal===entry.phrase);
+ const other=mirror?.challenge;
+ return {...entry,challenge:{...entry.challenge,questions:[],vocabulary:{translationLanguage:'de',translationExample:mirror?.example??'',reversible:true,termAlternatives:entry.challenge.questions[0]?.answers.filter(a=>a!==entry.phrase)??[],translationAlternatives:other?.type==='learning'?other.questions[0]?.answers.filter(a=>a!==entry.literal)??[]:[],context:entry.phrase==='friend'?{de:'Gemeint ist eine männliche Person.',en:'This refers to a male person.'}:{de:'',en:''}}}};
+});

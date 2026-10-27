@@ -50,6 +50,9 @@ function contentSchema(requireLiteral:boolean){return entryFields.superRefine((i
   if(presentation==='text'&&input.audioId)ctx.addIssue({code:'custom',path:['audioId'],message:'Wähle Audio aus, um eine Aufnahme zu verwenden.'});
   const expected=challengeTypes[input.kind as keyof typeof challengeTypes];
   if(input.challenge?.type==='learning'){
+    if(input.challenge.vocabulary){
+      if(input.kind!=='vocabulary'||input.challenge.vocabulary.translationLanguage===input.language)ctx.addIssue({code:'custom',path:['challenge','vocabulary','translationLanguage'],message:'Ausgangs- und Zielsprache müssen verschieden sein.'});
+    }
     if(input.kind!==input.challenge.domain)ctx.addIssue({code:'custom',path:['challenge'],message:'Lernaufgabe und Beitragsart müssen übereinstimmen.'});
     if(presentation==='audio')ctx.addIssue({code:'custom',path:['presentation'],message:'Lernaufgaben benötigen auch einen Text.'});
     if(input.kind==='grammar'&&!input.meaning)ctx.addIssue({code:'custom',path:['meaning'],message:'Bitte die Grammatikregel erklären.'});
@@ -78,7 +81,8 @@ export const entryInput=contentSchema(true);
 // Stored starter cards and saved rounds predate the required translation.
 export const storedEntryInput=contentSchema(false);
 export type EntryInput = z.infer<typeof entryInput>;
-export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'|'hint'> & {hint?:string;sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
+export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'|'hint'> & {canonicalVocabularyId?:string|null;hint?:string;sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
+export const learningEntryInput=entryInput.superRefine((input,ctx)=>{if(!['vocabulary','grammar'].includes(input.kind))ctx.addIssue({code:'custom',path:['kind'],message:'Bitte einen Lernbeitrag wählen.'});if(input.kind==='vocabulary'&&(input.challenge?.type!=='learning'||!input.challenge.vocabulary))ctx.addIssue({code:'custom',path:['challenge','vocabulary'],message:'Bitte die Übersetzungssprache ausdrücklich angeben.'});});
 export const explanationInput = z.object({ creditName:text(80),body: z.string().trim().min(10).max(1500),sourceLocale:z.enum(['de','en']).optional(),translation:translationFields.optional(),translationReviewed:z.boolean().optional() }).refine(input=>!input.translation?.body||input.translationReviewed,{message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
 export const playerName = z.string().trim().min(2, 'Bitte mindestens zwei Zeichen verwenden.').max(24);

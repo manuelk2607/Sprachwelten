@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isRegisteredLanguage } from "./language-codes";
+import {vocabularyPair} from './vocabulary';
 export const learningFilter = z.object({
   language: z.string().max(30).refine(isRegisteredLanguage),
   domain: z.enum(["vocabulary", "grammar"]).optional(),
@@ -17,6 +18,7 @@ const bilingual = z
 export const learningQuestion = z
   .object({
     id: z.string().regex(/^[a-z0-9-]{1,40}$/),
+    answerLanguage:z.string().max(30).refine(isRegisteredLanguage).optional(),
     exercise: z.enum([
       "recall",
       "writing",
@@ -30,12 +32,12 @@ export const learningQuestion = z
     explanation: bilingual,
   })
   .superRefine((v, c) => {
-    const choices = v.choices.map(learningIdentity);
+    const choices = v.choices.map(value=>learningIdentity(value,v.answerLanguage));
     if (
       choices.length &&
       (choices.length < 2 ||
         new Set(choices).size !== choices.length ||
-        !v.answers.some((a) => choices.includes(learningIdentity(a))))
+        !v.answers.some((a) => choices.includes(learningIdentity(a,v.answerLanguage))))
     )
       c.addIssue({
         code: "custom",
@@ -68,22 +70,25 @@ export const learningChallenge = z
       "Das Thema darf höchstens 100 Zeichen je Sprache haben.",
     ),
     level: z.enum(learningLevels),
-    questions: z.array(learningQuestion).min(1).max(8),
+    questions: z.array(learningQuestion).max(8).default([]),
+    vocabulary:vocabularyPair.optional(),
   })
   .refine(
     (v) => new Set(v.questions.map((q) => q.id)).size === v.questions.length,
     "Aufgaben benötigen eindeutige IDs.",
+  ).refine(v=>v.domain==='vocabulary'&&!!v.vocabulary||v.questions.length>0,'Bitte mindestens eine Lernaufgabe ergänzen.'
   );
 export type LearningChallenge = z.infer<typeof learningChallenge>;
 export type LearningQuestion = z.infer<typeof learningQuestion>;
 // Preserve diacritics, non-Latin scripts and meaningful punctuation. Alternatives
 // must be authored explicitly rather than guessed from an unrelated language.
-export function learningIdentity(text: string) {
-  return text.normalize("NFC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
+export function learningIdentity(text: string,language?:string) {
+  let normalized=text.normalize('NFC');try{normalized=normalized.toLocaleLowerCase(language);}catch{normalized=normalized.toLowerCase();}
+  return normalized.replace(/\s+/gu, " ").trim();
 }
 export function gradeLearning(question: LearningQuestion, answer: string) {
   return question.answers.some(
-    (value) => learningIdentity(value) === learningIdentity(answer),
+    (value) => learningIdentity(value,question.answerLanguage) === learningIdentity(answer,question.answerLanguage),
   );
 }
 export type LearningState = {

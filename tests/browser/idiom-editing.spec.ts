@@ -6,6 +6,7 @@ import type { RoomAction, Entry } from "../../lib/content";
 import { entryPreview } from "../../lib/content-public";
 import { entryInput } from "../../lib/content";
 
+test.beforeEach(async({page})=>{await page.route('**/api/learning/vocabulary?*',r=>r.fulfill({json:{cards:[],more:false,topics:[],levels:[]}}));});
 test("new idioms submit canonical text and show bold words and translated hints in discovery", async ({
   page,
 }) => {

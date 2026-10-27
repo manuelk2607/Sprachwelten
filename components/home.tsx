@@ -3,7 +3,7 @@ import {PhraseText} from "./phrase-text";
 import { Select } from "./select";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useI18n } from "@/lib/i18n";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback,useEffect, useState, useSyncExternalStore } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -30,7 +30,7 @@ import { AuthDialog } from "./auth-dialog";
 import { ContributeDialog } from "./contribute-dialog";
 import { EntryDialog } from "./entry-dialog";
 import { LanguagePicker } from "./language-picker";
-import {LearningDashboard} from './learning-dashboard';
+import {LearningHub} from './learning-hub';
 import type {ContentKind} from '@/lib/content';
 
 const subscribeToHydration = () => () => {};
@@ -46,6 +46,9 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
   const [contribute, setContribute] = useState(false);
   const [contributionKind,setContributionKind]=useState<ContentKind>('idiom');
   const [contributionLanguage,setContributionLanguage]=useState('de');
+  const [contributionTranslationLanguage,setContributionTranslationLanguage]=useState<string|undefined>(undefined);
+  const [learningPair,setLearningPair]=useState({source:'de',target:'en'});
+  const rememberLearningPair=useCallback((source:string,target:string)=>setLearningPair({source,target}),[]);
   const [play, setPlay] = useState(false);
   const [exploring, setExploring] = useState(false);
   const [kind, setKind] = useState("");
@@ -140,7 +143,8 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
     setContribute(false);
     setSelected(data.entry);
   };
-  const openContribute = () => {setContributionKind('idiom');setContributionLanguage('de');setContribute(true);};
+  const openContribute = () => {setContributionKind(area==='learn'?'vocabulary':'idiom');setContributionLanguage(area==='learn'?learningPair.target:'de');setContributionTranslationLanguage(area==='learn'?learningPair.source:undefined);setContribute(true);};
+  const openGameContribution=()=>{setContributionKind('idiom');setContributionLanguage('de');setContributionTranslationLanguage(undefined);setContribute(true);};
   return (
     <>
       <Header
@@ -150,7 +154,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
         onLogin={() => setAuth(true)}
       />
       <main>
-        {area==='learn'&&<LearningDashboard ready={interactive} version={refresh} login={()=>setAuth(true)} contribute={(kind,language)=>{setContributionKind(kind);setContributionLanguage(language);setContribute(true);}}/>}
+        {area==='learn'&&<LearningHub openEntry={openExisting} ready={interactive} version={refresh} onPairChange={rememberLearningPair} login={()=>setAuth(true)} contribute={(kind,language,source)=>{setContributionKind(kind);setContributionLanguage(language);setContributionTranslationLanguage(source);setContribute(true);}}/>}
         {area==='play'&&<>
         <section className="hero">
           <div className="hero-copy">
@@ -339,10 +343,10 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
             </div>
             <button
               className="button outline discovery-contribute"
-              onClick={openContribute}
+              onClick={openGameContribution}
             >
               <Plus size={18} />
-              {t("Eigenen Ausdruck teilen")}
+              {t("Spielbeitrag teilen")}
             </button>
           </div>
           {!exploring ? (
@@ -386,7 +390,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
                     onValueChange={setKind}
                   >
                     <option value="">{t("Alles")}</option>
-                    {Object.entries(kindLabels).filter(([id]) => id !== "taboo").map(([id, label]) => (
+                    {Object.entries(kindLabels).filter(([id]) => !['taboo','vocabulary','grammar'].includes(id)).map(([id, label]) => (
                       <option key={id} value={id}>
                         {t(label)}
                       </option>
@@ -439,7 +443,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
                       "Für diese Auswahl ist noch kein Beitrag vorhanden. Du kannst den Anfang machen.",
                     )}
                   </p>
-                  <button className="button primary" onClick={openContribute}>
+                  <button className="button primary" onClick={openGameContribution}>
                     {t("Ausdruck beitragen")}
                   </button>
                 </div>
@@ -510,7 +514,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
               )}
             </p>
           </div>
-          <button className="button dark" onClick={openContribute}>
+          <button className="button dark" onClick={openGameContribution}>
             {t("Etwas beitragen")}
             <Plus size={18} />
           </button>
@@ -548,6 +552,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
         <ContributeDialog
           initialKind={contributionKind}
           initialLanguage={contributionLanguage}
+          initialTranslationLanguage={contributionTranslationLanguage}
           openExisting={openExisting}
           close={() => setContribute(false)}
           saved={() => {

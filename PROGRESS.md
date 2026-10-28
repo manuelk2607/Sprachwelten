@@ -1,6 +1,6 @@
 # Sprachwelten – Fortsetzungsstand, 28. Oktober 2026
 
-## Aktueller Auftrag
+## Auftrag – technisch umsetzbares Paket abgeschlossen
 
 Restaufgaben gezielt abschließen, funktionierende Features und Produktionsdaten
 bewahren. Feature-Branch `feature/editorial-qa-20261028`, Ausgangspunkt `28ad357`.
@@ -8,7 +8,7 @@ Nur `manuelk2607/Sprachwelten`; veröffentlichen ausschließlich mit
 `npm run deploy:cloudflare` auf https://sprachwelten.maki26.workers.dev/.
 Historie: [Archiv](docs/progress-archive-2026-10-27.md).
 
-## Neu implementiert – abschließende Freigabeprüfung läuft
+## Neu abgeschlossen
 
 - Separates, leeres QA-Projekt `polished-wind-59150518`, Auth-Template
   `br-damp-glitter-baqvjq5l`. Projektspezifischer Schlüssel im GitHub-Environment
@@ -36,7 +36,7 @@ Historie: [Archiv](docs/progress-archive-2026-10-27.md).
 - Neue Auditbefunde: Better Auth auf zusammengehörige 1.7.14-Pakete, better-call
   1.4.4/better-fetch 1.3.3 und Mail-Renderer 2.2.0 aktualisiert; letzterer entfernt
   indirektes deepmerge. Keine Audit-Ausnahme. Installation, Typprüfung, Lint, 186 Unit-Tests, Übersetzungen, vollständiger Audit
-  und Offline-Build erfolgreich; Browserfälle erfolgreich nach gezielten Wiederholungen.
+  und Offline-Build erfolgreich; Browserfälle erfolgreich; vollständige CI 144/144.
   Nicht behaupten, dass damit Neons unabhängig verwalteter Auth-Dienst aktualisiert wurde.
 - Veraltete regionale/QA-Notizen abgeglichen. Zwei Mehrspieler-Browsertests erhalten
   realistische Zeitgrenzen für vorhandene Wheel-/Polling-/Abstimmungsphasen.
@@ -57,21 +57,38 @@ Historie: [Archiv](docs/progress-archive-2026-10-27.md).
   bestanden. Kontrollierte HTTP-Antworten, keine echten KI-Aufrufe.
 - Nach installiertem Abhängigkeitsupdate: Typprüfung, Lint, **186/186 Unit-Tests**,
   Übersetzungsabdeckung, vollständiger Audit ohne Befund und Offline-Build bestanden.
-  Gesamt Desktop/Mobil 143/144; ein Mobilfall durch gleichzeitige Build-/HMR-
-  Neuladungen unterbrochen, danach separat 1/1 erfolgreich. Künftige vollständige
-  CI führt Build und Browser sequenziell aus; deren Ergebnis noch abwarten.
+  Lokal Desktop/Mobil 143/144; ein Mobilfall durch parallele Build-/HMR-Neuladungen
+  unterbrochen, anschließend separat 1/1 erfolgreich. Abschließende sequenzielle
+  GitHub-CI vollständig erfolgreich: **144/144 Desktop-/Mobilfälle**.
 
-## Veröffentlichung noch offen
+## Veröffentlichung abgeschlossen
 
-Produktion bestätigt: `calm-tooth-60944868` / `br-delicate-field-b96d9qc4`,
-Datenbank `sprachspiel`, Migration **025**, **24 Lernbeiträge**. Tabellen 026 fehlen.
-Aktiver vorheriger Code `67d07216736cfa9d71521153d652cc3d80bb6719`,
-Worker `5168180b-d783-42c5-ac04-21873604cae2`. Noch keine produktive Migration 026.
+Code `13b4705b721c23f9217d7d4fd086bd43ea5f68bc` auf GitHub main.
+Beide CI-Läufe erfolgreich:
+- Checks: https://github.com/manuelk2607/Sprachwelten/actions/runs/40775570137
+- Echte isolierte Integration: https://github.com/manuelk2607/Sprachwelten/actions/runs/40775570160
 
-**Nächster konkreter Schritt:** lokale Prüfungen abgeschlossen, Commit und CI,
-dann versionierte Migration 026
-auf bestätigtem Produktionsziel, bestehender Deploymentweg und Live-Prüfung.
-Bestehende Secrets, Auth, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
+Produktionsziel `calm-tooth-60944868` / `br-delicate-field-b96d9qc4`,
+`sprachspiel`. Migration **026** transaktional angewendet und protokolliert.
+Vorher/nachher unverändert: **452 Beiträge, ein Administratorgrant, vier Auth-Konten,
+24 Lernbeiträge**. Neue Einstufungs-/Historientabellen leer: keine Freigaben erzeugt.
+Worker erfolgreich veröffentlicht: **a4fb5a83-7ebd-49b9-9965-b9437a9c2737**.
+Bestehende Secrets, Auth-Ziel, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
+
+Live bestätigt: DE/EN-Spiel-/Lernseiten 200; Sprachverfügbarkeit und versteckte
+Stufen ohne Freigaben; echte anonyme Managed-Auth-Sitzung; Admin-/eigene Beiträge/
+Hefte anonym 401; neue redaktionelle GET-/PUT-Route anonym 401. Erzwungene
+unfreigegebene Stufe scheitert mit 422 vor Raumerstellung. Beide Vokabelrichtungen
+weiterhin zehn Karten, `no-store`; Sitemap 32 öffentliche Seiten, robots 200.
+Keine produktiven Testkonten, Beiträge, Hefte, Partien, Antwortabgaben oder KI-Aufrufe.
+Echter Passwort-Login nur in QA geprüft, produktiver Passwort-Login/OTP nicht
+als geprüft ausweisen. Vollständiges Live-Protokoll lokal:
+`/private/tmp/sprachwelten-live-20261028.log`.
+
+**Nächster konkreter Schritt:** autorisiertes erreichbares QA-Postfach für OTP
+bereitstellen bzw. das eindeutig identifizierte alte Testkonto in Neon Auth
+manuell entfernen. Danach fachliche Inhalte prüfen und ausreichend echte
+Einstufungen erfassen. Keine erneute Grundlagenanalyse oder Kern-Neuimplementierung.
 
 ## Bereits vollständig vorhanden – nicht erneut implementieren
 
@@ -97,5 +114,5 @@ Bestehende Secrets, Auth, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
 | P2 | Sechs Dialektkarten quellengeprüft, weiterhin `needsSpecialistReview`; noch keine ausreichenden fachlichen Spielstufensammlungen. | Sprachwissenschaftliche Freigabe und begründete Einstufungen beschaffen. Technische Verwaltung ist implementiert, keine Freigaben erfinden. |
 | P3 | Search Console eingerichtet; Indexierungsstatus extern. | Im eigenen Google-Konto prüfen, keine wiederholten Indexierungsanfragen automatisieren. |
 
-Keine bestätigte P0-Anwendungsstörung. Neue Auditbefunde vor Veröffentlichung beheben.
+Keine bestätigte P0-Anwendungsstörung. Neue Auditbefunde sind behoben, vollständiger Audit ohne Ausnahme bestanden.
 Weitere Skalierungsumbauten nur bei gemessenem Engpass. Sprachraum bleibt außerhalb.

@@ -49,7 +49,7 @@ export const GET = (request: Request) =>
         ? "challenge->>'targetLanguage'"
         : "language";
     const rows = await database().query(
-      `SELECT ${field} AS code,count(*)::int AS count FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[]) AND ($2='' OR challenge->>'category'=$2) GROUP BY ${field} ORDER BY ${field} LIMIT 64`,
+      `SELECT ${field} AS code,count(*)::int AS count,count(*) FILTER(WHERE EXISTS(SELECT 1 FROM entry_difficulty_reviews r WHERE r.entry_id=content_entries.id AND r.content_revision=content_entries.revision AND r.reviewed AND r.reviewed_at<=CURRENT_DATE))::int AS "reviewedCount" FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[]) AND ($2='' OR challenge->>'category'=$2) GROUP BY ${field} ORDER BY ${field} LIMIT 64`,
       [kinds, category],
     );
     if (input.mode === "false-friends") {

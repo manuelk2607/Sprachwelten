@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { languageLabel } from "@/lib/language-label";
 import { useKeyedState } from "@/lib/use-keyed-state";
-type Count = { code: string; count: number };
+import {GameDifficultyPicker} from './game-difficulty-picker';
+import type {DifficultyLevel} from '@/lib/editorial-difficulty';
+type Count = { code: string; count: number;reviewedCount?:number };
 export function GameLanguagePicker({
   mode,
   value,
@@ -13,6 +15,7 @@ export function GameLanguagePicker({
   pronunciationCategory,
   attributionCategory,
   remember = false,
+  difficulty,onDifficultyChange,
 }: {
   mode: string;
   value?: string[];
@@ -22,6 +25,7 @@ export function GameLanguagePicker({
   pronunciationCategory?: string;
   attributionCategory?: string;
   remember?: boolean;
+  difficulty?:DifficultyLevel;onDifficultyChange?:(value:DifficultyLevel|null)=>void;
 }) {
   const { t, locale } = useI18n(),
     [search, setSearch] = useState("");
@@ -186,6 +190,7 @@ export function GameLanguagePicker({
             </label>
           ))}
       </div>
+      {onDifficultyChange&&(difficulty||(counts??[]).some(c=>(c.reviewedCount??0)>=20))&&<GameDifficultyPicker mode={mode} settings={{gameLanguages:selected,meaningCategory,pronunciationCategory,attributionCategory}} value={difficulty} onChange={onDifficultyChange} disabled={disabled}/>}
     </fieldset>
   );
 }

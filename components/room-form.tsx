@@ -1,4 +1,5 @@
 "use client";
+import type {DifficultyLevel} from '@/lib/editorial-difficulty';
 import {GameLanguagePicker} from "./game-language-picker";
 import {useKeyedState} from '@/lib/use-keyed-state';
 import { useAuthSession } from "@/lib/auth/provider";
@@ -42,6 +43,7 @@ export function RoomForm({
   const [meaningCategory,setMeaningCategory]=useState('all');
   const [pronunciationCategory,setPronunciationCategory]=useState('both');
   const [attributionCategory,setAttributionCategory]=useState('both');
+  const [difficulty,setDifficulty]=useKeyedState<DifficultyLevel|undefined>(JSON.stringify([mode,gameLanguages,meaningCategory,pronunciationCategory,attributionCategory]),undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const info = modeInfo(mode);
@@ -67,6 +69,7 @@ export function RoomForm({
             name: data.get("name"),
             locale: data.get("locale") ?? locale,
             mode,
+            difficulty,
             gameLanguages:mode==='word-chain'?undefined:gameLanguages,
             meaningCategory: data.get("meaningCategory") ?? undefined,
             pronunciationCategory:
@@ -182,7 +185,7 @@ export function RoomForm({
             </Select>
           </label>
         )}
-        {!join&&mode!=='word-chain'&&<GameLanguagePicker key={mode} mode={mode} value={gameLanguages} onChange={setGameLanguages} disabled={busy} remember meaningCategory={mode==='meaning-quiz'?meaningCategory:undefined} pronunciationCategory={mode==='tongue-twisters'?pronunciationCategory:undefined} attributionCategory={mode==='who-said-it'?attributionCategory:undefined}/>}
+        {!join&&mode!=='word-chain'&&<GameLanguagePicker key={mode} mode={mode} value={gameLanguages} onChange={setGameLanguages} disabled={busy} remember difficulty={difficulty} onDifficultyChange={value=>setDifficulty(value??undefined)} meaningCategory={mode==='meaning-quiz'?meaningCategory:undefined} pronunciationCategory={mode==='tongue-twisters'?pronunciationCategory:undefined} attributionCategory={mode==='who-said-it'?attributionCategory:undefined}/>}
         {!join&&mode==='word-chain'&&<label>{t('Sprache des gemeinsamen Satzes')}<Select name="sentenceLanguage" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
         {!join && mode === "who-said-it" && (
           <label>

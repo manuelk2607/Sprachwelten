@@ -2,6 +2,8 @@ import {initializeTaboo,actTaboo,viewTaboo,tabooPlayerLeft,type TabooState} from
 import { hasText, hasAudio, presentationOf } from "./content-media";
 import { songTitle } from "./attribution";
 import {gameLanguagesInput} from './game-languages';
+import type {DifficultyLevel} from './editorial-difficulty';
+import {difficultyScopeChanged} from './game-difficulty';
 import {
   initializeTeam,
   settleTeam,
@@ -123,6 +125,7 @@ export type Game = {
   pronunciationCategory?: PronunciationCategory;
   pronunciationLanguage?: string;
   gameLanguages?:string[];
+  difficulty?:DifficultyLevel;
   attributionCategory?: AttributionCategory;
   tabooLanguages?: string[];
   taboo?: TabooState;
@@ -585,6 +588,9 @@ export function act(
     if (action.mode && !currentModeIds.includes(action.mode))
       throw new GameError("Dieses Spiel ist nicht verfügbar.", 422);
     const next = { ...game, mode: action.mode ?? game.mode };
+    if(difficultyScopeChanged(action))next.difficulty=undefined;
+    if(action.difficulty!==undefined)next.difficulty=action.difficulty??undefined;
+    if(next.difficulty&&next.mode==='word-chain')throw new GameError('Für diese Auswahl ist keine Spielstufe freigegeben.',422);
     if(action.mode&&action.mode!==game.mode)next.gameLanguages=undefined;
     if(action.gameLanguages){
       const parsed=gameLanguagesInput.safeParse(action.gameLanguages);
@@ -963,6 +969,7 @@ export function viewGame(game: Omit<Game, "prompts">, playerId: string) {
     pronunciationCategory: game.pronunciationCategory ?? "both",
     pronunciationLanguage: game.pronunciationLanguage ?? "",
     gameLanguages:game.gameLanguages,
+    difficulty:game.difficulty,
     attributionCategory: game.attributionCategory ?? "both",
     challengeFallback: c ? challengeHasFallback(c, game.locale) : false,
     attributionType: c?.type === "attribution" ? c.category : null,

@@ -16,6 +16,7 @@ import {
   type RoomPoolSettings,
 } from "@/lib/game-pool";
 import { roomVersion } from "@/lib/room-etag";
+import {difficultyScopeChanged} from '@/lib/game-difficulty';
 type Context = { params: Promise<{ code: string }> };
 export const GET = (request: Request, ctx: Context) =>
   safe(async () => {
@@ -63,6 +64,8 @@ export const POST = (request: Request, ctx: Context) =>
       ...game,
       ...(action.action === "configure"
         ? {
+            ...(difficultyScopeChanged(action)?{difficulty:undefined}:{}),
+            ...(action.difficulty!==undefined?{difficulty:action.difficulty??undefined}:{}),
             ...(action.mode ? { mode: action.mode } : {}),
             ...(action.mode&&action.mode!==game.mode?{gameLanguages:undefined}:{}),
             ...(action.gameLanguages?{gameLanguages:action.gameLanguages}:{}),
@@ -89,6 +92,7 @@ export const POST = (request: Request, ctx: Context) =>
       (action.action === "configure" &&
         [
           action.mode,
+          action.difficulty,
           action.gameLanguages,
           action.meaningCategory,
           action.pronunciationCategory,

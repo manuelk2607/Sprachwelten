@@ -7,6 +7,7 @@ import {
   type ContributionDraft,
 } from "@/lib/contribution-draft";
 import { useKeyedState } from "@/lib/use-keyed-state";
+import {EditorialReviewEditor} from './editorial-review-editor';
 import { phraseInput } from "@/lib/phrase-markup";
 import { PhraseText } from "./phrase-text";
 import { presentationOf } from "@/lib/content-media";
@@ -982,6 +983,7 @@ export function ContributeDialog({
               )}
         </button>
       </form>
+      {initialEntry&&editTarget==='admin'&&!review&&session?.user?.id&&!['vocabulary','grammar'].includes(initialEntry.kind)&&<EditorialReviewEditor key={initialEntry.id+':'+initialEntry.revision} entry={initialEntry}/>}
     </Dialog>
   );
 }

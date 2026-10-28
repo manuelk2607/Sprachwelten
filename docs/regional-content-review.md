@@ -36,14 +36,14 @@ Jede Einstufung braucht Datum, Quellen und eine begründete Bewertung der Aufgab
 etwa Vertrautheit der konkreten Bedeutung und erforderliches Kontextwissen.
 Textlänge ist kein Einstufungskriterium. Ein pauschales `curated` genügt nicht.
 
-Aktuell fehlen solche Einstufungen; deshalb gibt es weder einen sichtbaren Filter
-noch automatisch vergebene Stufen. Die Freigabeprüfung ist vorbereitet und getestet,
-noch nicht an Spielpool, Speicherung oder Raumkonfiguration angeschlossen.
-Vor dieser nächsten Ausbaustufe: fachliche Prüfung, genügend eingestufte Karten,
-separate Migration/Verwaltung, dann durchgängige Pool-/Rematch-/UI-Tests.
+Aktuell fehlen fachliche Einstufungen; deshalb bleiben sichtbare Spielstufen aus.
+Seit 28. Oktober sind Speicherung, revisionsgebundene Admin-Verwaltung sowie
+Pool-/Raum-/Rematch-/UI-Integration implementiert. Siehe
+[Redaktionelle Spielstufen](editorial-difficulty.md). Mindestens 20 aktuelle,
+ausdrücklich geprüfte Karten je Sprache, Kategorie und Stufe sind erforderlich.
+Die Tests verwenden ausschließlich synthetische Freigaben in isolierter QA.
 
-Abgleich 27. Oktober: weiterhin keine fachlichen Freigaben oder automatisch
-vergebenen Stufen. Die Bereitschaftsprüfung berücksichtigt nur aktuelle,
-widerspruchsfreie Bewertungen, echte Kalenderdaten und explizite Zustimmung;
-eine spätere zurückgezogene Freigabe kann nicht durch einen alten positiven
-Eintrag überstimmt werden. Grammatik-/CEFR-Lernniveaus sind davon getrennt.
+Die sechs oben dokumentierten Karten behalten `needsSpecialistReview`.
+Quellenprüfung allein ersetzt keine fachliche Freigabe. Es wurden keine Karten
+automatisch oder im Rahmen der technischen Tests produktiv freigegeben.
+Grammatik-/CEFR-Lernniveaus bleiben davon getrennt.

@@ -1,5 +1,11 @@
 # Qualitätsrunde 24. Oktober 2026
 
+Fortsetzungsstand 28. Oktober: dedizierte echte QA-CI eingerichtet; redaktionelle
+Speicherung, Verwaltung und sichere Spielstufen-Integration umgesetzt. Fachliche
+Freigaben und echte OTP-Zustellung bleiben extern. Aktueller Prüf-/Deploymentstand
+ausschließlich in [PROGRESS.md](../PROGRESS.md). Die folgenden Abschnitte sind
+der historische Prüfbericht.
+
 Ausgangsstand: `8f41238`. Die bestehende CI war erfolgreich. Priorisiert wurden
 nachgewiesener Datenverlust, unnötige Browserlast und Bedienungsfehler vor neuen
 Spielvarianten oder zusätzlichen Einstellungen.

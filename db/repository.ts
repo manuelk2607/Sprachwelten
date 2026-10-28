@@ -1,5 +1,6 @@
 import {validateRegion} from './regions';
 import {languagePoolQuery} from './game-language-pool';
+import {readyGameDifficulties} from './editorial-repository';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
 import {sentencePrompts} from '@/lib/sentence-chain';
@@ -18,7 +19,7 @@ export const database = () => {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL fehlt.');
   return neon(process.env.DATABASE_URL);
 };
-export const withLanguageNames=(entry:Entry):Entry=>({...entry,challenge:entry.challenge??undefined,languageNames:registeredLanguageNames(entry.language)});
+export const withLanguageNames=(entry:Entry):Entry=>({...entry,editorialDifficulty:entry.editorialDifficulty??undefined,challenge:entry.challenge??undefined,languageNames:registeredLanguageNames(entry.language)});
 export const fields = `id, canonical_vocabulary_id AS "canonicalVocabularyId", sense, hint, phrase_markup as "phraseMarkup", (SELECT jsonb_build_object('de',r.de,'en',r.en) FROM content_regions r WHERE r.id=region_id) as "regionNames", revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
 export async function listEntries(kind = '', language = '', search = '', offset = 0) {
   const sql = database();
@@ -69,7 +70,8 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff',settings:Partial<RoomPoolSettings>={}) {
-  const query=(statement:string,params:unknown[])=>{const filtered=languagePoolQuery(mode,settings.gameLanguages,statement,params);return database().query(filtered.statement,filtered.params);};
+  if(settings.difficulty&&!(await readyGameDifficulties(mode,settings)).includes(settings.difficulty))throw new GameError('Für diese Auswahl ist keine Spielstufe freigegeben.',422);
+  const query=async(statement:string,params:unknown[])=>{const filtered=languagePoolQuery(mode,settings.gameLanguages,statement,params,settings.difficulty);const rows=await database().query(filtered.statement,filtered.params);return settings.difficulty?rows.map(row=>({...row,editorialDifficulty:settings.difficulty})):rows;};
   if(mode==='taboo')return (await query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='taboo' AND language=ANY($1::text[]) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 240`,[settings.gameLanguages??settings.tabooLanguages??[settings.locale??'de'],(settings.playedPrompts??[]).map(p=>p.id)]) as Entry[]).map(withLanguageNames);
   if(mode==='word-chain')return sentencePrompts();
   const seenIds=[...new Set([...(settings.playedPrompts??[]).map(prompt=>prompt.id),...(settings.round?[settings.round.entry.id]:[])])];

@@ -7,6 +7,7 @@ import { categoryId, categoryLabel } from './quiz-categories';
 import { translationFields, type ContentTranslations } from './content-translations';
 import {parsePhraseMarkup} from './phrase-markup';
 import {gameLanguagesInput} from './game-languages';
+import {difficultyLevels,type DifficultyLevel} from './editorial-difficulty';
 
 export const contentKinds = ['idiom', 'dialect', 'situation', 'word', 'tongue_twister','gaming_mission','youth_chat','academic','sound_pair','attribution','false_friend','word_order','joke','word_group','loanword','taboo','vocabulary','grammar'] as const;
 export type ContentKind = typeof contentKinds[number];
@@ -81,7 +82,7 @@ export const entryInput=contentSchema(true);
 // Stored starter cards and saved rounds predate the required translation.
 export const storedEntryInput=contentSchema(false);
 export type EntryInput = z.infer<typeof entryInput>;
-export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'|'hint'> & {canonicalVocabularyId?:string|null;hint?:string;sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
+export type Entry = Omit<EntryInput,'translation'|'translationReviewed'|'regionId'|'contextId'|'creditName'|'presentation'|'sense'|'hint'> & {editorialDifficulty?:DifficultyLevel;canonicalVocabularyId?:string|null;hint?:string;sense?:string;presentation?:Presentation;creditName?:string;regionId?:string;contextId?:string;translations?:ContentTranslations; id: string; status: 'curated' | 'community'; authorName: string; createdAt: string;updatedAt?:string;revision?:number;languageNames?:LanguageNames;regionNames?:{de:string;en:string} };
 export const learningEntryInput=entryInput.superRefine((input,ctx)=>{if(!['vocabulary','grammar'].includes(input.kind))ctx.addIssue({code:'custom',path:['kind'],message:'Bitte einen Lernbeitrag wählen.'});if(input.kind==='vocabulary'&&(input.challenge?.type!=='learning'||!input.challenge.vocabulary))ctx.addIssue({code:'custom',path:['challenge','vocabulary'],message:'Bitte die Übersetzungssprache ausdrücklich angeben.'});});
 export const explanationInput = z.object({ creditName:text(80),body: z.string().trim().min(10).max(1500),sourceLocale:z.enum(['de','en']).optional(),translation:translationFields.optional(),translationReviewed:z.boolean().optional() }).refine(input=>!input.translation?.body||input.translationReviewed,{message:'Bitte die zweite Sprachfassung vor dem Veröffentlichen prüfen.'});
 export type Explanation = { creditName?:string;id: string; body: string; sourceLocale?:'de'|'en';translations?:ContentTranslations; authorName: string; createdAt: string };
@@ -93,7 +94,7 @@ export type RatingScores=z.infer<typeof ratingScores>;
 export const roomAction = z.discriminatedUnion('action', [
   z.object({action:z.literal('taboo'),event:z.enum(['start','clue','guess','correct','skip','buzz','timeout']),text:z.string().trim().max(300).optional(),matchId:z.uuid(),roundNumber:z.number().int().min(1).max(10),cardIndex:z.number().int().min(1)}),
   z.object({ action: z.literal('start') }),
-  z.object({ action:z.literal('configure'),gameLanguages:gameLanguagesInput.optional(),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','taboo','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),sentenceLanguage:z.enum(['de','en']).optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
+  z.object({ action:z.literal('configure'),difficulty:z.enum(difficultyLevels).nullable().optional(),gameLanguages:gameLanguagesInput.optional(),rounds:z.number().int().min(1).max(10).optional(),mode:z.enum(['meaning-quiz','language-quiz','dialect-detective','everyday-language','loanword-quiz','tongue-twisters','word-outsider','word-chain','taboo','who-said-it','false-friends','word-builder','joke-quiz']).optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),sentenceLanguage:z.enum(['de','en']).optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional() }),
   z.object({ action:z.literal('restart'),rounds:z.number().int().min(1).max(10).optional(),immediate:z.boolean().optional() }),
   z.object({ action:z.literal('leave') }),
   z.object({ action:z.literal('heartbeat') }),

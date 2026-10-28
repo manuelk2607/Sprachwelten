@@ -1,4 +1,4 @@
-/** Editorial readiness gate, deliberately not connected to a premature UI filter.
+/** Editorial readiness gate shared by stored reviews and optional game stages.
  * A level needs two full ten-round games per category/language before exposure.
  * No automatic classification by length, popularity or guessed familiarity.
  */
@@ -19,7 +19,7 @@ export type EditorialDifficulty = {
   rationale: string;
 };
 export const minimumReviewedPerLevel = 20;
-const validReviewDate = (date: string) =>
+export const validReviewDate = (date: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(date) &&
   Number.isFinite(Date.parse(date)) &&
   new Date(date).toISOString().slice(0, 10) === date &&

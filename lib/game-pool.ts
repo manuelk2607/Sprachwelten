@@ -6,8 +6,9 @@ import {normalizedAnswer} from './challenges';
 import {prepareMeaningEntries} from './meaning-quiz';
 import {matchesGameLanguages} from './game-languages';
 
-export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'pronunciationLanguage' | 'attributionCategory' | 'tabooLanguages'|'sentenceLanguage'|'gameLanguages'>;
+export type PoolSettings = Pick<Game, 'mode' | 'locale' | 'meaningCategory' | 'pronunciationCategory' | 'pronunciationLanguage' | 'attributionCategory' | 'tabooLanguages'|'sentenceLanguage'|'gameLanguages'|'difficulty'>;
 export const poolKey = (game: PoolSettings) => JSON.stringify([game.mode, game.locale,
+  game.difficulty??null,
   game.gameLanguages?[...game.gameLanguages].sort():null,
   game.mode === 'meaning-quiz' ? game.meaningCategory ?? 'all' : null,
   game.mode === 'tongue-twisters' ? game.pronunciationCategory ?? 'both' : null,
@@ -26,6 +27,7 @@ export function promptIdentity(entry: Entry) {
 }
 
 export function playablePrompts(game: PoolSettings, prompts: Entry[]) {
+  if(game.difficulty)prompts=prompts.filter(entry=>entry.editorialDifficulty===game.difficulty);
   const candidates = game.mode === 'meaning-quiz'
     ? prepareMeaningEntries(prompts.filter(e=>matchesGameLanguages(game.mode,e,game.gameLanguages)), game.locale, game.meaningCategory ?? 'all') : prompts.filter(e=>matchesGameLanguages(game.mode,e,game.gameLanguages));
   const eligible = candidates.filter(entry =>

@@ -61,3 +61,17 @@ von Zustellung, Codebestätigung, Ablauf und falschen Codes benötigt ein vom Be
 autorisiertes erreichbares Postfach; die nicht zustellbaren QA-Adressen ersetzen
 das nicht. Keine echten Nachrichten oder neuen Postfachanbieter werden automatisch
 beauftragt. Der bekannte alte Testbenutzer ist separat in `PROGRESS.md` dokumentiert.
+
+## Einrichtung abgeschlossen am 28. Oktober 2026
+
+Dediziertes QA-Projekt `polished-wind-59150518`, leeres Auth-Template
+`br-damp-glitter-baqvjq5l`. Projektspezifischer Schlüssel im GitHub-Environment
+`qa`; Zugriff auf das Produktionsprojekt wurde ausdrücklich abgelehnt.
+Maximal 0,25 CU, Quoten 1.800 Compute-/3.600 Aktivsekunden und 200 MiB.
+Template bleibt ohne Anwendungstabellen und Benutzer. Kein Produktionsexport.
+
+Erster echter CI-Lauf erfolgreich: https://github.com/manuelk2607/Sprachwelten/actions/runs/40728056912
+Migrationen, PostgreSQL-Persistenz und echtes Managed Auth bestanden. Der aktuelle
+Runner enthält zusätzlich die synthetische redaktionelle Integrationssuite.
+OTP-Zustellung ist weiterhin nicht geprüft. Lokale QA-Schlüssel sind ignoriert
+und gehören niemals in Logs oder Git. Abgelaufene Testbranches nicht wiederverwenden.

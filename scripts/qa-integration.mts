@@ -11,7 +11,7 @@ function run(script: string) {
   // their historical project ID through a locally authenticated Neon CLI.
   const env = {
     ...process.env,
-    ...(script === "scripts/test-qa-auth.mts" ? {} : { TEST_NEON_BRANCH: "" }),
+    ...(['scripts/test-qa-auth.mts','scripts/test-editorial-integration.mts'].includes(script) ? {} : { TEST_NEON_BRANCH: "" }),
   };
   const result = spawnSync(process.execPath, ["--import", "tsx", script], {
     env,
@@ -36,6 +36,7 @@ if (process.argv.includes("--migrate-empty")) {
 run("scripts/test-learning-integration.mts");
 run("scripts/test-notebooks-integration.mts");
 run("scripts/test-game-redesign.mts");
+run('scripts/test-editorial-integration.mts');
 if (process.argv.includes("--auth")) run("scripts/test-qa-auth.mts");
 else
   console.log(

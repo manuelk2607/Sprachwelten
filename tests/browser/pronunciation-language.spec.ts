@@ -141,3 +141,28 @@ test("new pronunciation rooms default to the UI language and persist explicit mu
     ),
   ).toBe('["fr"]');
 });
+
+test('game difficulty is hidden without approval coverage and scoped to the selected languages',async({page})=>{
+ await page.route('**/api/rooms/languages?*',route=>route.fulfill({json:{languages:[{code:'de',count:40,reviewedCount:40},{code:'fr',count:40,reviewedCount:0}]}}));
+ await page.route('**/api/rooms/difficulties?*',route=>{
+  const languages=new URL(route.request().url()).searchParams.get('languages');
+  return route.fulfill({json:{levels:languages==='de'?['introductory']:[]}});
+ });
+ const ready=page.waitForResponse(r=>r.url().includes('/api/auth/get-session'));await page.goto('/');await ready;
+ await page.locator('.quick-start').getByRole('button',{name:'Raum erstellen',exact:true}).click();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog.getByRole('checkbox',{name:'Französisch (40)',exact:true})).toBeChecked();
+ await expect(dialog.getByRole('combobox',{name:'Spielstufe',exact:true})).toHaveCount(0);
+ await dialog.getByRole('checkbox',{name:'Französisch (40)',exact:true}).uncheck();
+ await dialog.getByRole('combobox',{name:'Spielstufe',exact:true}).click();
+ await page.getByRole('option',{name:'Einstieg',exact:true}).click();
+ await dialog.getByRole('textbox',{name:'Dein Spielname',exact:true}).fill('QA difficulty');
+ const sent:Record<string,unknown>[]=[];
+ await page.route('**/api/rooms',route=>{sent.push(route.request().postDataJSON());return route.fulfill({status:422,json:{error:'QA stopped before creating a real room.'}});});
+ await dialog.locator('form').getByRole('button',{name:'Raum erstellen',exact:true}).click();
+ await expect.poll(()=>sent.length).toBe(1);expect(sent[0].difficulty).toBe('introductory');
+ await dialog.getByRole('checkbox',{name:'Französisch (40)',exact:true}).check();
+ await expect(dialog.getByRole('combobox',{name:'Spielstufe',exact:true})).toHaveCount(0);
+ await dialog.locator('form').getByRole('button',{name:'Raum erstellen',exact:true}).click();
+ await expect.poll(()=>sent.length).toBe(2);expect(sent[1].difficulty).toBeUndefined();
+});

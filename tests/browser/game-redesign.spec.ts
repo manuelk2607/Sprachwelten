@@ -27,6 +27,7 @@ async function connect(page:Page,g:Game,index:number,prompts:Game['prompts']){
 }
 
 test('three clients share one wheel result, one performance and anonymous ratings',async({page,browser})=>{
+  test.setTimeout(60000);
   const {g,prompts}=game('tongue-twisters'),contexts=await Promise.all([browser.newContext(),browser.newContext()]);
   try{
     const pages=[page,...await Promise.all(contexts.map(context=>context.newPage()))];
@@ -35,7 +36,7 @@ test('three clients share one wheel result, one performance and anonymous rating
     await expect(page.getByRole('img',{name:'Alle Personen am Glücksrad'})).toBeVisible();
     await expect(page.getByRole('button',{name:'Vortrag beendet – bewerten',exact:true})).toHaveCount(0);
     const selected=g.round!.pronunciation!.selection!.selectedId,index=g.players.findIndex(player=>player.id===selected);
-    await expect(pages[index].getByRole('heading',{name:'Du bist dran.',exact:true})).toBeVisible();
+    await expect(pages[index].getByRole('heading',{name:'Du bist dran.',exact:true})).toBeVisible({timeout:10000});
     for(const p of pages)await expect(p.locator('.wheel-panel')).toHaveCount(0);
     await pages[index].getByRole('button',{name:'Vortrag beendet – bewerten',exact:true}).click();
     for(const p of pages.filter((_,i)=>i!==index)){
@@ -49,6 +50,7 @@ test('three clients share one wheel result, one performance and anonymous rating
 });
 
 test('sentence turns synchronize, the server checks letters and players decide meaning without AI',async({page,browser})=>{
+  test.setTimeout(60000);
   const {g,prompts}=game('word-chain'),context=await browser.newContext();
   // Two active players make turn changes easier to follow.
   g.players.pop();

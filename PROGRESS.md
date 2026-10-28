@@ -1,98 +1,101 @@
-# Sprachwelten – aktueller Stand, 27. Oktober 2026
+# Sprachwelten – Fortsetzungsstand, 28. Oktober 2026
 
-## Auftrag und Ausgangspunkt
+## Aktueller Auftrag
 
-Gezielte Restaufgaben und zusätzliche Qualitätsverbesserungen, Ausgangspunkt
-`7a46f24`, Feature-Branch `feature/quality-followup-20261027`. Bestehende Nutzer,
-Beiträge, Rechte und Spielstände erhalten. Veröffentlichung ausschließlich auf
-https://sprachwelten.maki26.workers.dev/ über `npm run deploy:cloudflare`.
-Historische Meilensteine/Tests stehen unverändert im
-[Archiv](docs/progress-archive-2026-10-27.md); alte Zwischenstände sind keine offenen Aufträge.
+Restaufgaben gezielt abschließen, funktionierende Features und Produktionsdaten
+bewahren. Feature-Branch `feature/editorial-qa-20261028`, Ausgangspunkt `28ad357`.
+Nur `manuelk2607/Sprachwelten`; veröffentlichen ausschließlich mit
+`npm run deploy:cloudflare` auf https://sprachwelten.maki26.workers.dev/.
+Historie: [Archiv](docs/progress-archive-2026-10-27.md).
 
-## Abgeschlossen
+## Neu implementiert – abschließende Freigabeprüfung läuft
 
-- Persönliche Vokabelhefte, explizite Sprachpaare mit kontrollierter Rückrichtung,
-  Schreibübungen, Karteikarten und dauerhafter richtungs-/kontogetrennter SRS sind
-  bereits veröffentlicht. Spiel-/Lernbeiträge, eigene Verwaltung und Moderation
-  sind getrennt; keine erneute Implementierung beginnen.
-- Mehrsprachige Spielauswahl, Zungenbrecher-Glücksrad, freie Wortketten mit
-  serverseitiger Buchstaben-/Peer-Sinnprüfung, faire Punkte, Hostwechsel,
-  Multiplayer-Replay-/Versionsschutz und Rematches bereits veröffentlicht.
-- „Zur Spielesammlung“ führt jetzt zu `/#spiele` bzw. `/en#spiele`, statt zur
-  Antwortsammlung im Lernbereich. DE/EN-Regression auf Desktop und Mobil.
-- Grammatikfilter zeigen ausschließlich passende Grammatikthemen. Automatische
-  Antwortsprache folgt der tatsächlichen Lernsprache, nicht der UI (z. B. I/İ im
-  Türkischen). Eingabefelder erhalten passende Sprachangaben; ältere Lückentext-
-  Übersetzungen ohne Lücke verwenden die gültige, gespeicherte Aufgabenfassung.
-- Zwei zusätzliche quellengeprüfte A1-Grammatikmodule mit acht selbst formulierten
-  Aufgaben: englisches be und deutsches sein/haben. Gültige Kurzformen sind
-  ausdrücklich hinterlegt. Seed ergänzt nur neue Inhalte; nichts wird überschrieben.
-- QA-Orchestrierung mit Produktions-/Host-/Auth-Guards und drei realen Repository-
-  Suiten. Optionaler Workflow für ein separates QA-Projekt mit leerem Auth-Template,
-  Ablauf nach einer Stunde, keine fremden PRs/Produktionszugänge. Einrichtung und
-  Einschränkungen: [isolated-integration.md](docs/isolated-integration.md).
-- Historische Migrationsfixtures sind bei normalen Repositorytests optional;
-  fehlende Fixtures werden ausdrücklich als nicht geprüft statt bestanden gemeldet.
-- Sicherheitsprüfung ohne Ausnahmen: GitHub hat GHSA-vfj7-8cjw-p6xm am 23. Oktober
-  zurückgezogen; aktueller vollständiger Audit ohne Befund. Neue/wiederkehrende
-  Tooling- und Runtime-Befunde blockieren gleichermaßen. Siehe [security.md](docs/security.md).
-- Redaktionelle Bereitschaftsprüfung verwirft ungültige Kalenderdaten, widersprüchliche
-  gleichzeitige Einstufungen und neuere zurückgezogene Freigaben. Keine willkürlichen
-  Spiel-Schwierigkeitsstufen aktiviert.
-- README, historische Spielideen-/Performance-Notizen und SEO-Seitenzahl aktualisiert;
-  öffentliche Sitemap enthält 32 Seiten. Historie ausgelagert, aktueller Arbeitsvorrat kompakt.
+- Separates, leeres QA-Projekt `polished-wind-59150518`, Auth-Template
+  `br-damp-glitter-baqvjq5l`. Projektspezifischer Schlüssel im GitHub-Environment
+  `qa`, Produktionszugriff damit ausdrücklich verweigert. CI-Variablen aktiv.
+  Maximal 0,25 CU, Quoten 1.800 Compute-/3.600 Aktivsekunden, 200 MiB.
+  Keine Produktionsdaten/Benutzer exportiert; Template leer lassen.
+- Erster **echter isolierter CI-Lauf erfolgreich**:
+  https://github.com/manuelk2607/Sprachwelten/actions/runs/40728056912
+  Migrationen, Lern-/Heft-/Spielpersistenz und Managed Auth einschließlich
+  Registrierung, Passwortfehler, Sitzung, Abmeldung und Replay bestanden.
+- Migration **026_editorial_difficulty.sql**: separate revisionsgebundene
+  Einstufungen und Historie; Admin-Verwaltung mit Quellen, Datum, Begründung und
+  ausdrücklicher fachlicher Freigabe. Parallele/veraltete Änderungen geschützt;
+  Inhaltsänderung oder Widerruf invalidiert die Freigabe.
+- Durchgängige optionale Spielstufen in Pool, Raum, Lobby und Startformular.
+  Nur bei mindestens 20 aktuellen Fachfreigaben je Sprache/Kategorie/Stufe;
+  SQL-Filter vor Stichprobe und Engine-Filter. Kategorie/Sprachwechsel löscht,
+  reine Rundenzahländerung und direkte Folgepartie erhalten die Auswahl.
+  CEFR separat; freie Wortketten/False Friends ohne irreführende Stufen.
+  **Keine produktiven Fachfreigaben erzeugt.** Siehe
+  [editorial-difficulty.md](docs/editorial-difficulty.md).
+- Neue synthetische Integrationssuite in CI: 20-Karten-Grenze, Sprach-/Kategorie-
+  trennung, echter Pool, Punkte/Folgepartie, konkurrierende Revisionen, Widerruf,
+  Inhaltsänderung/Löschung und Historie. Eigene Fixtures werden bereinigt.
+- Neue Auditbefunde: Better Auth auf zusammengehörige 1.7.14-Pakete, better-call
+  1.4.4/better-fetch 1.3.3 und Mail-Renderer 2.2.0 aktualisiert; letzterer entfernt
+  indirektes deepmerge. Keine Audit-Ausnahme. Installation, Typprüfung, Lint, 186 Unit-Tests, Übersetzungen, vollständiger Audit
+  und Offline-Build erfolgreich; Browserfälle erfolgreich nach gezielten Wiederholungen.
+  Nicht behaupten, dass damit Neons unabhängig verwalteter Auth-Dienst aktualisiert wurde.
+- Veraltete regionale/QA-Notizen abgeglichen. Zwei Mehrspieler-Browsertests erhalten
+  realistische Zeitgrenzen für vorhandene Wheel-/Polling-/Abstimmungsphasen.
 
-## Verifikation
+## Verifikation dieses Pakets
 
-183/183 Unit-Tests, 140/140 vollständige Desktop-/Mobilfälle sowie 16/16 gezielte
-Lernfälle bestanden. Typprüfung, Lint, Übersetzungsabdeckung, vollständiges Audit
-und Produktions-Build erfolgreich. Ein alter lokaler Kaltstart überschritt die
-Serverfrist; expliziter Offline-Server und Sitzungsbereitschaft beseitigten die
-Test-Startprobleme, ohne Anwendungsfehler zu verdecken.
+- Isolierte QA `br-wandering-breeze-baxn3n3e` (automatischer Ablauf 28. Oktober,
+  22:37 UTC): **alle 26 Migrationen**, echte Lern-/Heft-/Multiplayer-Suiten sowie
+  redaktionelle Integrationssuite und echtes Managed Auth bestanden.
+  Eigene Anwendungsfixtures bereinigt; synthetische Auth-Identität verbleibt nur
+  bis Branchablauf. Keine regulären Konten, Adminrechte oder Produktionsdaten verändert.
+- Vor abschließendem Abhängigkeitsupdate: 185 Unit-Tests bestanden; danach ein
+  zusätzlicher Zielsprachen-/SQL-Test ergänzt. Typprüfung, Lint, DE/EN-Abdeckung
+  und Offline-Build bestanden.
+- Gesamtbrowserlauf: 142/144 bestanden; beide fehlgeschlagenen Mehrspielerfälle
+  gezielt erneut erfolgreich (3/3), einschließlich Glücksrad, Wortkette und
+  reduzierter Bewegung. Admin-Einstufung und Stufenauswahl DE/EN auf Desktop/Mobil
+  bestanden. Kontrollierte HTTP-Antworten, keine echten KI-Aufrufe.
+- Nach installiertem Abhängigkeitsupdate: Typprüfung, Lint, **186/186 Unit-Tests**,
+  Übersetzungsabdeckung, vollständiger Audit ohne Befund und Offline-Build bestanden.
+  Gesamt Desktop/Mobil 143/144; ein Mobilfall durch gleichzeitige Build-/HMR-
+  Neuladungen unterbrochen, danach separat 1/1 erfolgreich. Künftige vollständige
+  CI führt Build und Browser sequenziell aus; deren Ergebnis noch abwarten.
 
-Echte isolierte PostgreSQL-Prüfungen bestanden: Lern-/Heft-/Kontentrennung,
-Sprachrichtungen, neue Grammatikmaterialien, Themenfilter, türkische Normalisierung,
-SRS, parallele Abgaben/Verschiebungen, Kartenaufdeckung, Mitgliedschaftsentzug,
-Glücksrad/Peer-Punkte/Wortketten, Versionsschutz, Heartbeats und Hostwechsel.
-Eigene erzeugte Daten/Räume bereinigt. Ziel `br-odd-king-b90o8w3l`, Host
-`ep-withered-sky-b936cqzb.c-7.eu-central-1.aws.neon.tech`, Ablauf 27. Oktober 20:00 UTC.
-Browserprüfungen verwenden kontrollierte HTTP-Antworten; keine echten KI-Aufrufe.
-QA-Managed-Auth/OTP ausdrücklich nicht als bestanden ausweisen.
+## Veröffentlichung noch offen
 
-## Veröffentlichung – abgeschlossen
+Produktion bestätigt: `calm-tooth-60944868` / `br-delicate-field-b96d9qc4`,
+Datenbank `sprachspiel`, Migration **025**, **24 Lernbeiträge**. Tabellen 026 fehlen.
+Aktiver vorheriger Code `67d07216736cfa9d71521153d652cc3d80bb6719`,
+Worker `5168180b-d783-42c5-ac04-21873604cae2`. Noch keine produktive Migration 026.
 
-Code-Commit `67d07216736cfa9d71521153d652cc3d80bb6719` auf GitHub `main`.
-Vollständige CI erfolgreich, einschließlich 183 Unit- und 140 Browserfällen:
-https://github.com/manuelk2607/Sprachwelten/actions/runs/40518439741
-Der neue isolierte Workflow wurde ohne QA-Konfiguration ausdrücklich übersprungen
-(nicht bestanden): https://github.com/manuelk2607/Sprachwelten/actions/runs/40518439666
+**Nächster konkreter Schritt:** lokale Prüfungen abgeschlossen, Commit und CI,
+dann versionierte Migration 026
+auf bestätigtem Produktionsziel, bestehender Deploymentweg und Live-Prüfung.
+Bestehende Secrets, Auth, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
 
-Produktionsziel `sprachspiel`/Migration 025 bestätigt. Genau zwei neue Grammatikmodule
-transaktional/idempotent ergänzt; beide IDs zurückgegeben. Jetzt vier Grammatikmodule,
-weiterhin alle 20 bisherigen Vokabelkarten einschließlich zehn Gegenkarten-Verweisen.
-Keine bestehende Karte überschrieben, keine neue Schema-Migration nötig.
-Worker erfolgreich veröffentlicht, Version `5168180b-d783-42c5-ac04-21873604cae2`.
-Bestehende Secrets, Auth-Ziel, R2, AI, Rate-Limits, Google-Tag und Cron erhalten.
+## Bereits vollständig vorhanden – nicht erneut implementieren
 
-Live bestätigt: Spielelinks DE/EN korrekt; neue Grammatikmodule mit jeweils vier
-Aufgaben und korrekter Antwortsprache; reine Grammatikthemen, kein anonymer
-Lernfortschritt/Autorenname. Beide Vokabelrichtungen unverändert zehn Karten und
-`no-store`. Sitemap 32 Seiten, robots.txt 200; private Hefte/Adminliste anonym 401,
-fremde Origin bei Heftmutation 403. Keine produktiven Testpartien, Testabgaben,
-Testhefte, neuen Konten oder KI-Aufrufe erzeugt. Keine Veröffentlichung mehr offen.
+- Persönliche Vokabelhefte mit Verwaltung, Suche, Übungen, expliziten Sprachpaaren,
+  kontrollierter Rückrichtung, konten-/richtungsgetrennter dauerhafter SRS und Statistik.
+- Getrennte Lern-/Spielbeiträge, Grammatikmodule/Themenfilter, sprachspezifische
+  Bewertung (auch Türkisch), gespeicherte akzeptierte Varianten, private Antworten.
+- Mehrsprachenauswahl, Zungenbrecher-Glücksrad/Peer-Punkte, freie Wortketten mit
+  Buchstabenprüfung und menschlicher Sinnbewertung; kein KI-Aufruf.
+- Multiplayer-Replay-/Versionsschutz, Heartbeats, Hostwechsel und gleiche Räume
+  für neue Spiele/Kategorien, keine Wiederverwendung bereits gespielter Karten.
+- „Zur Spielesammlung“ führt DE/EN zur Spieleübersicht. Frühere Lern-/Layout-
+  Verbesserungen und zwei zusätzliche A1-Grammatikmodule bereits veröffentlicht.
+- SEO 32 öffentliche Beschreibungsseiten, private Bereiche noindex und nicht in
+  Sitemap. Frühere vollständige CI: 183 Unit-/140 Browserfälle erfolgreich.
 
-## Verbleibend und extern blockiert
+## Verbleibende externe Aufgaben / Grenzen
 
-| Prio | Aufgabe / tatsächlicher Stand | Nächster konkreter Schritt |
+| Prio | Aufgabe | Nächster Schritt |
 | --- | --- | --- |
-| P1 | Altes temporäres QA-Konto: UUID `d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7`, Name „QA Sprachwelten – temporärer Integrationstest“, null Beiträge/Adminrechte erneut bestätigt. Reguläre Löschung meldet weiterhin `branch not found`. | In Neon Auth ausschließlich diese UUID manuell löschen. Keine SQL-Umgehung oder weiteren Produktions-Testkonten. |
-| P1 | Isolierte CI implementiert, aber noch nicht extern ausgeführt/aktiviert. Keine QA-Projektvariablen/Secrets vorhanden. | Separates leeres QA-Projekt/Auth-Template und projektspezifischen Schlüssel gemäß Anleitung einrichten; Workflow danach ausführen. Normale CI bleibt aktiv. |
-| P1 | OTP-Zustellung, echte Codebestätigung und Ablauf nicht geprüft. Schema-only-QA enthält zwar Auth-Struktur, aber keinen Dienst; reguläre Provisionierung scheitert mit 409 wegen bestehendem Schema. | Autorisiertes erreichbares Testpostfach und leeres QA-Auth-Template bereitstellen; keine Schemata löschen, keine Postfachanbieter automatisch beauftragen. |
-| P2 | Sechs Dialektkarten sind quellengeprüft, weiterhin `needsSpecialistReview`. Keine fachliche Zertifizierung erfinden. | Herkunft/Gebrauch/Bedeutungsvarianten und plausible falsche Antworten fachlich freigeben; siehe regionalen Prüfbericht. |
-| P2 | Spiel-Schwierigkeitsgrade: sichere Bereitschaftsprüfung vorhanden, noch keine gespeicherte redaktionelle Verwaltung oder Pool-/Raum-/UI-Auswahl. | Erst belastbare Einstufungen und mindestens 20 geprüfte Karten je Sprache/Kategorie/Stufe beschaffen, dann Speicherung und durchgängige Filter/Rematches umsetzen. CEFR-Lernniveaus bleiben separat. |
-| P3 | Search Console ist eingerichtet, technisches SEO funktioniert. Indexierungsstatus ist extern. | Im eigenen Google-Konto prüfen; keine wiederholten automatischen Indexierungsanfragen. |
+| P1 | Altes temporäres Produktions-QA-Konto `d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7`, „QA Sprachwelten – temporärer Integrationstest“: am 28. Oktober erneut eindeutig bestätigt, null Beiträge/Adminrechte. Reguläres Neon-Löschen weiterhin HTTP 404 „branch not found“. | In Neon Auth ausschließlich diese UUID manuell löschen. Keine SQL-Umgehung oder neuen Produktions-Testkonten. |
+| P1 | Echte OTP-Zustellung, Bestätigung und Ablauf ungetestet. Isoliertes Managed Auth funktioniert jetzt; frühere QA-Provisionierungsblockade ist erledigt. | Autorisiertes erreichbares Testpostfach bereitstellen; synthetische `.invalid`-Adressen ersetzen keinen Zustellungstest. Keine neuen Mailanbieter automatisch beauftragen. |
+| P2 | Sechs Dialektkarten quellengeprüft, weiterhin `needsSpecialistReview`; noch keine ausreichenden fachlichen Spielstufensammlungen. | Sprachwissenschaftliche Freigabe und begründete Einstufungen beschaffen. Technische Verwaltung ist implementiert, keine Freigaben erfinden. |
+| P3 | Search Console eingerichtet; Indexierungsstatus extern. | Im eigenen Google-Konto prüfen, keine wiederholten Indexierungsanfragen automatisieren. |
 
-Keine bestätigte P0-Störung. Weitere Skalierungsumbauten nur bei gemessenem
-Produktionsengpass. Sprachraum bleibt ausdrücklich außerhalb des Umfangs.
-Nach Abschluss der Veröffentlichung ist der nächste sinnvolle Schritt die QA-
-Einrichtung bzw. redaktionelle Freigabe, keine Wiederholung abgeschlossener Kernfeatures.
+Keine bestätigte P0-Anwendungsstörung. Neue Auditbefunde vor Veröffentlichung beheben.
+Weitere Skalierungsumbauten nur bei gemessenem Engpass. Sprachraum bleibt außerhalb.

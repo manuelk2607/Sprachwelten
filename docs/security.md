@@ -42,3 +42,24 @@ for ten players behind one connection plus a separate per-player/room allowance.
 Only public language and region registries use the shared 30-second cache.
 Region creation invalidates its local cache. Rooms, contribution details,
 account sessions and administration responses never enter this shared cache.
+
+## Security maintenance 2026-10-28
+
+The refreshed audit exposed Better Auth advisories GHSA-44jh-23m7-hpcf,
+GHSA-r4xp-prcw-77qf and GHSA-965c-763c-88jm (fixed from 1.7.7), plus
+GHSA-gcqx-w48m-w2h4 in deepmerge (no patched deepmerge release). Neon Auth
+currently pins the old packages. Override Better Auth, core, passkey and API-key
+together to 1.7.14, with matching better-call 1.4.4 and better-fetch 1.3.3. Keep
+this aligned set until upstream pins are patched. Do not introduce an audit waiver.
+
+The transitive React Email renderer is updated to 2.2.0, which uses html-to-text
+10 and deepmerge-ts instead of vulnerable deepmerge. No application mail provider
+or email-delivery configuration is changed. These are installed client/SDK
+updates; they do not assert that Neon’s independently managed Auth service was
+upgraded by this application. Direct managed Auth tests and simulated browser
+checks are reported separately; OAuth-provider flows and real OTP delivery are
+not claimed as tested.
+
+Advisories: https://github.com/advisories/GHSA-r4xp-prcw-77qf and
+https://github.com/advisories/GHSA-gcqx-w48m-w2h4. Audit policy remains strict for
+both runtime and tooling dependencies.

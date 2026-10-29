@@ -5,6 +5,9 @@ import { useI18n } from "@/lib/i18n";
 import { difficultyLevels } from "@/lib/editorial-difficulty";
 import {
   editorialReviewInput,
+  editorialReviewStatus,
+  editorialStatusLabels,
+  difficultyDescriptions,
   difficultyLabels,
   type StoredEditorialReview,
 } from "@/lib/editorial-review-input";
@@ -73,6 +76,21 @@ export function EditorialReviewEditor({ entry }: { entry: Entry }) {
           "Eine Spielstufe benötigt mindestens 20 fachlich geprüfte Karten je Sprache und Kategorie. Lernniveaus bleiben davon getrennt.",
         )}
       </p>
+      {state && (
+        <p>
+          {t(
+            editorialStatusLabels[
+              editorialReviewStatus(state.entryRevision, state.review)
+            ],
+          )}
+        </p>
+      )}
+      <p className="form-note">
+        {t(
+          "Jeder darf Beiträge erstellen. Ungeprüfte Beiträge bleiben in normalen Spielen verfügbar; die Prüfung betrifft nur redaktionelle Kennzeichnungen und Spielstufen.",
+        )}
+      </p>
+      <p className="form-note">{t(difficultyDescriptions[level])}</p>
       {state?.review && !state.effective && (
         <p className="notice">
           {t(

@@ -5,7 +5,12 @@ import { z } from "zod";
 const base = isolatedAuthTarget(process.env).href;
 const cookies = new Map<string, string>();
 const authResponse = z
-  .object({ user: z.object({ id: z.string() }).nullable().optional() })
+  .object({
+    user: z
+      .object({ id: z.string(), name: z.string().optional() })
+      .nullable()
+      .optional(),
+  })
   .nullable();
 async function request(path: string, body?: unknown, useCookies = true) {
   const res = await fetch(base + path, {
@@ -54,6 +59,17 @@ try {
   const login = await request("/sign-in/email", { email, password });
   assert.equal(login.status, 200);
   assert.equal(login.data?.user?.id, userId);
+  const updated = await request("/update-user", {
+    name: "Disposable QA profile updated",
+    image: null,
+  });
+  assert.equal(updated.status, 200);
+  const profile = await request("/get-session?disableCookieCache=true");
+  assert.equal(profile.data?.user?.id, userId);
+  assert.equal(profile.data?.user?.name, "Disposable QA profile updated");
+  console.log(
+    "PASS: real isolated managed profile update preserves the current account identity.",
+  );
   const session = await request("/get-session");
   assert.equal(session.data?.user?.id, userId);
   const anonymous = await request("/get-session", undefined, false);

@@ -46,6 +46,29 @@ export type StoredEditorialReview = Omit<
 > & { contentRevision: number };
 export const difficultyLabels = {
   introductory: "Einstieg",
-  intermediate: "Fortgeschritten",
-  advanced: "Anspruchsvoll",
+  intermediate: "Mittel",
+  advanced: "Fortgeschritten",
+} as const;
+
+export function editorialReviewStatus(
+  revision: number,
+  review: StoredEditorialReview | null,
+) {
+  if (!review) return "unreviewed" as const;
+  if (review.contentRevision !== revision) return "outdated" as const;
+  return review.reviewed ? ("approved" as const) : ("draft" as const);
+}
+export const editorialStatusLabels = {
+  unreviewed: "Noch nicht redaktionell geprüft",
+  outdated: "Erneute Prüfung erforderlich",
+  approved: "Redaktionell geprüft",
+  draft: "Einstufung ohne Freigabe",
+} as const;
+export const difficultyDescriptions = {
+  introductory:
+    "Einstieg: geläufige Bedeutung mit wenig zusätzlichem Kontextwissen.",
+  intermediate:
+    "Mittel: weniger geläufige Bedeutung oder zusätzlicher sprachlicher Kontext.",
+  advanced:
+    "Fortgeschritten: spezielles regionales oder kulturelles Wissen und feine Bedeutungsunterschiede.",
 } as const;

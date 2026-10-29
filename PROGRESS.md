@@ -1,4 +1,34 @@
-# Sprachwelten – Fortsetzungsstand, 28. Oktober 2026
+# Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
+
+## Laufendes Paket – Profil, Prüfstatus und SEO (29. Oktober)
+
+Branch `feature/profile-review-seo-20261029`, Basis `5d8481c`. Profilseite mit
+Anzeigename/optionalem HTTPS-Bild, Speichern/Abbrechen/Fehlerfeedback; vorhandenen
+Managed-Auth-Updateweg serverseitig auf eigenes Konto und erlaubte Felder begrenzt.
+Keine Schemaänderung und keine Änderungen an Beiträgen/Fortschritten. Bestehende
+UI-/Lernsprachpräferenzen bleiben getrennt; keine neue redundante Spracheinstellung.
+Prüfstatus unbewertet/Entwurf/geprüft/veraltet präzisiert, Spielstufen beschriftet
+mit Einstieg/Mittel/Fortgeschritten und redaktionellen Kriterien. Normale Beiträge
+und Spiele bleiben ohne Pflichtmoderation offen. Bestehende 20-Karten-Grenze bleibt.
+
+Testkonto: Benutzer meldet manuelle Löschung bzw. erneut „branch not found“ in Neon.
+Lesender SQL-Abgleich am 29. Oktober findet die bekannte UUID **noch einmal**.
+Keine Löschung versucht. Daher nicht als nachweislich entfernt markieren.
+Separates QA-Projekt erklärt; Benutzer hat ausdrücklich **Behalten** bestätigt.
+
+190 Unit-Tests, Typprüfung, Lint, DE/EN-Abdeckung, Audit ohne Befund und Build
+erfolgreich. Gezielte Desktop-/Mobilregression 22/22 einschließlich Profil,
+Adminstatus und Sprach-/Stufenfiltern; zusätzliche Profil-noindex-Prüfung 4/4.
+Doppelte Live-Region der statischen Statusanzeige korrigiert.
+SEO-Liveprüfung umfasst 32 öffentliche Seiten und private noindex-Routen.
+Wurzel-URL mit/ohne abschließenden Slash ist gleichwertig; Testnormalisierung korrigiert,
+keine unbegründete Canonical-Änderung. Keine erneuten Google-Indexierungsanträge.
+Google: 30 nicht indexierte Seiten gemeldet, Überprüfung bereits beantragt;
+Detailgründe und Ergebnis nur in Search Console sichtbar, keine 30 technischen Fehler behaupten.
+
+Nächster Schritt: Commit/CI mit
+echtem isolierten Profilupdate, bestehender Deploymentweg, abschließender Live-SEO-Test.
+Produktionsrelease darunter bleibt bis zur erneuten Veröffentlichung unverändert.
 
 ## Auftrag – technisch umsetzbares Paket abgeschlossen
 
@@ -86,8 +116,7 @@ als geprüft ausweisen. Vollständiges Live-Protokoll lokal:
 `/private/tmp/sprachwelten-live-20261028.log`.
 
 **Nächster konkreter Schritt:** autorisiertes erreichbares QA-Postfach für OTP
-bereitstellen bzw. das eindeutig identifizierte alte Testkonto in Neon Auth
-manuell entfernen. Danach fachliche Inhalte prüfen und ausreichend echte
+bereitstellen; die Abweichung beim alten Testkonto durch Neon klären. Danach fachliche Inhalte prüfen und ausreichend echte
 Einstufungen erfassen. Keine erneute Grundlagenanalyse oder Kern-Neuimplementierung.
 
 ## Bereits vollständig vorhanden – nicht erneut implementieren
@@ -109,7 +138,7 @@ Einstufungen erfassen. Keine erneute Grundlagenanalyse oder Kern-Neuimplementier
 
 | Prio | Aufgabe | Nächster Schritt |
 | --- | --- | --- |
-| P1 | Altes temporäres Produktions-QA-Konto `d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7`, „QA Sprachwelten – temporärer Integrationstest“: am 28. Oktober erneut eindeutig bestätigt, null Beiträge/Adminrechte. Reguläres Neon-Löschen weiterhin HTTP 404 „branch not found“. | In Neon Auth ausschließlich diese UUID manuell löschen. Keine SQL-Umgehung oder neuen Produktions-Testkonten. |
+| P1 | Altes QA-Konto `d8fb5e07-e5cd-4d8d-8841-f24d5aa5eaa7`: Benutzer meldet manuelle Löschung, Konsole meldet weiterhin „branch not found“. Lesender Abgleich 29. Oktober findet noch einen Auth-Datensatz. Keine erneute Löschung versucht. | Abweichung durch Neon prüfen lassen; Löschung noch nicht unabhängig bestätigt. |
 | P1 | Echte OTP-Zustellung, Bestätigung und Ablauf ungetestet. Isoliertes Managed Auth funktioniert jetzt; frühere QA-Provisionierungsblockade ist erledigt. | Autorisiertes erreichbares Testpostfach bereitstellen; synthetische `.invalid`-Adressen ersetzen keinen Zustellungstest. Keine neuen Mailanbieter automatisch beauftragen. |
 | P2 | Sechs Dialektkarten quellengeprüft, weiterhin `needsSpecialistReview`; noch keine ausreichenden fachlichen Spielstufensammlungen. | Sprachwissenschaftliche Freigabe und begründete Einstufungen beschaffen. Technische Verwaltung ist implementiert, keine Freigaben erfinden. |
 | P3 | Search Console eingerichtet; Indexierungsstatus extern. | Im eigenen Google-Konto prüfen, keine wiederholten Indexierungsanfragen automatisieren. |

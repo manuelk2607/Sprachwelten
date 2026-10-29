@@ -175,10 +175,10 @@ export function Header({
                 )}
               </a>
             )}
-            <span className="account-name">
+            <a href="/profile" className="button small outline profile-link" aria-label={t("Profil bearbeiten")}>
               <UserRound size={16} />
-              {session.user.name}
-            </span>
+              {t("Profil")}
+            </a>
             <button
               className="icon-button"
               aria-label={t("Abmelden")}

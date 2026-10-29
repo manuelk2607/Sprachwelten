@@ -22,7 +22,7 @@ test("every current game has reciprocal DE/EN guides and a unique public-only si
   assert.ok(pages.some(p=>p.url.endsWith('/lernen')));
   assert.ok(pages.some(p=>p.url.endsWith('/en/learn')));
   for (const page of pages)
-    assert.ok(!/\/api\/|\/room\/|\/admin|\/me(?:\/|$)/.test(page.url));
+    assert.ok(!/\/api\/|\/room\/|\/admin|\/profile|\/me(?:\/|$)/.test(page.url));
   for (const locale of ["de", "en"] as const)
     for (const game of publicGames) {
       const path = guidePath(game, locale),

@@ -7,8 +7,7 @@ nur noch den Namen, keine Mailadresse, Benutzer-ID, Rolle oder Bildadresse.
 ## Passwort
 
 Native Neon-Methode `changePassword`: aktuelles Passwort, neues Passwort (8–128
-Zeichen) und Wiederholung im Formular. Keine automatische Trim-/Unicode-Normalisierung
-von Passwörtern. Server erzwingt `revokeOtherSessions=true`. Andere Sitzungen werden
+Zeichen) und Wiederholung im Formular. Die App trimmt und normalisiert Passwörter nicht. Server erzwingt `revokeOtherSessions=true`. Andere Sitzungen werden
 widerrufen; aktuelle Sitzung bleibt gültig. Passwortfelder werden nach erfolgreicher
 Änderung oder Abbruch gelöscht, niemals in Entwürfe oder Browserstorage geschrieben.
 Für reine Google-Anmeldung ist der vorhandene Passwort-Reset aus dem Profil erreichbar.
@@ -53,3 +52,17 @@ ungetestet/blockiert. Die neuen Auth-Pfade verwenden den vorhandenen Proxy mit
 Sitzung, gleicher Origin, begrenztem JSON und strikten erlaubten Feldern.
 QA-Aktivzeit auf ausdrücklich autorisierte 7200 Sekunden erhöht; Compute 1800 Sekunden,
 0,25 CU und Storage unverändert. Kein neues Schema, keine produktiven Konten verändert.
+
+## Veröffentlichung
+
+Code `760d2bc4d156513e2aac3c0526364690377dfc20` auf main veröffentlicht.
+Worker `e34f209b-b017-4cc2-b51d-b96ac84726f5`, Schema unverändert 026.
+CI vollständig erfolgreich: 193 Unit-/154 Desktop-/Mobilfälle, Typ/Lint/Übersetzungen,
+Audit/Build; isolierte Passwort-/Sitzungstests real bestanden.
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40969002564
+https://github.com/manuelk2607/Sprachwelten/actions/runs/40969002439
+
+Live: Profil noindex, sensible Auth-Mutationen und kodierte Aliasse anonym 401/no-store,
+anonyme Sitzung 200/null. Kein Produktionskonto geändert, kein Code angefordert.
+Die Mailfunktion bleibt hinsichtlich tatsächlicher Provider-Freigabe und Zustellung
+extern offen; der QA-Dienst lehnt sie explizit ab. Dies ist kein bestandener Mailwechseltest.

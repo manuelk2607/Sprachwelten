@@ -1,6 +1,6 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
-## Laufendes Paket – E-Mail und Passwort statt Profilbild
+## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 
 Branch `feature/account-email-password`, Basis `c795bce`. Profilbild-Eingabe/
 Vorschau entfernt; bestehende Auth-Bildmetadaten werden nicht gelöscht. Profil-
@@ -31,8 +31,29 @@ Benutzer hat QA-Aktivzeit **7200 Sekunden** ausdrücklich freigegeben; per Neon
 angewendet. Compute-Limit weiterhin 1800 Sekunden, maximal 0,25 CU, 200 MiB.
 Keine Produktionsquoten geändert. Frühere Aktivgrenze 3600 führte zu „quota exceeded“.
 
-Nächster Schritt: unabhängig getesteten Stand committen/CI/veröffentlichen. Neons Mail-Sperre
-falls ungelöst klar als extern blockiert dokumentieren, keine volle OTP-Funktion behaupten.
+Code `760d2bc4d156513e2aac3c0526364690377dfc20` auf GitHub main.
+Beide CI-Läufe erfolgreich: **193 Unit-Tests, 154 vollständige Desktop-/Mobilfälle**,
+Typprüfung, Lint, Übersetzungsabdeckung, Audit und Build; echte isolierte Integration
+inklusive Passwort-/Sitzungsabläufen:
+- Checks: https://github.com/manuelk2607/Sprachwelten/actions/runs/40969002564
+- Integration: https://github.com/manuelk2607/Sprachwelten/actions/runs/40969002439
+
+Bestehender Cloudflare-Worker veröffentlicht, Version
+**e34f209b-b017-4cc2-b51d-b96ac84726f5**. Datenbank-/Auth-Produktionsziel vor Veröffentlichung
+bestätigt; keine Migration (026 bleibt), keine Änderung produktiver Konten oder
+Passwörter. Bestehende Bindings, Secrets und Cron erhalten.
+Live bestätigt: Profil 200/noindex; Passwort-/Mailanforderung-/Mailbestätigungs-
+Endpunkte und kodierter Pfadalias anonym 401/no-store; anonyme Managed-Auth-Sitzung
+200/null. Keine Mail angefordert und keine Credentials produktiv geändert.
+Protokoll `/private/tmp/sprachwelten-account-live.log`.
+
+**Nächster konkreter Schritt extern:** Neon zur Freischaltung von
+`emailOTP.changeEmail.enabled` im vorhandenen Managed-Auth-Projekt befragen; siehe
+`docs/account-settings-2026-10-29.md`. Konsole/API bieten aktuell keinen Schalter.
+QA meldet HTTP 400 „Change email with OTP is disabled“; produktive Freischaltung
+sowie echte Codezustellung/-bestätigung nicht nachgewiesen. Keine SQL-Umgehung,
+keine selbst erfundenen OTPs, keine neue Organisation oder Auth-Migration beginnen.
+Passwort- und Bildentfernungs-Paket ist abgeschlossen; keine Wiederholung nötig.
 
 ## Abgeschlossen – Profil, Prüfstatus und SEO (29. Oktober)
 

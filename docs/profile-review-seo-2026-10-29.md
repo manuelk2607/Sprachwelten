@@ -56,3 +56,20 @@ Kein erneuter Löschversuch. Die bekannte UUID ist trotz gemeldeter manueller L�
 noch im verwalteten Auth-Schema sichtbar; Nutzer bestätigt „branch not found“ auch
 in der Konsole. Daher bleibt die Löschung unabhängig unbestätigt. Keine SQL-Umgehung.
 Das separate QA-Projekt bleibt nach ausdrücklicher Nutzerentscheidung erhalten.
+
+## Abschluss
+
+Code `c651aacea0d627ec5cdc66b2809a34a4e1f29456`, veröffentlicht auf dem bestehenden
+Worker, Version `60a6599a-04c8-420d-bfdb-e45ff97e3971`. Keine neue Migration (026 bleibt).
+190 Unit-Tests, 148 vollständige Desktop-/Mobilfälle, Typprüfung, Lint,
+Übersetzungsabdeckung, Audit ohne Befund und Build erfolgreich. Echte isolierte
+Neon-Integration einschließlich Profilupdate, Identitätserhalt, Sitzungen/Logout
+und bisheriger Daten-/Spielpersistenz erfolgreich. UI-Browserfälle verwenden
+kontrollierte Antworten; keine produktive Profiländerung oder OTP-Zustellung getestet.
+
+CI: https://github.com/manuelk2607/Sprachwelten/actions/runs/40850391881
+Integration: https://github.com/manuelk2607/Sprachwelten/actions/runs/40850391814
+
+Abschließender reproduzierbarer Live-SEO-Test einschließlich Profil-noindex bestanden.
+Anonyme Profilmutationen sowie kodierte Aliasse 401/no-store; keine künstlichen
+Freigaben oder Produktivkonten angelegt. Bestehende Bindings/Secrets unverändert.

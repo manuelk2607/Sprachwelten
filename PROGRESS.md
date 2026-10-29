@@ -1,6 +1,6 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
-## Laufendes Paket – Profil, Prüfstatus und SEO (29. Oktober)
+## Abgeschlossen – Profil, Prüfstatus und SEO (29. Oktober)
 
 Branch `feature/profile-review-seo-20261029`, Basis `5d8481c`. Profilseite mit
 Anzeigename/optionalem HTTPS-Bild, Speichern/Abbrechen/Fehlerfeedback; vorhandenen
@@ -26,9 +26,32 @@ keine unbegründete Canonical-Änderung. Keine erneuten Google-Indexierungsantr�
 Google: 30 nicht indexierte Seiten gemeldet, Überprüfung bereits beantragt;
 Detailgründe und Ergebnis nur in Search Console sichtbar, keine 30 technischen Fehler behaupten.
 
-Nächster Schritt: Commit/CI mit
-echtem isolierten Profilupdate, bestehender Deploymentweg, abschließender Live-SEO-Test.
-Produktionsrelease darunter bleibt bis zur erneuten Veröffentlichung unverändert.
+Code `c651aacea0d627ec5cdc66b2809a34a4e1f29456` auf GitHub main.
+Beide CI-Läufe erfolgreich, einschließlich 190 Unit-/148 Desktop-/Mobilfällen
+und echtem isoliertem Managed-Auth-Profilupdate:
+- https://github.com/manuelk2607/Sprachwelten/actions/runs/40850391881
+- https://github.com/manuelk2607/Sprachwelten/actions/runs/40850391814
+
+Veröffentlicht auf bestehendem Worker:
+**60a6599a-04c8-420d-bfdb-e45ff97e3971**.
+Keine neue Datenbankmigration, Schema bleibt 026. Bestehende Secrets, Auth-Ziel,
+Inhalte, Lernstände, Rechte, R2/AI, Rate-Limits, Google-Tag und Cron erhalten.
+
+Live-Prüfung bestanden: alle 32 öffentlichen Seiten mit 200, konsistenten Canonicals,
+passenden DE/EN-hreflang-Zielen, Titel/Beschreibung und ohne noindex; Sitemap und
+robots korrekt. Profil, eigene Beiträge, Admin und Raumseite noindex und nicht in
+Sitemap. Anonyme Profiländerung (auch kodierter Pfadalias) 401/no-store, anonyme
+Managed-Auth-Sitzung 200/null; keine ungeprüften Spielstufen freigegeben.
+Echte Profiländerung ausschließlich in isolierter QA geprüft (Identität erhalten),
+Browserprüfungen mit kontrollierten HTTP-Antworten; keine produktiven Konten verändert.
+Keine KI-Aufrufe und keine Google-Indexierungsanträge.
+
+**Nächste Schritte ausschließlich extern:** Neon-Verwaltungsfehler beim eindeutig
+identifizierten alten Testkonto klären (keine erneute Löschung versuchen), laufende
+Search-Console-Überprüfung abwarten; autorisiertes QA-Postfach für echte OTP-Zustellung
+bereitstellen und belegte redaktionelle Einstufungen erfassen. Keine erneute
+Implementierung des Profils/Prüfsystems oder pauschale SEO-Änderungen beginnen.
+Der folgende Abschnitt dokumentiert den vorherigen Release vom 28. Oktober.
 
 ## Auftrag – technisch umsetzbares Paket abgeschlossen
 

@@ -1,5 +1,5 @@
 import { account } from "@/lib/http";
-import { updateOwnProfile, isProfileUpdatePath } from "@/lib/profile-handler";
+import { updateOwnProfile, accountMutationSchema } from "@/lib/profile-handler";
 import { getAuth } from "@/lib/auth/server";
 type Handler = (
   request: Request,
@@ -8,9 +8,13 @@ type Handler = (
 const handler =
   (method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"): Handler =>
   async (request, context) => {
-    if (isProfileUpdatePath((await context.params).path))
-      return updateOwnProfile(request, account, (validated) =>
-        getAuth().handler().POST(validated, context),
+    const schema = accountMutationSchema((await context.params).path);
+    if (schema)
+      return updateOwnProfile(
+        request,
+        account,
+        (validated) => getAuth().handler().POST(validated, context),
+        schema,
       );
     try {
       return await getAuth().handler()[method](request, context);

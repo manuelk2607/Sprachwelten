@@ -61,7 +61,6 @@ try {
   assert.equal(login.data?.user?.id, userId);
   const updated = await request("/update-user", {
     name: "Disposable QA profile updated",
-    image: null,
   });
   assert.equal(updated.status, 200);
   const profile = await request("/get-session?disableCookieCache=true");
@@ -69,6 +68,56 @@ try {
   assert.equal(profile.data?.user?.name, "Disposable QA profile updated");
   console.log(
     "PASS: real isolated managed profile update preserves the current account identity.",
+  );
+  const other = await fetch(base + "/sign-in/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: new URL(base).origin,
+    },
+    body: JSON.stringify({ email, password }),
+    signal: AbortSignal.timeout(30000),
+  });
+  assert.equal(other.status, 200);
+  const otherCookie = other.headers
+    .getSetCookie()
+    .map((raw) => raw.split(";")[0])
+    .join("; ");
+  assert.ok(
+    (
+      await request("/change-password", {
+        currentPassword: password + "wrong",
+        newPassword: password + "new",
+        revokeOtherSessions: true,
+      })
+    ).status >= 400,
+  );
+  assert.equal(
+    (
+      await request("/change-password", {
+        currentPassword: password,
+        newPassword: password + "new",
+        revokeOtherSessions: true,
+      })
+    ).status,
+    200,
+  );
+  const revoked = await fetch(base + "/get-session?disableCookieCache=true", {
+    headers: { Cookie: otherCookie },
+    signal: AbortSignal.timeout(30000),
+  });
+  assert.ok(!authResponse.parse(await revoked.json())?.user);
+  await request("/sign-out", {});
+  assert.ok(
+    (await request("/sign-in/email", { email, password })).status >= 400,
+  );
+  assert.equal(
+    (await request("/sign-in/email", { email, password: password + "new" }))
+      .status,
+    200,
+  );
+  console.log(
+    "PASS: real QA password change, wrong current password rejection, old password invalidation, new password login and other-session revocation.",
   );
   const session = await request("/get-session");
   assert.equal(session.data?.user?.id, userId);

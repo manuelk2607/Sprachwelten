@@ -67,7 +67,7 @@ beauftragt. Der bekannte alte Testbenutzer ist separat in `PROGRESS.md` dokument
 Dediziertes QA-Projekt `polished-wind-59150518`, leeres Auth-Template
 `br-damp-glitter-baqvjq5l`. Projektspezifischer Schlüssel im GitHub-Environment
 `qa`; Zugriff auf das Produktionsprojekt wurde ausdrücklich abgelehnt.
-Maximal 0,25 CU, Quoten 1.800 Compute-/3.600 Aktivsekunden und 200 MiB.
+Maximal 0,25 CU, Quoten 1.800 Compute-/7.200 Aktivsekunden und 200 MiB.
 Template bleibt ohne Anwendungstabellen und Benutzer. Kein Produktionsexport.
 
 Erster echter CI-Lauf erfolgreich: https://github.com/manuelk2607/Sprachwelten/actions/runs/40728056912
@@ -75,3 +75,7 @@ Migrationen, PostgreSQL-Persistenz und echtes Managed Auth bestanden. Der aktuel
 Runner enthält zusätzlich die synthetische redaktionelle Integrationssuite.
 OTP-Zustellung ist weiterhin nicht geprüft. Lokale QA-Schlüssel sind ignoriert
 und gehören niemals in Logs oder Git. Abgelaufene Testbranches nicht wiederverwenden.
+
+Am 29. Oktober hat der Benutzer die QA-Aktivzeitgrenze von 3.600 auf 7.200 Sekunden
+ausdrücklich freigegeben. Compute-Obergrenze 1.800 Sekunden, 0,25 CU und Storage bleiben
+unverändert. Die alte Grenze blockierte weitere Tests mit `quota exceeded`.

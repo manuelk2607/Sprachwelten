@@ -18,10 +18,9 @@ const req = (data: unknown, origin = "https://example.test") =>
     },
     body: JSON.stringify(data),
   });
-test("profile accepts bounded names and optional HTTPS images, rejects identity/role/email changes", () => {
-  assert.deepEqual(profileInput.parse({ name: " Manuel ", image: "" }), {
+test("profile accepts bounded names, rejects image and identity/role/email changes", () => {
+  assert.deepEqual(profileInput.parse({ name: " Manuel " }), {
     name: "Manuel",
-    image: null,
   });
   for (const data of [
     { name: "" },

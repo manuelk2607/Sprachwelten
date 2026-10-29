@@ -1,5 +1,39 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## Laufendes Paket – E-Mail und Passwort statt Profilbild
+
+Branch `feature/account-email-password`, Basis `c795bce`. Profilbild-Eingabe/
+Vorschau entfernt; bestehende Auth-Bildmetadaten werden nicht gelöscht. Profil-
+Namensänderung akzeptiert ausschließlich den Namen. Passwortänderung mit aktuellem
+Passwort, Wiederholung, 8–128 Zeichen, zwingender Abmeldung anderer Sitzungen;
+Passwörter nur im Arbeitsspeicher und nach Erfolg/Abbruch gelöscht.
+Eigener Mailwechsel über native Neon-OTP-Endpunkte mit gebundener Zieladresse,
+Bestätigungscode, Wiederholen/Abbruch und ausdrücklicher Fehleranzeige. Direkte
+E-Mail-/Rollen-/Zielkontoänderung über `update-user` bleibt verboten. Alle neuen
+Mutationen haben Sitzungs-, Origin-, Größen- und Schemaprüfung inklusive Pfadaliassen.
+
+193 Unit-Tests, 10 gezielte Desktop-/Mobilfälle, Typprüfung, Lint, DE/EN-Abdeckung,
+Audit ohne Befund und Build bestanden. Echte isolierte Auth-Prüfung in
+`br-long-sky-batt1ulp`: falsches aktuelles Passwort, tatsächlicher Passwortwechsel,
+altes Passwort ungültig, neues Passwort gültig, andere Sitzung widerrufen, eigene
+Identität/Sitzung/Logout erhalten. Synthetische `.invalid`-Konten nur in ablaufender QA.
+Keine produktiven Konten geändert. QA-Zweig läuft automatisch nach einer Stunde ab.
+
+**Externe Einschränkung Mailwechsel:** QA-Dienst antwortet tatsächlich mit HTTP 400
+„Change email with OTP is disabled“. Es gibt in Neons dokumentiertem OpenAPI-/CLI-
+Konfigurationsmodell kein Feld für `emailOTP.changeEmail.enabled`. Nicht durch SQL,
+eigene OTPs oder einen sofortigen ungeprüften Mailwechsel umgehen. Benutzerlogin im
+richtigen Projekt anschließend erfolgt; QA-Konsole unter `settings/auth` vollständig
+lesend geprüft: kein Mailwechsel-Schalter vorhanden. Keine Auth-Einstellung verändert.
+Produktive Freischaltung und echte OTP-Zustellung/Bestätigung nicht als geprüft ausweisen.
+
+Benutzer hat QA-Aktivzeit **7200 Sekunden** ausdrücklich freigegeben; per Neon
+angewendet. Compute-Limit weiterhin 1800 Sekunden, maximal 0,25 CU, 200 MiB.
+Keine Produktionsquoten geändert. Frühere Aktivgrenze 3600 führte zu „quota exceeded“.
+
+Nächster Schritt: unabhängig getesteten Stand committen/CI/veröffentlichen. Neons Mail-Sperre
+falls ungelöst klar als extern blockiert dokumentieren, keine volle OTP-Funktion behaupten.
+
 ## Abgeschlossen – Profil, Prüfstatus und SEO (29. Oktober)
 
 Branch `feature/profile-review-seo-20261029`, Basis `5d8481c`. Profilseite mit

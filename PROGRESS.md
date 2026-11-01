@@ -1,4 +1,34 @@
-# Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
+# Sprachwelten – Fortsetzungsstand, 1. November 2026
+
+## Inhalte – schwedische Redewendungen und Jugendwörter
+
+Über das bestehende, angemeldete Manuel-Konto wurden in Produktion **18 neue
+Community-Beiträge** angelegt: alle **10** noch fehlenden Redewendungen aus der
+geprüften View-Stockholm-Liste sowie **8** noch fehlende historische deutsche
+Jugendwörter aus der Langenscheidt-Jahresübersicht. Jeder Eintrag hat vier
+inhaltlich unterschiedliche DE-/EN-Antworten, `Manuel` als sichtbare
+Beitragsangabe, die jeweilige Quelle und die echte Konto-ID; keine redaktionelle
+Freigabe oder Schwierigkeitsstufe wurde erfunden. Drei bereits vorhandene
+schwedische Ausdrücke und sechs bereits vorhandene Jugendwörter wurden als
+Dubletten übersprungen.
+
+Produktionsprüfung: 18/18 Beiträge dem richtigen Konto zugeordnet, Status
+`community`, vier Antwortmöglichkeiten, DE und EN vollständig und je Sprache
+eindeutig. Die vorbereitete Gesamtmenge von 22 neuen Beiträgen besteht die
+vorhandene `entryInput`-Validierung; alle Antwortsets bestehen die
+Eindeutigkeitsprüfung. 14 gezielte Unit-Tests zu Antwortvalidierung,
+Sprachfassungen, verdeckten Lösungen, Mischung und Spielauswertung bestanden.
+Bestehende Daten wurden ausschließlich gelesen; neue
+Beiträge liefen über das öffentliche, authentifizierte Formular samt
+Rate-Limit und serverseitiger Validierung.
+
+**Offen wegen des bestehenden Limits von 20 Kontobeiträgen pro Stunde:**
+`Swag`, `Niveaulimbo`, `hartzen` und `Gammelfleischparty`. `Swag` liegt bereits
+vollständig als lokaler Browserentwurf vor, wurde aber nicht veröffentlicht.
+Das laufende Limitfenster endet am 1. November um 16:28:46 UTC; keine Umgehung
+oder direkte Datenbankeinfügung verwenden. Nächster Schritt: nach Ablauf über
+das angemeldete Formular die vier vorbereiteten Beiträge veröffentlichen und
+dieselbe Produktionsprüfung erneut ausführen.
 
 ## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 

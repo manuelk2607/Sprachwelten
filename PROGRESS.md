@@ -29,7 +29,13 @@ Typprüfung, Lint und Build bestanden (bestehende Framework-/Sourcemap-Warnungen
 Noch keine realen Queue-POSTs; echte Login-/Netzfehler-/Parallelprozessintegration
 nicht behaupten. Keine Datenbankmigration erforderlich.
 
-Nächster Schritt: Backendänderungen veröffentlichen; danach autorisierte lokale
+Commit `4b751c6` sichert das vollständige vorbereitete Paket. Deployment mit
+`npm run deploy:cloudflare` versucht, aber vor Veröffentlichung abgebrochen:
+kein nutzbarer Cloudflare-Zugang im nichtinteraktiven Prozess (Wrangler verlangt
+`CLOUDFLARE_API_TOKEN`). Kein temporäres Konto oder Ersatz-Worker angelegt.
+
+Nächster Schritt: bestehenden Cloudflare-Zugang wiederherstellen und
+Backendänderungen veröffentlichen; danach autorisierte lokale
 Kontozugangsdaten bereitstellen und `--publish` starten. `.env.auth-test.local`
 ist aktuell nicht vorhanden. Der Lauf stoppt bei fehlender Anmeldung oder noch
 nicht bereitgestelltem Quoten-Endpunkt vor der ersten Veröffentlichung.

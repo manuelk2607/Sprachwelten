@@ -1,9 +1,10 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
+import type { LoggingFunction, RolldownLog } from "rolldown";
+import hostingConfig from "./.openai/hosting.json" with { type: "json" };
 import { readExecutionProfile } from "./scripts/execution-profile.mts";
-import { sites } from "./build/sites-vite-plugin";
-import { readLimitBindings } from "./lib/read-guard";
+import { sites } from "./build/sites-vite-plugin.ts";
+import { readLimitBindings } from "./lib/read-guard.ts";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -60,6 +61,31 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    // vinext currently emits two known warnings from its own generated
+    // modules. Keep warnings from project code visible while omitting only
+    // these third-party bundler diagnostics from the build output.
+    build: {
+      rollupOptions: {
+        onwarn(warning: RolldownLog, warn: LoggingFunction) {
+          const message = warning.message ?? "";
+          const fromVinext =
+            (typeof warning.id === "string" &&
+              (warning.id.includes("node_modules/vinext/") ||
+                warning.id.includes("virtual:vinext"))) ||
+            (typeof warning.plugin === "string" &&
+              (warning.plugin.includes("vinext") || warning.plugin.startsWith("rsc:"))) ||
+            message.includes("rsc:");
+          const knownVinextWarning =
+            fromVinext &&
+            (warning.code === "INEFFECTIVE_DYNAMIC_IMPORT" ||
+              warning.code === "SOURCEMAP_BROKEN" ||
+              message.includes("rsc:inject-async-local-storage") ||
+              message.includes("rsc:virtual:vite-rsc/assets-manifest"));
+
+          if (!knownVinextWarning) warn(warning);
+        },
+      },
+    },
     server: {
       ...(managedLinux
         ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] }

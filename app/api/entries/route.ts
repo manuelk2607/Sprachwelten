@@ -3,6 +3,7 @@ import { entryInput } from '@/lib/content';
 import { body, respond, safe } from '@/lib/http';
 import {contributor,limitContribution,withContributor} from '@/lib/contributor';
 import { addEntry, listEntries } from '@/db/repository';
+import {checkPublicationOwner} from '@/lib/contribution-publication';
 export const GET = (request: Request) => safe(async () => {
   const q = new URL(request.url).searchParams;
   const kind=q.get('kind')??'', language=q.get('language')??'', search=(q.get('q')??'').slice(0,100);
@@ -10,6 +11,9 @@ export const GET = (request: Request) => safe(async () => {
   return respond({ entries: await listEntries(kind,language,search,offset) });
 });
 export const POST = (request: Request) => safe(async () => {
-  const input=await body(request,entryInput.refine(v=>!['vocabulary','grammar'].includes(v.kind),'Bitte Lernbeiträge über das Lernformular einreichen.')),user=await contributor(request);await limitContribution(request,user,'entry');
+  const input=await body(request,entryInput.refine(v=>!['vocabulary','grammar'].includes(v.kind),'Bitte Lernbeiträge über das Lernformular einreichen.')),user=await contributor(request);
+  const expectedOwner=request.headers.get('x-contribution-owner');
+  checkPublicationOwner(expectedOwner,user);
+  await limitContribution(request,user,'entry');
   const entry=await addEntry(input,user.id,user.name);return withContributor(respond({entry:publicEntry(entry)},201),request,user);
 });

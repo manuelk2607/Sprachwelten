@@ -1,5 +1,39 @@
 # Sprachwelten – Fortsetzungsstand, 1. November 2026
 
+## Veröffentlichungswarteschlange vorbereitet
+
+`publication-queue.json`: **44 pending, 0 published, 0 failed** (dieses Paket).
+Enthalten: vier restliche Jugendwörter sowie die ausdrücklich zur Vorbereitung
+freigegebenen 20 Gaming- und 20 Hochschulbegriffe. Die zuvor gespeicherten 18
+Beiträge bleiben separat abgeschlossen. Produktionsbestand lesend abgeglichen;
+mehrdeutige Begriffe durch Kontext präzisiert, Ablenkungsantworten verbessert und
+alle vier Antworten in DE/EN ergänzt. Keine erfundenen redaktionellen Freigaben.
+
+Manueller, wiederaufnehmbarer Lauf: `node --import tsx scripts/publish-queue.mts`
+prüft lokal; `--publish` meldet sich mit lokal bereitgestellten autorisierten
+Kontodaten an und arbeitet bis zur Restquote. Keine Zugangsdaten werden gespeichert.
+Vor jedem POST Dubletten- und Quotenprüfung; Status vor Versand atomar sichern,
+anschließend erneut lesen und Inhalt/Bearbeitungsrecht prüfen. Unklare Ausgänge
+bleiben `failed`; ausdrücklich mit `--retry-failed` nach Fehlerprüfung fortsetzen.
+Kontoprüfung im Server verhindert Gastbeiträge bei zwischenzeitlichem Sitzungsablauf.
+Details/Startanleitung: `docs/publication-queue.md`.
+
+Die anfängliche Sperre bis 16:28:48 UTC ist abgelaufen. Vor jedem weiteren POST
+liest der neue Endpunkt `/api/me/contribution-limit` die tatsächliche Kontoquote.
+Der bestehende Cron hat keine Benutzersitzung; keine automatische Veröffentlichung
+ohne gestarteten Prozess oder dauerhafte Kontozugangsdaten eingerichtet.
+
+Prüfungen: vollständige bestehende Unit-Suite bestanden; zusätzlich fünf gezielte
+Tests zu Queue-Integrität, Wiederaufnahme, Kontoschutz und exakter Limitgrenze.
+Typprüfung, Lint und Build bestanden (bestehende Framework-/Sourcemap-Warnungen).
+Noch keine realen Queue-POSTs; echte Login-/Netzfehler-/Parallelprozessintegration
+nicht behaupten. Keine Datenbankmigration erforderlich.
+
+Nächster Schritt: Backendänderungen veröffentlichen; danach autorisierte lokale
+Kontozugangsdaten bereitstellen und `--publish` starten. `.env.auth-test.local`
+ist aktuell nicht vorhanden. Der Lauf stoppt bei fehlender Anmeldung oder noch
+nicht bereitgestelltem Quoten-Endpunkt vor der ersten Veröffentlichung.
+
 ## Inhalte – schwedische Redewendungen und Jugendwörter
 
 Über das bestehende, angemeldete Manuel-Konto wurden in Produktion **18 neue

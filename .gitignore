@@ -62,3 +62,7 @@ next-env.d.ts
 
 /test-results/
 /playwright-report/
+
+# Runtime lock and atomic staging file contain no credentials.
+/publication-queue.json.lock
+/publication-queue.json.tmp

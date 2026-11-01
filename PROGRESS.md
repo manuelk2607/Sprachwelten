@@ -1,4 +1,31 @@
-# Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
+# Sprachwelten – Fortsetzungsstand, 1. November 2026
+
+## CI-Korrektur – letzter fehlgeschlagener Actions-Lauf
+
+Run `41350148914` auf `codex/drafts-reports-taboo-local` scheiterte im
+vollständigen Abhängigkeitsaudit, bevor Lint, Tests und Build liefen. Ursache war
+kein GitHub-/Netzfehler: Der Branch basierte auf `b617a17` und führte dadurch
+bereits behobene Better-Auth-, Deepmerge-, Fast-URI-, Undici- und Zod-Versionen
+wieder ein. Der aktuelle Hauptstand wurde ohne Überschreiben der Branchänderungen
+zusammengeführt. Zusätzlich wurde das neu veröffentlichte Minimatch-Advisory
+`GHSA-g3hv-75wg-m249` durch die gepatchte transitive Version 11.0.3 geschlossen;
+keine Audit-Ausnahme und keine abgeschwächte Prüfung.
+
+Beim vollständigen lokalen Browserlauf wurde unabhängig davon eine echte
+Hydrations-/Weiterleitungsrace für den alten Link `/#entdecken` sichtbar. Die
+Weiterleitung nach `/lernen#entdecken` beziehungsweise `/en/learn#entdecken`
+läuft nun bereits im ausgelieferten Dokument und bleibt zusätzlich durch den
+bestehenden Client-Fallback abgesichert. 153 weitere Desktop-/Mobilfälle
+bestanden; der betroffene Desktopfall bestand anschließend 5/5 parallele
+Wiederholungen. Der erste lokale Browserstart innerhalb der macOS-App-Isolation
+scheiterte ausschließlich am verweigerten Chromium-Mach-Port; außerhalb dieser
+Isolation lief die Suite regulär.
+
+Lokal bestanden: vollständiges Abhängigkeitsaudit, Lint, DE/EN-Abdeckung,
+Typprüfung, 193 Unit-Tests und Offline-Build. Vollständiger Browserlauf vor dem
+Race-Fix: 153/154; gezielte Verifikation nach dem Fix: 5/5. Nächster Schritt:
+Commit pushen und den dadurch gestarteten Actions-Lauf bis zum tatsächlichen
+Ergebnis prüfen; Erfolg erst bei grüner vollständiger CI dokumentieren.
 
 ## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 

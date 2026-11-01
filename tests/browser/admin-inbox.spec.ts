@@ -316,3 +316,32 @@ test("the unread filter combines with search, clears hidden selections and remov
 });
 
 test.beforeEach(async({page})=>{await page.route("**/api/admin/reports?*",route=>route.fulfill({json:{reports:[]}}));});
+
+test('editorial difficulty starts unapproved, saves revisions explicitly and can withdraw approval without editing content',async({page})=>{
+ await adminInbox(page);
+ let review:Record<string,unknown>|null=null,revision=0;
+ const submissions:Record<string,unknown>[]=[];
+ await page.route('**/api/admin/entries/*/difficulty',route=>{
+  if(route.request().method()==='PUT'){
+   const data=route.request().postDataJSON();expect(data.entryRevision).toBe(0);expect(data.reviewRevision).toBe(revision);submissions.push(data);revision++;
+   review={...data,contentRevision:0,reviewRevision:revision};return route.fulfill({json:{reviewRevision:revision}});
+  }
+  return route.fulfill({json:{entryRevision:0,kind:'word',language:'de',review,effective:review?.reviewed??false,availability:{counts:{introductory:review?.reviewed?1:0}}}});
+ });
+ await page.getByText('Neueste Beiträge',{exact:false}).click();
+ await page.locator('.inbox-list').getByRole('button',{name:entries[0].phrase,exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Beitrag bearbeiten',exact:true});
+ await dialog.getByText('Redaktionelle Spielstufe',{exact:true}).click();
+ const editor=dialog.locator('.editorial-review');
+ await expect(editor.getByRole('button',{name:'Einstufung speichern',exact:true})).toBeVisible();
+ const approval=editor.getByRole('checkbox');await expect(approval).not.toBeChecked();
+ await editor.getByRole('textbox',{name:'Quellen (eine HTTPS-Adresse pro Zeile)',exact:true}).fill('https://www.duden.de/rechtschreibung/Wort');
+ await editor.getByRole('textbox',{name:'Begründung der Einstufung',exact:true}).fill('Die gespeicherte Aufgabe wurde anhand der angegebenen Quelle geprüft.');
+ await editor.getByRole('button',{name:'Einstufung speichern',exact:true}).click();
+ await expect(editor.getByRole('status')).toHaveText('Einstufung gespeichert.');expect(submissions[0].reviewed).toBe(false);
+ await approval.check();await editor.getByRole('button',{name:'Einstufung speichern',exact:true}).click();
+ await expect.poll(()=>submissions.length).toBe(2);expect(submissions[1].reviewed).toBe(true);
+ await expect(editor.getByRole('status')).toHaveText('Einstufung gespeichert.');await approval.uncheck();
+ await editor.getByRole('button',{name:'Einstufung speichern',exact:true}).click();await expect.poll(()=>submissions.length).toBe(3);expect(submissions[2].reviewed).toBe(false);
+ await expect(dialog.locator('[name="phrase"]')).toHaveValue(entries[0].phrase);
+});

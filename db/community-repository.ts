@@ -13,11 +13,11 @@ export async function ownsEntry(id: string, userId: string) {
     ).length === 1
   );
 }
-export async function ownEntries(userId: string, offset: number, query = "") {
+export async function ownEntries(userId: string, offset: number, query = "",area:'play'|'learn'='play') {
   const pattern = "%" + query.replace(/[\\%_]/g, "\\$&") + "%";
   const rows = await database().query(
-    `SELECT ${fields} FROM content_entries WHERE author_id=$1 AND deleted_at IS NULL AND ($3='%%' OR concat_ws(' ',phrase,literal,meaning,hint,sense,translations::text,challenge::text) ILIKE $3) ORDER BY created_at DESC,id LIMIT 31 OFFSET $2`,
-    [userId, offset, pattern],
+    `SELECT ${fields} FROM content_entries WHERE author_id=$1 AND deleted_at IS NULL AND ((kind IN ('vocabulary','grammar'))=$4) AND ($3='%%' OR concat_ws(' ',phrase,literal,meaning,hint,sense,translations::text,challenge::text) ILIKE $3) ORDER BY created_at DESC,id LIMIT 31 OFFSET $2`,
+    [userId, offset, pattern,area==='learn'],
   );
   return {
     entries: (rows.slice(0, 30) as Entry[]).map(withLanguageNames),

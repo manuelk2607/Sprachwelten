@@ -5,9 +5,13 @@ import { missionTiles, type Bilingual, type Challenge } from "@/lib/challenges";
 import { AnswerTranslationProvider, BilingualField } from "./bilingual-field";
 import { Select } from "./select";
 import { LanguagePicker } from "./language-picker";
+import {LearningEditor} from './learning-editor';
 const empty = (): Bilingual => ({ de: "", en: "" });
 export function initialChallenge(kind: ContentKind): Challenge | undefined {
   switch (kind) {
+    case "vocabulary":
+    case "grammar":
+      return {type:'learning',domain:kind,topic:{de:'',en:''},level:'A1',questions:[{id:'exercise-1',exercise:'writing',prompt:{de:'',en:''},answers:[''],choices:[],explanation:{de:'',en:''}}]};
     case "idiom":
     case "gaming_mission":
     case "youth_chat":
@@ -100,16 +104,17 @@ export function ChallengeEditor({
     <AnswerTranslationProvider
       key={value.type}
       enabled={
-        !!reactions || value.type === "sound" || value.type === "friends"
+        !!reactions || value.type === "sound" || value.type === "friends" || value.type==='learning'
       }
     >
       <fieldset className="challenge-editor" data-field="challenge">
-        <legend>{t("Spielaufgabe")}</legend>
+        <legend>{t(value.type==='learning'?"Lernaufgaben":"Spielaufgabe")}</legend>
         <p className="form-note">
           {t(
             "Ergänze beide Sprachfassungen. Fehlende Übersetzungen werden als Originaltext gekennzeichnet.",
           )}
         </p>
+        {value.type==='learning'&&<LearningEditor value={value} onChange={onChange}/>}
         {value.type === "mission" && (
           <>
             <p>

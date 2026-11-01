@@ -6,6 +6,8 @@
     "node": ">=24"
   },
   "scripts": {
+    "qa:integration": "node --import tsx scripts/qa-integration.mts",
+    "test:editorial-integration": "node --import tsx scripts/test-editorial-integration.mts",
     "dev": "node scripts/run-framework.mts dev",
     "build": "node scripts/run-framework.mts build",
     "start": "node --import ./scripts/sites-env.mts ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
@@ -15,6 +17,11 @@
     "db:migrate": "node --env-file=.env.local --import tsx scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
     "test:integration": "node --env-file=.env.test.local --import tsx scripts/smoke.mts",
+    "test:game-integration": "node --import tsx scripts/test-game-redesign.mts",
+    "test:learning-integration": "node --import tsx scripts/test-learning-integration.mts",
+    "test:notebooks-integration": "node --import tsx scripts/test-notebooks-integration.mts",
+    "db:seed-learning": "node --env-file=.env.local --import tsx scripts/seed-learning.mts",
+    "test:live-auth": "node --env-file-if-exists=.env.auth-test.local --import tsx scripts/test-live-auth-ai.mts",
     "deploy:cloudflare": "node --env-file=.env.local scripts/deploy-cloudflare.mts",
     "test:browser": "playwright test",
     "check:translations": "tsx scripts/list-missing-translations.mts --check",
@@ -28,7 +35,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-server-dom-webpack": "19.3.1",
-    "zod": "4.5.4"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.64.0",
@@ -53,9 +60,19 @@
   },
   "type": "module",
   "overrides": {
+    "zod": "$zod",
+    "undici": "7.30.1",
+    "fast-uri": "3.1.9",
     "miniflare": {
       "sharp": "0.35.5"
     },
-    "fflate": "0.7.5"
+    "fflate": "0.7.5",
+    "better-auth": "1.7.14",
+    "@better-auth/core": "1.7.14",
+    "@better-auth/passkey": "1.7.14",
+    "@better-auth/api-key": "1.7.14",
+    "@react-email/render": "2.2.0",
+    "better-call": "1.4.4",
+    "@better-fetch/fetch": "1.3.3"
   }
 }

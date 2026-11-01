@@ -5,12 +5,13 @@ import {roomAction,type Entry} from '../lib/content';
 import {poolKey,playablePrompts,unseenPrompts,updateAvailability} from '../lib/game-pool';
 import {extraSeeds} from '../lib/extra-seeds';
 import {newGameEntries} from '../lib/new-game-seeds';
+import {finishWheelAnimation} from './game-fixtures';
 const player=()=>({id:crypto.randomUUID(),name:crypto.randomUUID(),tokenHash:crypto.randomUUID(),score:0});
 const template=extraSeeds.find(entry=>entry.kind==='tongue_twister')!,sound=newGameEntries.find(entry=>entry.kind==='sound_pair')!;
 const entries:Entry[]=['de','en','fr'].flatMap(language=>[0,1,2].map(index=>({...(index===2?sound:template),id:crypto.randomUUID(),language,phrase:`${language} example ${index}`})));
 function lobby(){const game=createGame('SPRACH',player(),'de','tongue-twisters');joinGame(game,player());updateAvailability(game,entries);return game;}
 function finish(game:Game){
- for(const speaker of game.players){const target={speakerId:speaker.id,roundNumber:game.roundIndex+1,matchId:game.matchId!};act(game,speaker.id,{action:'performed',...target});for(const voter of game.players.filter(p=>p.id!==speaker.id))act(game,voter.id,{action:'rate',...target,clarity:5,accuracy:5,rhythm:5});}
+ const target=finishWheelAnimation(game);act(game,target.speakerId,{action:'performed',...target});for(const voter of game.players.filter(p=>p.id!==target.speakerId))act(game,voter.id,{action:'rate',...target,clarity:5,accuracy:5,rhythm:5});
  act(game,game.hostId,{action:'next'});
 }
 test('new games default to their game language while legacy rooms retain their existing all-language setting',()=>{
@@ -28,7 +29,7 @@ test('the language filter combines with both categories and never falls back to 
 test('audio-only pronunciation prompts follow the same source-language filter as text',()=>{
  const game=lobby(),audio=entries.map(entry=>({...entry,presentation:'audio' as const,phrase:'',audioId:crypto.randomUUID()}));
  assert.equal(playablePrompts(game,audio).length,3);assert.ok(playablePrompts(game,audio).every(entry=>entry.language==='de'));
- act(game,game.hostId,{action:'configure',pronunciationLanguage:'fr',rounds:1},audio);act(game,game.hostId,{action:'start'},audio);assert.equal(game.round!.entry.language,'fr');assert.ok(viewGame(game,game.hostId).prompt?.audioId);assert.equal(viewGame(game,game.hostId).prompt?.phrase,'');
+ act(game,game.hostId,{action:'configure',pronunciationLanguage:'fr',rounds:1},audio);act(game,game.hostId,{action:'start'},audio);assert.equal(game.round!.entry.language,'fr');finishWheelAnimation(game);assert.ok(viewGame(game,game.hostId).prompt?.audioId);assert.equal(viewGame(game,game.hostId).prompt?.phrase,'');
 });
 test('language changes require a host in the lobby and a registered language or explicit all-language choice',()=>{
  const game=lobby();for(const value of ['de','fr','bar',''])assert.ok(roomAction.safeParse({action:'configure',pronunciationLanguage:value}).success);

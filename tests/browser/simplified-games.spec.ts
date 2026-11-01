@@ -4,25 +4,25 @@ import type {RoomAction} from '../../lib/content';
 import {communityGameEntries} from '../../lib/community-game-seeds';
 import {seedEntries} from '../../lib/seeds';
 import {newGameEntries} from '../../lib/new-game-seeds';
-import {chainPrompts,edgeLetter} from '../../lib/word-chain';
+import {sentencePrompts} from '../../lib/sentence-chain';
 import {updateAvailability} from '../../lib/game-pool';
 import {wordSeeds} from '../../lib/word-seeds';
 
 for(const mode of ['meaning-quiz','word-outsider','loanword-quiz','word-chain'] as const){
  test(`${mode} can be completed from the lobby through its actual UI`,async({page})=>{
   const host={id:crypto.randomUUID(),name:'Browser QA',tokenHash:'qa-only',score:0};const game=createGame('ABC234',host,'de',mode);game.totalRounds=1;
-  const prompts=mode==='word-chain'?chainPrompts():[...seedEntries,...wordSeeds,...newGameEntries,...communityGameEntries];
+  const prompts=mode==='word-chain'?sentencePrompts().filter(entry=>entry.language==='de'&&['Die','Eine'].includes(entry.phrase)):[...seedEntries,...wordSeeds,...newGameEntries,...communityGameEntries];
   updateAvailability(game,prompts);
   await page.addInitScript(()=>localStorage.setItem('sprachwelten-room:ABC234','qa-only'));
   await page.route('**/api/auth/get-session**',route=>route.fulfill({json:null}));
   await page.route('**/api/rooms/ABC234',route=>{if(route.request().method()==='POST')act(game,host.id,route.request().postDataJSON() as RoomAction,prompts);return route.fulfill({json:{room:viewGame(game,host.id)}});});
   await page.goto('/room/ABC234');await page.getByRole('button',{name:'Spiel starten',exact:true}).click();
   if(mode==='word-chain'){
-   const choices=page.locator('.word-chain-board .option');await expect(choices).toHaveCount(4);const chain=game.round!.chain!,right=chain.choices.find(word=>edgeLetter(word.text,'first')===edgeLetter(chain.words.at(-1)!.text,'last'))!;await page.getByRole('button',{name:right.text,exact:true}).click();
+   for(const word of ['Erde','explodiert.']){await page.getByRole('textbox',{name:'Dein nächstes Wort',exact:true}).fill(word);await page.getByRole('button',{name:'Wort ergänzen',exact:true}).click();}
   }else{
    await expect(page.locator('.options button.option')).toHaveCount(4);const right=game.round!.options.find(option=>option.solution)!;await page.locator('.options button.option').filter({has:page.getByText(right.text,{exact:true})}).click();
   }
-  await expect(page.getByRole('button',{name:'Zum Ergebnis',exact:true})).toBeVisible();await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();await expect(page.getByRole('heading',{name:'Dein Sprachgefühl in Punkten',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'1 / 1 Punkte',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Zum Ergebnis',exact:true})).toBeVisible();await page.getByRole('button',{name:'Zum Ergebnis',exact:true}).click();await expect(page.getByRole('heading',{name:'Dein Sprachgefühl in Punkten',exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:mode==='word-chain'?'2 Punkte':'1 / 1 Punkte',exact:true})).toBeVisible();
   if(mode==='loanword-quiz'){
     if(page.viewportSize()!.width>600)await expect.poll(()=>page.locator('.finished-actions').evaluate(actions=>{
       const [direct,prepare,leave]=Array.from(actions.querySelectorAll('button')).map(button=>button.getBoundingClientRect());

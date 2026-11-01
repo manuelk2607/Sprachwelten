@@ -7,6 +7,7 @@ import { englishWordMeanings } from './word-seeds';
 import { extraEnglish } from './extra-seeds';
 import { localizedTexts } from './content-translations';
 import { categoryId, categoryLabel } from './quiz-categories';
+import {applyRegionalReview} from './regional-review';
 const meanings = [
   'The real cause or the crucial point of a problem.',
   'To understand absolutely nothing about what is being discussed.',
@@ -66,7 +67,7 @@ function localizeCuratedEntry(entry:Entry,locale:Locale):Entry {
   return result;
 }
 export function localizeEntry(entry:Entry,locale:Locale):Entry {
-  const result=localizeCuratedEntry(entry,locale);
+  const result=applyRegionalReview(entry,localizeCuratedEntry(entry,locale),locale);
   const regionId=entry.regionId??categoryId('region',entry.region);
   const contextId=entry.contextId??categoryId('context',entry.context);
   if(!regionId&&!contextId)return result;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Game } from "./game";
-import { GameError } from "./game";
+import { GameError } from "./game-error";
 export const reportReasons = {
   answer: "Antwort oder Aufgabe stimmt nicht",
   translation: "Übersetzung unklar oder falsch",
@@ -41,7 +41,11 @@ export function reportedRound(
   )
     throw new GameError("Bitte melde die aktuell aufgelöste Aufgabe.", 409);
   return {
-    entry: game.round.entry,
+    entry: game.round.sentence?{...game.round.entry,
+      phrase:game.round.sentence.words.map(word=>word.text).join(' '),
+      language:game.round.sentence.language,
+      meaning:game.round.sentence.feedback?.reason[game.locale]??'',
+    }:game.round.entry,
     key: [
       game.code,
       game.matchId,

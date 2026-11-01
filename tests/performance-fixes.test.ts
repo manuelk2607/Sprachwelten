@@ -9,6 +9,7 @@ import {seedEntries} from '../lib/seeds';
 import {roomAction,type Entry} from '../lib/content';
 import {securityHeaders} from '../lib/security-headers';
 import {roomVersion} from '../lib/room-etag';
+import {finishWheelAnimation,legacyPronunciation} from './game-fixtures';
 
 const player=()=>({id:crypto.randomUUID(),name:crypto.randomUUID().slice(0,8),tokenHash:crypto.randomUUID(),score:0});
 test('room cache validators accept Cloudflare weak ETags and reject invalid versions',()=>{
@@ -28,16 +29,13 @@ test('pronunciation actions cannot be replayed across same-room rematches',()=>{
   const host=player(),guest=player(),game=createGame('REVIEW',host,'de','tongue-twisters');joinGame(game,guest);
   game.pronunciationLanguage='';
   act(game,host.id,{action:'configure',rounds:1});act(game,host.id,{action:'start'},extraSeeds);
-  const old={speakerId:host.id,roundNumber:1,matchId:game.matchId!};
-  for(const speaker of [host,guest]){
-    const target={...old,speakerId:speaker.id};
-    act(game,speaker.id,{action:'performed',...target});
-    act(game,speaker===host?guest.id:host.id,{action:'rate',...target,clarity:5,accuracy:5,rhythm:5});
-  }
+  const old=finishWheelAnimation(game);
+  act(game,old.speakerId,{action:'performed',...old});
+  act(game,game.players.find(player=>player.id!==old.speakerId)!.id,{action:'rate',...old,clarity:5,accuracy:5,rhythm:5});
   act(game,host.id,{action:'next'});act(game,host.id,{action:'restart',rounds:1},extraSeeds);
   act(game,host.id,{action:'start'},extraSeeds);
   assert.throws(()=>act(game,host.id,{action:'performed',...old}),/aktuellen Vortrag/);
-  act(game,host.id,{action:'performed',...old,matchId:game.matchId!});
+  const current=finishWheelAnimation(game);act(game,current.speakerId,{action:'performed',...current});
   assert.throws(()=>act(game,guest.id,{action:'rate',...old,clarity:5,accuracy:5,rhythm:5}),/aktuellen Vortrag/);
   assert.equal(game.phase,'rating');assert.deepEqual(game.round!.pronunciation!.ratings,{});
 });
@@ -45,7 +43,7 @@ test('pronunciation actions cannot be replayed across same-room rematches',()=>{
 test('legacy stored pronunciation rooms use their public fallback match identifier',()=>{
   const host=player(),game=createGame('REVIEW',host,'de','tongue-twisters');joinGame(game,player());
   delete game.pronunciationLanguage;
-  act(game,host.id,{action:'start'},extraSeeds);delete game.matchId;
+  act(game,host.id,{action:'start'},extraSeeds);legacyPronunciation(game);delete game.matchId;
   const action=roomAction.parse({action:'performed',speakerId:host.id,roundNumber:1,matchId:viewGame(game,host.id).matchId});
   act(game,host.id,action);assert.equal(game.phase,'rating');
 });

@@ -28,6 +28,7 @@ available round limits, distinct senses and regions, valid-meaning exclusion fro
 automatic distractors, preserved HTTP validators and bounded expiry cleanup.
 Existing auth, contribution, duplicate, game concurrency and browser suites pass.
 
-Remaining work: clean up the existing project-wide lint backlog before enabling
-lint as a required CI gate. Moving polling to push events, broader read-API abuse
-limits and translation-request coalescing remain separate follow-up work.
+Status reconciled 2026-10-27: project-wide lint and required CI checks are now green;
+public/room read limits have also been implemented. This report preserves historical
+measurements. Further push infrastructure or translation coalescing requires a
+measured production bottleneck; it is not an outstanding mandatory refactor.

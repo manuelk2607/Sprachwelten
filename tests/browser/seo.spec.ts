@@ -51,7 +51,7 @@ test("sitemap and robots advertise only public pages, private screens opt out an
   expect(sitemap.headers()["content-type"]).toContain("xml");
   const xml = await sitemap.text();
   for (const entry of sitemapEntries()) expect(xml).toContain(entry.url);
-  expect((xml.match(/<loc>/g) ?? []).length).toBe(30);
+  expect((xml.match(/<loc>/g) ?? []).length).toBe(sitemapEntries().length);
   const robots = await request.get("/robots.txt");
   expect(robots.status()).toBe(200);
   expect(await robots.text()).toContain(

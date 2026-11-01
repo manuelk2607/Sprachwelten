@@ -1,6 +1,13 @@
 "use client";
-import {draftKey,parseDraft,draftChallenge,draftFieldNames,type ContributionDraft} from "@/lib/contribution-draft";
+import {
+  draftKey,
+  parseDraft,
+  draftChallenge,
+  draftFieldNames,
+  type ContributionDraft,
+} from "@/lib/contribution-draft";
 import { useKeyedState } from "@/lib/use-keyed-state";
+import {EditorialReviewEditor} from './editorial-review-editor';
 import { phraseInput } from "@/lib/phrase-markup";
 import { PhraseText } from "./phrase-text";
 import { presentationOf } from "@/lib/content-media";
@@ -20,7 +27,7 @@ import {
   type ContentKind,
 } from "@/lib/content";
 import { contexts } from "@/lib/quiz-categories";
-import { textsOf, type TranslationTexts } from "@/lib/content-translations";
+import { textsOf, translationKeys, type TranslationTexts } from "@/lib/content-translations";
 import { TranslationEditor, type TranslationField } from "./translation-editor";
 import { AudioInput } from "./audio-input";
 import { LanguagePicker } from "./language-picker";
@@ -34,6 +41,9 @@ export function ContributeDialog({
   saved,
   openExisting,
   initialEntry,
+  initialKind='idiom',
+  initialLanguage='de',
+  initialTranslationLanguage,
   editTarget = "admin",
   review,
 }: {
@@ -41,6 +51,9 @@ export function ContributeDialog({
   saved: () => void;
   openExisting: (id: string) => Promise<void>;
   initialEntry?: Entry;
+  initialKind?: ContentKind;
+  initialLanguage?:string;
+  initialTranslationLanguage?:string;
   editTarget?: "admin" | "own" | "suggest";
   review?: { id: string; revision: number };
 }) {
@@ -53,9 +66,10 @@ export function ContributeDialog({
     audio: presentationOf(initialEntry ?? {}) !== "text",
   });
   const [challenge, setChallenge] = useState<Challenge | undefined>(
-    initialEntry ? initialEntry.challenge : initialChallenge("idiom"),
+    initialEntry ? initialEntry.challenge : (()=>{const c=initialChallenge(initialKind);return c?.type==='learning'&&initialKind==='vocabulary'&&initialTranslationLanguage?{...c,vocabulary:{translationLanguage:initialTranslationLanguage,termAlternatives:[],translationAlternatives:[],reversible:false,context:{de:'',en:''}},questions:[]}:c;})(),
   );
-  const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? "idiom");
+  const [kind, setKind] = useState<ContentKind>(initialEntry?.kind ?? initialKind);
+  const contributionArea = ['vocabulary', 'grammar'].includes(kind) ? 'learn' : 'play';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sense, setSense] = useState(initialEntry?.sense ?? "");
@@ -71,9 +85,13 @@ export function ContributeDialog({
     kind === initialEntry.kind
       ? { phrase, phraseMarkup: "" }
       : phraseInput(phrase, kind);
-  const hintsRelevant = kind === "idiom" || kind === "dialect" ||
-    (kind === "attribution" && challenge?.type === "attribution" && challenge.category === "song");
-  const [language, setLanguage] = useState(initialEntry?.language ?? "de");
+  const hintsRelevant =
+    kind === "idiom" ||
+    kind === "dialect" ||
+    (kind === "attribution" &&
+      challenge?.type === "attribution" &&
+      challenge.category === "song");
+  const [language, setLanguage] = useState(initialEntry?.language ?? initialLanguage);
   const [regionId, setRegionId] = useState(initialEntry?.regionId ?? "");
   const [contextId, setContextId] = useState(initialEntry?.contextId ?? "");
   const duplicateKey = JSON.stringify([
@@ -126,6 +144,7 @@ export function ContributeDialog({
         ...(challenge?.type === "order"
           ? { targetLanguage: challenge.targetLanguage }
           : {}),
+        ...(challenge?.type==='learning'&&challenge.vocabulary?{translationLanguage:challenge.vocabulary.translationLanguage,literal:String(formRef.current?.querySelector<HTMLInputElement>('[name="literal"]')?.value??'')}:{})
       });
       fetch("/api/entries/duplicates?" + query, { signal: controller.signal })
         .then(async (response) => {
@@ -173,9 +192,9 @@ export function ContributeDialog({
       setOpening(false);
     }
   };
-  const [sourceLocale, setSourceLocale] = useState<Locale>(
-    initialEntry?.sourceLocale ?? locale,
-  );
+  // New explanations follow the active interface language. Existing entries
+  // retain their stored source language while they are edited.
+  const [sourceLocale,setSourceLocale] = useState<Locale>(initialEntry ? initialEntry.sourceLocale ?? "de" : locale);
   const [translation, setTranslation] = useState<Partial<TranslationTexts>>(
     initialEntry?.translations?.[
       (initialEntry.sourceLocale ?? "de") === "de" ? "en" : "de"
@@ -197,6 +216,8 @@ export function ContributeDialog({
     "situation",
     "word",
     "false_friend",
+    "vocabulary",
+    "grammar",
   ].includes(kind);
   const freeRegionRelevant = ["idiom", "word"].includes(kind);
   const hintField: TranslationField = {
@@ -205,34 +226,173 @@ export function ContributeDialog({
     max: 300,
   };
   const fields: TranslationField[] = [
-    { key: "literal", label: "Wörtliche Übersetzung", max: 300 },
+    ...(kind==='vocabulary'?[]:[{ key: "literal" as const, label: "Wörtliche Übersetzung", max: 300 }]),
     { key: "meaning", label: "Bedeutung oder Erklärung", max: 1500 },
-    { key: "example", label: "Beispielsatz", max: 600 },
+    ...(kind==='vocabulary'?[]:[{ key: "example" as const, label: "Beispielsatz", max: 600 }]),
     { key: "culturalNote", label: "Kultureller Hinweis", max: 1000 },
-    ...(hintsRelevant ? [hintField] : []),
   ];
-  const sourceChanged = () => {
+  const sourceChanged = (event?: React.FormEvent<HTMLElement>) => {
+    const name=(event?.target as HTMLInputElement|undefined)?.name as keyof TranslationTexts|undefined;
     setRevision((value) => value + 1);
-    setTranslation({});
+    setTranslation(value => name && translationKeys.includes(name) ? {...value,[name]:""} : hintsRelevant ? {hint:value.hint} : {});
     setReviewed(false);
   };
   const getSource = () =>
-    textsOf(Object.fromEntries(new FormData(formRef.current!).entries()));
-  const draftOwner=session?.user?.id??'guest';
-  const [pendingDraft,setPendingDraft]=useState<ContributionDraft|null>(null);
-  const [draftDirty,setDraftDirty]=useState(false),[draftNotice,setDraftNotice]=useState('');
-  const [,setDraftChange]=useState(0);
-  const [restoreFields,setRestoreFields]=useState<ContributionDraft|null>(null);
-  const draftSnapshot:ContributionDraft={version:1,updatedAt:0,kind,phrase,sense,language,regionId,contextId,sourceLocale,translation:textsOf(translation),reviewed,media,challenge,fields:{}};
-  const draftRef=useRef({owner:draftOwner,snapshot:draftSnapshot,dirty:false,pending:false});
-  useEffect(()=>{draftRef.current={owner:draftOwner,snapshot:{...draftSnapshot,updatedAt:Date.now(),fields:Object.fromEntries(draftFieldNames.map(name=>[name,String(formRef.current?new FormData(formRef.current).get(name)??'':'')]))},dirty:draftDirty&&!initialEntry,pending:!!pendingDraft};});
-  function persistDraft(){const current=draftRef.current;if(!current.dirty||current.pending)return;try{localStorage.setItem(draftKey(current.owner),JSON.stringify(current.snapshot));setDraftNotice('Entwurf in diesem Browser gespeichert.');}catch{setDraftNotice('Der Entwurf konnte nicht im Browser gespeichert werden.');}}
-  useEffect(()=>{if(initialEntry)return;let active=true;queueMicrotask(()=>{if(!active)return;try{setPendingDraft(parseDraft(localStorage.getItem(draftKey(draftOwner))));}catch{/* Storage can be unavailable. */}setDraftDirty(false);setDraftNotice('');});return()=>{active=false;};},[draftOwner,initialEntry]);
-  useEffect(()=>{if(!draftDirty||initialEntry||pendingDraft)return;const timer=setTimeout(persistDraft,700);return()=>clearTimeout(timer);});
-  useEffect(()=>{if(initialEntry)return;const save=()=>persistDraft();window.addEventListener('pagehide',save);return()=>{window.removeEventListener('pagehide',save);const current=draftRef.current;if(current.dirty&&!current.pending)try{localStorage.setItem(draftKey(current.owner),JSON.stringify(current.snapshot));}catch{/* Keep the form usable. */}};},[initialEntry]);
-  useEffect(()=>{if(!restoreFields||!formRef.current)return;for(const name of draftFieldNames){const control=formRef.current.elements.namedItem(name);if(control instanceof HTMLInputElement||control instanceof HTMLTextAreaElement)control.value=restoreFields.fields[name]??'';}queueMicrotask(()=>setRestoreFields(null));},[restoreFields]);
-  function restoreDraft(){if(!pendingDraft)return;const d=pendingDraft;setKind(d.kind);setPhrase(d.phrase);setSense(d.sense);setLanguage(d.language);setRegionId(d.regionId);setContextId(d.contextId);setSourceLocale(d.sourceLocale);setTranslation(d.translation);setReviewed(d.reviewed);setMedia(d.media);setChallenge(draftChallenge(d.challenge,initialChallenge(d.kind)));setRestoreFields(d);setPendingDraft(null);setDraftDirty(true);setDraftNotice(d.media.audio?'Textentwurf wiederhergestellt. Bitte die Aufnahme erneut hinzufügen.':'Entwurf wiederhergestellt.');}
-  function discardDraft(){try{localStorage.removeItem(draftKey(draftOwner));}catch{}setPendingDraft(null);setDraftDirty(false);setDraftNotice('');}
+    textsOf(
+      formRef.current
+        ? Object.fromEntries(new FormData(formRef.current).entries())
+        : (initialEntry ?? {}),
+    );
+  const draftOwner = session?.user?.id ?? "guest";
+  const [pendingDraft, setPendingDraft] = useState<ContributionDraft | null>(
+    null,
+  );
+  const [draftDirty, setDraftDirty] = useState(false),
+    [draftNotice, setDraftNotice] = useState("");
+  const [, setDraftChange] = useState(0);
+  const [restoreFields, setRestoreFields] = useState<ContributionDraft | null>(
+    null,
+  );
+  const draftSnapshot: ContributionDraft = {
+    version: 1,
+    updatedAt: 0,
+    kind,
+    phrase,
+    sense,
+    language,
+    regionId,
+    contextId,
+    sourceLocale,
+    translation: textsOf(translation),
+    reviewed,
+    media,
+    challenge,
+    fields: {},
+  };
+  const draftRef = useRef({
+    owner: draftOwner,
+    snapshot: draftSnapshot,
+    dirty: false,
+    pending: false,
+  });
+  useEffect(() => {
+    draftRef.current = {
+      owner: draftOwner,
+      snapshot: {
+        ...draftSnapshot,
+        updatedAt: Date.now(),
+        fields: Object.fromEntries(
+          draftFieldNames.map((name) => [
+            name,
+            String(
+              formRef.current
+                ? (new FormData(formRef.current).get(name) ?? "")
+                : "",
+            ),
+          ]),
+        ),
+      },
+      dirty: draftDirty && !initialEntry,
+      pending: !!pendingDraft,
+    };
+  });
+  function persistDraft() {
+    const current = draftRef.current;
+    if (!current.dirty || current.pending) return;
+    try {
+      localStorage.setItem(
+        draftKey(current.owner),
+        JSON.stringify(current.snapshot),
+      );
+      setDraftNotice("Entwurf in diesem Browser gespeichert.");
+    } catch {
+      setDraftNotice("Der Entwurf konnte nicht im Browser gespeichert werden.");
+    }
+  }
+  useEffect(() => {
+    if (initialEntry) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        setPendingDraft(parseDraft(localStorage.getItem(draftKey(draftOwner))));
+      } catch {
+        /* Storage can be unavailable. */
+      }
+      setDraftDirty(false);
+      setDraftNotice("");
+    });
+    return () => {
+      active = false;
+    };
+  }, [draftOwner, initialEntry]);
+  useEffect(() => {
+    if (!draftDirty || initialEntry || pendingDraft) return;
+    const timer = setTimeout(persistDraft, 700);
+    return () => clearTimeout(timer);
+  });
+  useEffect(() => {
+    if (initialEntry) return;
+    const save = () => persistDraft();
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.removeEventListener("pagehide", save);
+      const current = draftRef.current;
+      if (current.dirty && !current.pending)
+        try {
+          localStorage.setItem(
+            draftKey(current.owner),
+            JSON.stringify(current.snapshot),
+          );
+        } catch {
+          /* Keep the form usable. */
+        }
+    };
+  }, [initialEntry]);
+  useEffect(() => {
+    if (!restoreFields || !formRef.current) return;
+    for (const name of draftFieldNames) {
+      const control = formRef.current.elements.namedItem(name);
+      if (
+        control instanceof HTMLInputElement ||
+        control instanceof HTMLTextAreaElement
+      )
+        control.value = restoreFields.fields[name] ?? "";
+    }
+    queueMicrotask(() => setRestoreFields(null));
+  }, [restoreFields]);
+  function restoreDraft() {
+    if (!pendingDraft) return;
+    const d = pendingDraft;
+    setKind(d.kind);
+    setPhrase(d.phrase);
+    setSense(d.sense);
+    setLanguage(d.language);
+    setRegionId(d.regionId);
+    setContextId(d.contextId);
+    setSourceLocale(d.sourceLocale);
+    setRevision(value=>value+1);
+    setTranslation(d.translation);
+    setReviewed(d.reviewed);
+    setMedia(d.media);
+    setChallenge(draftChallenge(d.challenge, initialChallenge(d.kind)));
+    setRestoreFields(d);
+    setPendingDraft(null);
+    setDraftDirty(true);
+    setDraftNotice(
+      d.media.audio
+        ? "Textentwurf wiederhergestellt. Bitte die Aufnahme erneut hinzufügen."
+        : "Entwurf wiederhergestellt.",
+    );
+  }
+  function discardDraft() {
+    try {
+      localStorage.removeItem(draftKey(draftOwner));
+    } catch {}
+    setPendingDraft(null);
+    setDraftDirty(false);
+    setDraftNotice("");
+  }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || audioBusy) return;
@@ -278,7 +438,7 @@ export function ContributeDialog({
             : editTarget === "own"
               ? "/api/me/entries/" + initialEntry.id
               : "/api/admin/entries/" + initialEntry.id
-          : "/api/entries";
+          : contributionArea==='learn'?'/api/learning/entries':"/api/entries";
       const response = await fetch(endpoint, {
         method: initialEntry && editTarget !== "suggest" ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -306,7 +466,12 @@ export function ContributeDialog({
         if (json.duplicate && !initialEntry) setDuplicate(json.duplicate);
         throw new Error(json.error);
       }
-      if(!initialEntry&&!pendingDraft){draftRef.current.dirty=false;try{localStorage.removeItem(draftKey(draftOwner));}catch{}}
+      if (!initialEntry && !pendingDraft) {
+        draftRef.current.dirty = false;
+        try {
+          localStorage.removeItem(draftKey(draftOwner));
+        } catch {}
+      }
       saved();
       close();
     } catch (error) {
@@ -328,14 +493,14 @@ export function ContributeDialog({
             ? "Verbesserung vorschlagen"
             : initialEntry
               ? "Beitrag bearbeiten"
-              : "Ein Stück Sprache teilen.",
+              : contributionArea==='learn'?"Lernbeitrag teilen":"Ein Stück Sprache teilen.",
       )}
       close={close}
       wide
     >
       <p className="muted">
         {t(
-          "Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.",
+          contributionArea==='learn'?"Teile ein bestätigtes Sprachpaar oder eine Grammatikregel. Lernbeiträge bleiben von Spielaufgaben getrennt.":"Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.",
         )}
       </p>
       {!initialEntry && !session?.user && (
@@ -345,10 +510,29 @@ export function ContributeDialog({
           )}
         </p>
       )}
-      {!initialEntry&&pendingDraft&&<section className="notice"><p>{t('Ein gespeicherter Beitragsentwurf ist vorhanden.')}</p><div className="button-row"><button className="button small outline" onClick={restoreDraft}>{t('Entwurf wiederherstellen')}</button><button className="button small outline" onClick={discardDraft}>{t('Entwurf verwerfen')}</button></div></section>}
-      {!initialEntry&&draftNotice&&<p className="form-note" role="status">{t(draftNotice)}</p>}
+      {!initialEntry && pendingDraft && (
+        <section className="notice">
+          <p>{t("Ein gespeicherter Beitragsentwurf ist vorhanden.")}</p>
+          <div className="button-row">
+            <button className="button small outline" onClick={restoreDraft}>
+              {t("Entwurf wiederherstellen")}
+            </button>
+            <button className="button small outline" onClick={discardDraft}>
+              {t("Entwurf verwerfen")}
+            </button>
+          </div>
+        </section>
+      )}
+      {!initialEntry && draftNotice && (
+        <p className="form-note" role="status">
+          {t(draftNotice)}
+        </p>
+      )}
       <form
-        onChangeCapture={()=>{setDraftDirty(true);setDraftChange(value=>value+1);}}
+        onChangeCapture={() => {
+          setDraftDirty(true);
+          setDraftChange((value) => value + 1);
+        }}
         ref={formRef}
         className="form-stack"
         onSubmit={submit}
@@ -365,11 +549,12 @@ export function ContributeDialog({
               onValueChange={(value) => {
                 setPhrase(plainPhrase.phrase);
                 setKind(value as ContentKind);
+                if(value==='vocabulary'||value==='grammar')setMedia(current=>({...current,text:true}));
                 setChallenge(initialChallenge(value as ContentKind));
                 sourceChanged();
               }}
             >
-              {Object.entries(kindLabels).map(([id, label]) => (
+              {Object.entries(kindLabels).filter(([id])=>['vocabulary','grammar'].includes(id)===(contributionArea==='learn')).map(([id, label]) => (
                 <option key={id} value={id}>
                   {t(label)}
                 </option>
@@ -390,6 +575,7 @@ export function ContributeDialog({
         </div>
         <div data-field="presentation">
           <MediaChoiceInput
+            requireText={kind==='vocabulary'||kind==='grammar'}
             value={media}
             onChange={(value) => {
               setMedia(value);
@@ -401,7 +587,7 @@ export function ContributeDialog({
         {media.text && (
           <label>
             {t(
-              kind === "word" || kind === "false_friend"
+              kind === "word" || kind === "false_friend" || kind==='vocabulary'
                 ? "Wort oder kurzer Ausdruck"
                 : kind === "tongue_twister" || kind === "sound_pair"
                   ? "Satz zum Nachsprechen"
@@ -424,6 +610,7 @@ export function ContributeDialog({
                   "gaming_mission",
                   "youth_chat",
                   "loanword",
+                  "vocabulary",
                 ].includes(kind)
                   ? 1
                   : 3
@@ -515,9 +702,27 @@ export function ContributeDialog({
                 disabled={busy}
                 maxLength={300}
                 rows={2}
-                onChange={sourceChanged}
+                onChange={() => {
+                  setRevision((value) => value + 1);
+                  setTranslation((value) => ({ ...value, hint: "" }));
+                  setReviewed(false);
+                }}
               />
             </label>
+            <TranslationEditor
+              compact
+              sourceLocale={sourceLocale}
+              fields={[hintField]}
+              getSource={() => textsOf({ hint: getSource().hint })}
+              translation={translation}
+              onChange={(value) => {
+                setTranslation(value);
+                setRevision((version) => version + 1);
+              }}
+              revision={revision}
+              reviewed={reviewed}
+              setReviewed={setReviewed}
+            />
             <p className="form-note">
               {t(
                 "Gib einen kleinen Hinweis, ohne die Lösung zu verraten. Im Spiel wird er erst auf Wunsch eingeblendet und kostet keine Punkte.",
@@ -579,7 +784,11 @@ export function ContributeDialog({
           </label>
         )}
         {challenge && (
-          <ChallengeEditor audioOnly={!media.text} value={challenge} onChange={setChallenge} />
+          <ChallengeEditor
+            audioOnly={!media.text}
+            value={challenge}
+            onChange={setChallenge}
+          />
         )}
         {duplicate && (
           <div className="duplicate-notice" role="status">
@@ -604,11 +813,11 @@ export function ContributeDialog({
         {literalRequired ? (
           <fieldset className="source-fields" onChange={sourceChanged}>
             <legend>
-              {t("Deine Erklärung")} ·{" "}
+              {t(kind==='vocabulary'?"Übersetzung und Zusatzinformationen":"Deine Erklärung")} ·{" "}
               {t(sourceLocale === "de" ? "Deutsch" : "Englisch")}
             </legend>
             <label>
-              {t("Wörtliche Übersetzung")} <span>{t("(erforderlich)")}</span>
+              {t(kind==='vocabulary'?"Übersetzung in der gewählten Sprache":"Wörtliche Übersetzung")} <span>{t("(erforderlich)")}</span>
               <input
                 required
                 minLength={1}
@@ -647,12 +856,13 @@ export function ContributeDialog({
         ) : (
           <details
             className="source-fields optional-source-fields"
+            open={kind==='grammar'?true:undefined}
             onChange={sourceChanged}
           >
-            <summary>{t("Optionale Zusatzinformationen")}</summary>
+            <summary>{t(kind==='grammar'?"Regel und Beispiele":"Optionale Zusatzinformationen")}</summary>
             <p className="form-note">
               {t(
-                answerDriven
+                kind==='grammar'?"Erkläre die Regel und ergänze ein Beispiel. Die Übungen prüfen diese Regel mit nachvollziehbaren Lösungen.":answerDriven
                   ? "Die richtige Antwort ist bereits die Lösung. Ergänze hier nur Hintergrundwissen, wenn es wirklich hilft."
                   : kind === "tongue_twister"
                     ? "Für einen Zungenknoten genügt der Satz oder die Aufnahme. Eine Bedeutung ist nicht erforderlich."
@@ -665,9 +875,10 @@ export function ContributeDialog({
               value={initialEntry?.literal ?? ""}
             />
             <label>
-              {t("Zusätzliche Erklärung")} <span>{t("(optional)")}</span>
+              {t(kind==='grammar'?"Grammatikregel":"Zusätzliche Erklärung")} {kind!=='grammar'&&<span>{t("(optional)")}</span>}
               <textarea
                 name="meaning"
+                required={kind==='grammar'}
                 defaultValue={initialEntry?.meaning ?? ""}
                 maxLength={1500}
                 rows={3}
@@ -693,19 +904,11 @@ export function ContributeDialog({
             </label>
           </details>
         )}
-        {(literalRequired || hintsRelevant) && (
+        {(literalRequired||kind==='grammar') && (
           <TranslationEditor
             sourceLocale={sourceLocale}
-            setSourceLocale={(value) => {
-              setSourceLocale(value);
-              sourceChanged();
-            }}
-            fields={literalRequired ? fields : [hintField]}
-            getSource={() =>
-              literalRequired
-                ? getSource()
-                : textsOf({ hint: getSource().hint })
-            }
+            fields={fields}
+            getSource={getSource}
             translation={translation}
             onChange={setTranslation}
             revision={revision}
@@ -780,6 +983,7 @@ export function ContributeDialog({
               )}
         </button>
       </form>
+      {initialEntry&&editTarget==='admin'&&!review&&session?.user?.id&&!['vocabulary','grammar'].includes(initialEntry.kind)&&<EditorialReviewEditor key={initialEntry.id+':'+initialEntry.revision} entry={initialEntry}/>}
     </Dialog>
   );
 }

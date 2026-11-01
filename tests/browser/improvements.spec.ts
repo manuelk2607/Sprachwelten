@@ -193,6 +193,7 @@ test("Taboo hides the card from guessers while the describer starts a timed turn
 test("Taboo is a word-connections category and allows multiple original languages", async ({
   page,
 }) => {
+  await page.route('**/api/rooms/languages?*',r=>r.fulfill({json:{languages:[{code:'de',count:3},{code:'en',count:3}]}}));
   await guest(page);
   const ready = page.waitForResponse((r) =>
     r.url().includes("/api/auth/get-session"),
@@ -215,14 +216,14 @@ test("Taboo is a word-connections category and allows multiple original language
     .click();
   await page.getByRole("option", { name: "Tabu", exact: true }).click();
   await expect(
-    dialog.getByRole("checkbox", { name: "Deutsch", exact: true }),
+    dialog.getByRole("checkbox", { name: "Deutsch (3)", exact: true }),
   ).toBeChecked();
-  await dialog.getByRole("checkbox", { name: "Englisch", exact: true }).check();
+  await dialog.getByRole("checkbox", { name: "Englisch (3)", exact: true }).check();
   await dialog
-    .getByRole("checkbox", { name: "Deutsch", exact: true })
+    .getByRole("checkbox", { name: "Deutsch (3)", exact: true })
     .uncheck();
   await expect(
-    dialog.getByRole("checkbox", { name: "Englisch", exact: true }),
+    dialog.getByRole("checkbox", { name: "Englisch (3)", exact: true }),
   ).toBeDisabled();
 });
 test("later uncontrolled draft edits are saved and successful publication clears only the active draft", async ({

@@ -20,13 +20,9 @@ export function reviewDependencyAudit(input: unknown) {
   const accepted: z.infer<typeof advisory>[] = [],
     blocked: z.infer<typeof advisory>[] = [];
   for (const finding of findings.values()) {
-    // No fixed release exists. Only repository-owned file globs reach braces;
-    // contributed text, paths and quiz answers never become compiler glob patterns.
-    const toolingOnly =
-      finding.dependency === "braces" &&
-      finding.range === "<=3.0.3" &&
-      finding.url === "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm";
-    (toolingOnly ? accepted : blocked).push(finding);
+    // The former braces advisory was withdrawn upstream on 2026-10-23.
+    // No allowlist remains: reintroduced or new findings fail closed.
+    blocked.push(finding);
   }
   return { accepted, blocked };
 }

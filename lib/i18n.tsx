@@ -26,7 +26,7 @@ export function I18nProvider({
     const routeLocale =
       path === "/en" || path.startsWith("/en/")
         ? "en"
-        : path === "/spiele" || path.startsWith("/spiele/")
+        : path === "/lernen" || path === "/spiele" || path.startsWith("/spiele/")
           ? "de"
           : null;
     const parameter = new URLSearchParams(window.location.search).get("lang");
@@ -44,7 +44,7 @@ export function I18nProvider({
   }, []);
   const setLocale = useCallback((value: Locale) => {
     setLanguage(value);
-    localStorage.setItem("sprachwelten-language", value);
+    try {localStorage.setItem("sprachwelten-language", value);} catch {/* The current tab can still change language when storage is blocked. */}
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;

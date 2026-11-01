@@ -1,10 +1,23 @@
 import {improvementTranslations} from './improvement-translations';
+import {learningTranslations} from './learning-translations';
+import {notebookTranslations} from './notebook-translations';
 import {reviewFixTranslations} from './review-fix-translations';
 import {communityTranslations} from './community-translations';
 import {newGameTranslations} from './new-game-translations';
 import {simplifiedGameTranslations} from './simplified-game-translations';
+import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  ...notebookTranslations,
+  ...learningTranslations,
+  ...gameRedesignTranslations,
+  'Dein Lernrückblick':'Your learning review',
+  'Eine gültige Übersetzung':'One valid translation',
+  'Die Übersetzung dauert zu lange. Bitte später erneut versuchen oder manuell übersetzen.':'Translation is taking too long. Please try again later or translate it manually.',
+  'richtig beantwortet':'answered correctly',
+  'Wiederhole die bereits aufgelösten Begriffe. Der Rückblick bleibt nach dem Neuladen in diesem Tab erhalten.':'Review the expressions already revealed. Your review survives reloading in this tab.',
+  'Nur falsche Antworten':'Incorrect answers only',
+  'Alles richtig beantwortet!':'Every answer correct!',
   ...improvementTranslations,
   'Album':'Album',
   'Album anzeigen':'Show album',
@@ -236,7 +249,8 @@ export const english: Record<string, string> = {
   "Bitte mindestens Text oder Audio auswählen.":"Please select at least text or audio.",
   "Sprache, Lösungen und optionale Hinweise ergänzt du weiterhin unten.":"Add the language, solutions and optional notes below.",
   "Sprache deiner Erklärung":"Language of your explanation",
-  "Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.":"Original expressions stay unchanged. This language applies to your explanations, examples and notes.",
+  "Sie folgt automatisch deiner aktuellen Oberflächensprache. Originalausdrücke bleiben unverändert.":"It follows your current interface language automatically. Original expressions stay unchanged.",
+  "Die Sprache wird beim Öffnen des Formulars übernommen. Gespeicherte Beiträge und Entwürfe behalten ihre Ursprungssprache.":"The language is taken from your preference when opening the form. Saved contributions and drafts keep their original language.",
   "Übersetzung ins":"Translation into",
   "Deutsche":"German",
   "Englische":"English",

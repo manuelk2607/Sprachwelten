@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async({page})=>{await page.route('**/api/learning/vocabulary?*',r=>r.fulfill({json:{cards:[],more:false,topics:[],levels:[]}}));});
 test("discovery excludes the Taboo filter in DE and EN while contributions still allow it", async ({
   page,
 }) => {
@@ -11,7 +12,7 @@ test("discovery excludes the Taboo filter in DE and EN while contributions still
   const ready = page.waitForResponse((r) =>
     r.url().includes("/api/auth/get-session"),
   );
-  await page.goto("/");
+  await page.goto("/lernen");
   await ready;
   await page
     .getByRole("button", { name: "Sammlung öffnen", exact: true })
@@ -37,10 +38,7 @@ test("discovery excludes the Taboo filter in DE and EN while contributions still
     await page.keyboard.press("Escape");
   }
   await page.getByRole("button", { name: "DE", exact: true }).click();
-  await page
-    .locator(".header")
-    .getByRole("button", { name: "Beitragen", exact: true })
-    .click();
+  await page.locator('.discovery-contribute').click();
   await page.getByRole("dialog").getByRole("combobox").first().click();
   await expect(
     page.getByRole("option", { name: "Tabu", exact: true }),

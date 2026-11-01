@@ -1,5 +1,13 @@
 # Vorschläge für Sprachwelten
 
+**Archiv, abgeglichen am 27. Oktober 2026:** Die folgenden Prototypideen beschreiben
+den damaligen Entwurf, nicht offene Implementierungsaufträge. Gaming-, Jugend- und
+akademische Sprache sind inzwischen Kategorien des gemeinsamen Bedeutungsquiz:
+direkte Bedeutungsauswahl statt komplizierter geheimer Ansagen. Aktuelle Regeln
+stehen in `lib/mode-guides.ts`, der Betrieb und Restaufgaben in `PROGRESS.md`.
+Der Sprachraum bleibt nach ausdrücklicher Produktentscheidung zurückgestellt;
+historische Preis-/Aufwandsschätzungen sind keine aktuelle Tarifempfehlung.
+
 Stand: 15. Oktober 2026. Diese drei Spielideen und der Live-Sprachraum sind noch nicht implementiert.
 
 ## 1. Gaming: „Ping! Verstanden?“

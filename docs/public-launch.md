@@ -6,7 +6,7 @@ Die aktuelle Hauptadresse ist https://sprachwelten.maki26.workers.dev/. `lib/sit
 
 - `/` und `/en` sind die deutschen/englischen Startseiten.
 - `/spiele` und `/en/games` verlinken alle 13 aktuellen Spielvarianten. Jede Anleitung hat eine eigene URL, serverseitig sichtbare Regeln, einen eigenen Titel, eine Beschreibung und gegenseitige `hreflang`-Links. Es werden keine Datenbankbeiträge oder Quizlösungen geladen.
-- `/sitemap.xml` enthält ausschließlich die 30 öffentlichen Seiten. `/robots.txt` nennt die Sitemap; API-Endpunkte werden nicht zum Crawlen angeboten.
+- `/sitemap.xml` enthält ausschließlich die 32 öffentlichen Seiten einschließlich `/lernen` und `/en/learn`. `/robots.txt` nennt die Sitemap; API-Endpunkte werden nicht zum Crawlen angeboten.
 - Konto-, Admin- und Raumseiten liefern `noindex`. Das ergänzt die bestehenden Zugriffskontrollen und ersetzt sie nicht.
 - Open Graph und Twitter Cards verwenden eigene DE/EN-PNG-Vorschaubilder mit 1200 × 630 Pixeln. `node --import tsx scripts/generate-social-preview.mts` erzeugt sie aus dem vorhandenen Design neu.
 
@@ -18,7 +18,12 @@ Die aktuelle Hauptadresse ist https://sprachwelten.maki26.workers.dev/. `lib/sit
 4. Build und `npm run deploy:cloudflare` ausführen. Der Runner überträgt den optionalen Code als Worker-Variable und erhält bestehende Einstellungen. Prüfe anschließend, dass der Tag im HTML-Quelltext der Startseite enthalten ist. Der Tag muss für spätere Google-Prüfungen erhalten bleiben.
 5. Klicke in Search Console auf **Bestätigen**. Reiche unter **Sitemaps** die Adresse `https://sprachwelten.maki26.workers.dev/sitemap.xml` ein. Über **URL-Prüfung** kann die Indexierung der Startseite beantragt werden.
 
-Die Bestätigung kann erst abgeschlossen werden, wenn der vom Kontoinhaber erhaltene Tag hinterlegt ist. Die Website funktioniert auch ohne Search Console. Eine Sitemap oder Indexierungsanfrage garantiert keine Aufnahme oder Position in Suchergebnissen; neue Inhalte können erst nach Tagen oder Wochen erscheinen. [Google-Anleitung zur Bestätigung](https://support.google.com/webmasters/answer/9008080?hl=en-GB), [Indexierung beantragen](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl).
+Der vom Kontoinhaber gelieferte Bestätigungstag ist bereits veröffentlicht. Sitemap
+und öffentliche Seiten wurden live erfolgreich abgerufen. Der verbleibende manuelle
+Schritt ist die Kontrolle des Indexierungsstatus in Search Console, gegebenenfalls
+nach Ablauf des Google-Kontingents. Keine erneute Website-Verifizierung oder
+automatischen Indexierungsanfragen ohne Bedarf. Eine Sitemap garantiert keine
+Aufnahme oder Position. [Google-Anleitung zur Bestätigung](https://support.google.com/webmasters/answer/9008080?hl=en-GB), [Indexierung beantragen](https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl).
 
 ## Danach
 

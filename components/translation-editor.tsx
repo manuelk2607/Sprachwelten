@@ -1,10 +1,10 @@
 "use client";
-import { Select } from "./select";
 import { useEffect, useRef, useState } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
 import {
   otherLocale,
   textsOf,
+  translationFields,
   type TranslationTexts,
 } from "@/lib/content-translations";
 import { useAuthSession } from "@/lib/auth/provider";
@@ -15,7 +15,6 @@ export type TranslationField = {
 };
 export function TranslationEditor({
   sourceLocale,
-  setSourceLocale,
   fields,
   getSource,
   translation,
@@ -23,9 +22,9 @@ export function TranslationEditor({
   revision,
   reviewed,
   setReviewed,
+  compact = false,
 }: {
   sourceLocale: Locale;
-  setSourceLocale: (locale: Locale) => void;
   fields: TranslationField[];
   getSource: () => TranslationTexts;
   translation: Partial<TranslationTexts>;
@@ -33,36 +32,51 @@ export function TranslationEditor({
   revision: number;
   reviewed: boolean;
   setReviewed: (value: boolean) => void;
+  compact?: boolean;
 }) {
   const { t } = useI18n();
   const session = useAuthSession();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [machine, setMachine] = useState(false);
-  const version = useRef(revision);
+  const [suggestion, setSuggestion] = useState<{
+    snapshot: string;
+    texts: TranslationTexts;
+  } | null>(null);
+  const snapshot=JSON.stringify([sourceLocale,revision,fields.map(field=>field.key),translation,session?.user?.id]);
+  const version = useRef(snapshot);
+  const request = useRef<AbortController|null>(null);
+  const preview=suggestion?.snapshot===snapshot ? suggestion : null;
   useEffect(() => {
-    version.current = revision;
-  }, [revision]);
+    version.current = snapshot;
+  }, [snapshot]);
+  useEffect(()=>()=>request.current?.abort(),[]);
   const target = otherLocale(sourceLocale);
+  const FieldsContainer = compact ? "details" : "div";
   const hasTranslation = fields.some((field) => translation[field.key]?.trim());
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/translations", { signal: controller.signal })
       .then((r) => r.json() as Promise<{ available: boolean }>)
-      .then((data) => setAvailable(data.available === true))
-      .catch(() => setAvailable(false));
+      .then((data) => {if(!controller.signal.aborted)setAvailable(data.available === true);})
+      .catch(() => {if(!controller.signal.aborted)setAvailable(false);});
     return () => controller.abort();
   }, []);
   async function suggest() {
     const current = version.current;
+    const source=getSource();
+    const texts=textsOf(Object.fromEntries(fields.map(field=>[field.key,source[field.key]])));
+    const controller=new AbortController();
+    request.current?.abort();request.current=controller;
     setBusy(true);
     setError("");
+    setSuggestion(null);
     try {
       const response = await fetch("/api/translations", {
         method: "POST",
+        signal:controller.signal,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceLocale, texts: getSource() }),
+        body: JSON.stringify({ sourceLocale, texts }),
       });
       const result = (await response.json()) as {
         translation: TranslationTexts;
@@ -73,57 +87,60 @@ export function TranslationEditor({
         throw new Error(
           "Dein Ausgangstext hat sich geändert. Bitte die Übersetzung erneut erstellen.",
         );
-      onChange(result.translation);
-      setReviewed(false);
-      setMachine(true);
+      const parsed=translationFields.safeParse(result.translation);
+      if(!parsed.success || fields.some(field=>texts[field.key]&&!parsed.data[field.key]?.trim()))throw new Error("Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.");
+      setSuggestion({ snapshot: current, texts:parsed.data });
     } catch (error) {
+      if(controller.signal.aborted)return;
       setError(
         error instanceof Error
           ? error.message
           : "Die automatische Übersetzung ist gerade nicht erreichbar. Du kannst die Übersetzung selbst ergänzen.",
       );
     } finally {
-      setBusy(false);
+      if(request.current===controller)setBusy(false);
     }
   }
   return (
     <section
-      className="translation-editor"
+      className={
+        compact
+          ? "translation-editor inline-hint-translation"
+          : "translation-editor"
+      }
       aria-label={t("Übersetzung ergänzen")}
     >
-      <label>
-        {t("Sprache deiner Erklärung")}
-        <Select
-          value={sourceLocale}
-          onValueChange={(value) => {
-            setSourceLocale(value as Locale);
-            onChange({});
-            setReviewed(false);
-            setMachine(false);
-            setError("");
-          }}
-        >
-          <option value="de">{t("Deutsch")}</option>
-          <option value="en">{t("Englisch")}</option>
-        </Select>
-      </label>
-      <p className="form-note">
-        {t(
-          "Originalausdrücke bleiben unverändert. Die Sprache hier gilt für deine Erklärungen, Beispiele und Hinweise.",
-        )}
-      </p>
-      <h3>
-        {t("Übersetzung ins")} {t(target === "de" ? "Deutsche" : "Englische")}
-      </h3>
-      <p className="muted">
-        {t(
-          "Du kannst die zweite Sprachfassung selbst schreiben oder einen Vorschlag bearbeiten. Fehlende Felder erscheinen später als gekennzeichneter Originaltext.",
-        )}
-      </p>
+      {!compact && (
+        <>
+          <p className="form-note">
+            <strong>
+              {t("Sprache deiner Erklärung")}:{" "}
+              {t(sourceLocale === "de" ? "Deutsch" : "Englisch")}
+            </strong>{" "}
+            {t(
+              "Die Sprache wird beim Öffnen des Formulars übernommen. Gespeicherte Beiträge und Entwürfe behalten ihre Ursprungssprache.",
+            )}
+          </p>
+          <h3>
+            {t("Übersetzung ins")}{" "}
+            {t(target === "de" ? "Deutsche" : "Englische")}
+          </h3>
+          <p className="muted">
+            {t(
+              "Du kannst die zweite Sprachfassung selbst schreiben oder einen Vorschlag bearbeiten. Fehlende Felder erscheinen später als gekennzeichneter Originaltext.",
+            )}
+          </p>
+        </>
+      )}
       <button
         type="button"
         className="button outline"
-        disabled={busy || available !== true || !session?.user}
+        disabled={
+          busy ||
+          available !== true ||
+          !session?.user ||
+          !fields.some((field) => getSource()[field.key]?.trim())
+        }
         onClick={() => void suggest()}
       >
         {busy ? t("Wird übersetzt …") : t("Übersetzung vorschlagen")}
@@ -135,7 +152,7 @@ export function TranslationEditor({
           )}
         </p>
       )}
-      {available === true && (
+      {available === true && !compact && (
         <p className="form-note">
           {t(
             "Für Vorschläge werden deine Erklärungstexte an Cloudflare Workers AI gesendet.",
@@ -149,30 +166,90 @@ export function TranslationEditor({
           )}
         </p>
       )}
-      {machine && hasTranslation && (
-        <p role="status" className="form-note">
-          {t(
-            "Automatischer Übersetzungsvorschlag: Bitte Bedeutung und kulturelle Feinheiten prüfen und bei Bedarf korrigieren.",
-          )}
-        </p>
+      {preview && (
+        <div className="answer-translation-preview">
+          {fields.map((field) => (
+            <label key={field.key}>
+              {t("Übersetzungsvorschlag")} ·{" "}
+              {t(target === "de" ? "Deutsch" : "Englisch")}
+              <textarea
+                maxLength={field.max}
+                rows={2}
+                value={preview.texts[field.key]}
+                onChange={(event) =>
+                  setSuggestion({
+                    ...preview,
+                    texts: {
+                      ...preview.texts,
+                      [field.key]: event.target.value,
+                    },
+                  })
+                }
+              />
+            </label>
+          ))}
+          <div className="answer-translation-actions">
+            <button
+              type="button"
+              className="button outline small"
+              disabled={fields.some(
+                (field) =>
+                  (getSource()[field.key]?.trim() && !preview.texts[field.key]?.trim()) ||
+                  preview.texts[field.key].length > field.max,
+              )}
+              onClick={() => {
+                if(version.current!==preview.snapshot)return;
+                onChange({
+                  ...translation,
+                  ...Object.fromEntries(
+                    fields.map((field) => [
+                      field.key,
+                      preview.texts[field.key],
+                    ]),
+                  ),
+                });
+                setReviewed(false);
+                setSuggestion(null);
+              }}
+            >
+              {t("Vorschlag übernehmen")}
+            </button>
+            <button
+              type="button"
+              className="button outline small"
+              onClick={() => setSuggestion(null)}
+            >
+              {t("Verwerfen")}
+            </button>
+          </div>
+        </div>
       )}
-      {fields.map((field) => (
-        <label key={field.key}>
-          {t(field.label)} · {t(target === "de" ? "Deutsch" : "Englisch")}
-          <textarea
-            value={translation[field.key] ?? ""}
-            maxLength={field.max}
-            rows={field.key === "meaning" || field.key === "body" ? 3 : 2}
-            onChange={(e) => {
-              onChange({ ...translation, [field.key]: e.target.value });
-              setReviewed(false);
-            }}
-          />
-        </label>
-      ))}
+      <FieldsContainer>
+        {compact && (
+          <summary>
+            {t("Zweite Sprachfassung")} · {target.toUpperCase()}
+          </summary>
+        )}
+        {fields.map((field) => (
+          <label key={field.key}>
+            {t(field.label)} · {t(target === "de" ? "Deutsch" : "Englisch")}
+            <textarea
+              name={"translation."+field.key}
+              value={translation[field.key] ?? ""}
+              maxLength={field.max}
+              rows={field.key === "meaning" || field.key === "body" ? 3 : 2}
+              onChange={(e) => {
+                onChange({ ...translation, [field.key]: e.target.value });
+                setReviewed(false);
+              }}
+            />
+          </label>
+        ))}
+      </FieldsContainer>
       {hasTranslation && (
         <label className="translation-review">
           <input
+            name="translationReviewed"
             type="checkbox"
             checked={reviewed}
             required

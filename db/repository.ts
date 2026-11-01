@@ -1,7 +1,9 @@
 import {validateRegion} from './regions';
+import {languagePoolQuery} from './game-language-pool';
+import {readyGameDifficulties} from './editorial-repository';
 import {audioBucket} from '@/lib/audio-storage';
 import {prepareAttributionEntries} from '@/lib/attribution';
-import {chainPrompts} from '@/lib/word-chain';
+import {sentencePrompts} from '@/lib/sentence-chain';
 import type {RoomPoolSettings} from '@/lib/game-pool';
 import { registeredLanguageNames } from '@/lib/language-registry';
 import { neon } from '@neondatabase/serverless';
@@ -17,16 +19,22 @@ export const database = () => {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL fehlt.');
   return neon(process.env.DATABASE_URL);
 };
-export const withLanguageNames=(entry:Entry):Entry=>({...entry,challenge:entry.challenge??undefined,languageNames:registeredLanguageNames(entry.language)});
-export const fields = `id, sense, hint, phrase_markup as "phraseMarkup", (SELECT jsonb_build_object('de',r.de,'en',r.en) FROM content_regions r WHERE r.id=region_id) as "regionNames", revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
+export const withLanguageNames=(entry:Entry):Entry=>({...entry,editorialDifficulty:entry.editorialDifficulty??undefined,challenge:entry.challenge??undefined,languageNames:registeredLanguageNames(entry.language)});
+export const fields = `id, canonical_vocabulary_id AS "canonicalVocabularyId", sense, hint, phrase_markup as "phraseMarkup", (SELECT jsonb_build_object('de',r.de,'en',r.en) FROM content_regions r WHERE r.id=region_id) as "regionNames", revision, updated_at as "updatedAt", kind, presentation, challenge, phrase, language, credit_name as "creditName",audio_id as "audioId", literal, meaning, example, region, region_id as "regionId", cultural_note as "culturalNote", context, context_id as "contextId", source_locale as "sourceLocale", translations, source_url as "sourceUrl", status, author_name as "authorName", created_at as "createdAt"`;
 export async function listEntries(kind = '', language = '', search = '', offset = 0) {
   const sql = database();
-  return (await sql.query(`SELECT id,kind,phrase,phrase_markup AS "phraseMarkup",presentation,status,created_at AS "createdAt" FROM content_entries WHERE deleted_at IS NULL AND kind<>'taboo' AND ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 6 OFFSET $4`, [kind, language, search, offset]) as EntryPreview[]);
+  return (await sql.query(`SELECT id,kind,phrase,phrase_markup AS "phraseMarkup",presentation,status,created_at AS "createdAt" FROM content_entries WHERE deleted_at IS NULL AND kind NOT IN ('taboo','vocabulary','grammar') AND ($1='' OR kind=$1) AND ($2='' OR language=$2) AND ($3='' OR phrase ILIKE '%' || $3 || '%' OR meaning ILIKE '%' || $3 || '%' OR translations #>> '{de,meaning}' ILIKE '%' || $3 || '%' OR translations #>> '{en,meaning}' ILIKE '%' || $3 || '%') ORDER BY created_at DESC, id LIMIT 6 OFFSET $4`, [kind, language, search, offset]) as EntryPreview[]);
 }
 export async function getEntry(id: string) {
   const sql = database(); const rows = await sql.query(`SELECT ${fields} FROM content_entries WHERE id=$1 AND deleted_at IS NULL`, [id]); return rows[0]?withLanguageNames(rows[0] as Entry):undefined;
 }
 export async function findDuplicateEntry(input:EntryIdentity):Promise<ExistingEntry|undefined> {
+  const translationLanguage=input.translationLanguage??(input.challenge?.type==='learning'?input.challenge.vocabulary?.translationLanguage:undefined);
+  if(input.kind==='vocabulary'&&translationLanguage){
+    const rows=await database().query(`SELECT id,phrase FROM content_entries WHERE deleted_at IS NULL AND kind='vocabulary' AND content_phrase_key(sense)=content_phrase_key($1) AND ((lower(language)=lower($2) AND challenge->'vocabulary'->>'translationLanguage'=$3 AND content_phrase_key(phrase)=content_phrase_key($4)) OR (lower(language)=lower($3) AND challenge->'vocabulary'->>'translationLanguage'=$2 AND content_phrase_key(phrase)=content_phrase_key($5) AND content_phrase_key(literal)=content_phrase_key($4))) LIMIT 1`,[input.sense??'',input.language,translationLanguage,input.phrase,input.literal??'']);
+    return rows[0] as ExistingEntry|undefined;
+  }
+
   const scope=input.kind==='dialect'?input.regionId??'':input.kind==='situation'?input.contextId??'':input.kind==='attribution'?input.attributionCategory??'':input.kind==='word_order'?input.targetLanguage??'':input.kind==='false_friend'?(input.otherLanguage??'')+':'+(input.otherWord??''):'';
   const rows=await database()`SELECT id,phrase FROM content_entries WHERE deleted_at IS NULL AND kind=${input.kind} AND lower(language)=lower(${input.language}) AND content_phrase_key(sense)=content_phrase_key(${input.sense??''}) AND ((${input.audioHash??''}<>'' AND audio_hash=${input.audioHash??''}) OR (${input.phrase}<>'' AND presentation<>'audio' AND content_phrase_key(phrase)=content_phrase_key(${input.phrase}))) AND (CASE WHEN kind='dialect' THEN coalesce(region_id,region) WHEN kind='situation' THEN coalesce(context_id,context) WHEN kind='attribution' THEN coalesce(challenge->>'category','') WHEN kind='word_order' THEN coalesce(challenge->>'targetLanguage','') WHEN kind='false_friend' THEN coalesce(challenge->>'otherLanguage','') || ':' || content_phrase_key(coalesce(challenge->>'otherWord','')) ELSE '' END)=(CASE WHEN ${input.kind}='false_friend' THEN ${input.otherLanguage??''} || ':' || content_phrase_key(${input.otherWord??''}) ELSE ${scope} END) LIMIT 1`;
   return rows[0] as ExistingEntry|undefined;
@@ -62,23 +70,25 @@ export async function addExplanation(id: string, input:{body:string;creditName?:
   return await database()`INSERT INTO explanations(entry_id,body,author_id,author_name,source_locale,translations,credit_name) VALUES (${id},${input.body},${authorId},${authorName},${sourceLocale},${JSON.stringify(translations)}::jsonb,${input.creditName??''}) RETURNING id`;
 }
 export async function gamePrompts(mode: PlayableGameMode = 'idiom-bluff',settings:Partial<RoomPoolSettings>={}) {
-  if(mode==='taboo')return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='taboo' AND language=ANY($1::text[]) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 240`,[settings.tabooLanguages??[settings.locale??'de'],(settings.playedPrompts??[]).map(p=>p.id)]) as Entry[]).map(withLanguageNames);
-  if(mode==='word-chain')return chainPrompts();
+  if(settings.difficulty&&!(await readyGameDifficulties(mode,settings)).includes(settings.difficulty))throw new GameError('Für diese Auswahl ist keine Spielstufe freigegeben.',422);
+  const query=async(statement:string,params:unknown[])=>{const filtered=languagePoolQuery(mode,settings.gameLanguages,statement,params,settings.difficulty);const rows=await database().query(filtered.statement,filtered.params);return settings.difficulty?rows.map(row=>({...row,editorialDifficulty:settings.difficulty})):rows;};
+  if(mode==='taboo')return (await query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='taboo' AND language=ANY($1::text[]) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 240`,[settings.gameLanguages??settings.tabooLanguages??[settings.locale??'de'],(settings.playedPrompts??[]).map(p=>p.id)]) as Entry[]).map(withLanguageNames);
+  if(mode==='word-chain')return sentencePrompts();
   const seenIds=[...new Set([...(settings.playedPrompts??[]).map(prompt=>prompt.id),...(settings.round?[settings.round.entry.id]:[])])];
   if(mode==='meaning-quiz'){
     const kinds=settings.meaningCategory==='expression'?['idiom','dialect']:settings.meaningCategory==='gaming'?['gaming_mission']:settings.meaningCategory==='youth'?['youth_chat']:settings.meaningCategory==='academic'?['academic']:['idiom','dialect','gaming_mission','youth_chat','academic'];
-    return (await database().query(`SELECT ${fields} FROM (SELECT *,row_number() OVER (PARTITION BY kind ORDER BY (id=ANY($2::uuid[])),random()) AS sample_rank FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[])) sampled WHERE sample_rank<=50`,[kinds,seenIds]) as Entry[]).map(withLanguageNames);
+    return (await query(`SELECT ${fields} FROM (SELECT *,row_number() OVER (PARTITION BY kind ORDER BY (id=ANY($2::uuid[])),random()) AS sample_rank FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[])) sampled WHERE sample_rank<=50`,[kinds,seenIds]) as Entry[]).map(withLanguageNames);
   }
   const newKinds={'gaming-call':'gaming_mission','generation-chat':'youth_chat','plain-talk':'academic','who-said-it':'attribution','false-friends':'false_friend','word-builder':'word_order','joke-quiz':'joke','word-outsider':'word_group','loanword-quiz':'loanword'} as const;
-  if(mode in newKinds){const category=mode==='who-said-it'&&settings.attributionCategory&&settings.attributionCategory!=='both'?settings.attributionCategory:'';const entries=(await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 AND ($2='' OR challenge->>'category'=$2) ORDER BY (id=ANY($3::uuid[])),random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds],category,seenIds]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
+  if(mode in newKinds){const category=mode==='who-said-it'&&settings.attributionCategory&&settings.attributionCategory!=='both'?settings.attributionCategory:'';const entries=(await query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=$1 AND ($2='' OR challenge->>'category'=$2) ORDER BY (id=ANY($3::uuid[])),random() LIMIT 120`,[newKinds[mode as keyof typeof newKinds],category,seenIds]) as Entry[]).map(withLanguageNames);return mode==='who-said-it'?prepareAttributionEntries(entries):mode==='gaming-call'&&entries.some(e=>e.challenge?.type==='relay')?entries.filter(e=>e.challenge?.type==='relay'):entries;}
   const quiz = { 'language-quiz': {kind:'word',field:'language'}, 'dialect-detective': {kind:'dialect',field:'region_id'}, 'everyday-language': {kind:'situation',field:'context_id'} } as const;
   if (mode in quiz) {
     // Column names are a fixed server allowlist; values remain parameterized.
     const {kind,field}=quiz[mode as keyof typeof quiz];
-    return (await database().query(`SELECT ${fields} FROM content_entries e WHERE e.deleted_at IS NULL AND kind=$1 AND trim(${field})<>'' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.deleted_at IS NULL AND other.kind=$1 AND ((e.audio_hash IS NOT NULL AND other.audio_hash=e.audio_hash) OR (e.phrase<>'' AND other.phrase<>'' AND lower(trim(other.phrase))=lower(trim(e.phrase)))) AND lower(trim(other.${field}))<>lower(trim(e.${field}))) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 40`, [kind,seenIds]) as Entry[]).map(withLanguageNames);
+    return (await query(`SELECT ${fields} FROM content_entries e WHERE e.deleted_at IS NULL AND kind=$1 AND trim(${field})<>'' AND NOT EXISTS (SELECT 1 FROM content_entries other WHERE other.deleted_at IS NULL AND other.kind=$1 AND ((e.audio_hash IS NOT NULL AND other.audio_hash=e.audio_hash) OR (e.phrase<>'' AND other.phrase<>'' AND lower(trim(other.phrase))=lower(trim(e.phrase)))) AND lower(trim(other.${field}))<>lower(trim(e.${field}))) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 40`, [kind,seenIds]) as Entry[]).map(withLanguageNames);
   }
-  if (mode === 'tongue-twisters') return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[]) AND ($3='' OR language=$3) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 40`, [settings.pronunciationCategory==='twister'?['tongue_twister']:settings.pronunciationCategory==='sound'?['sound_pair']:['tongue_twister','sound_pair'],seenIds,settings.pronunciationLanguage??'']) as Entry[]).map(withLanguageNames);
-  return (await database().query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='idiom' ORDER BY (id=ANY($1::uuid[])),random() LIMIT 40`, [seenIds]) as Entry[]).map(withLanguageNames);
+  if (mode === 'tongue-twisters') return (await query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind=ANY($1::text[]) AND ($3='' OR language=$3) ORDER BY (id=ANY($2::uuid[])),random() LIMIT 40`, [settings.pronunciationCategory==='twister'?['tongue_twister']:settings.pronunciationCategory==='sound'?['sound_pair']:['tongue_twister','sound_pair'],seenIds,settings.gameLanguages?'':settings.pronunciationLanguage??'']) as Entry[]).map(withLanguageNames);
+  return (await query(`SELECT ${fields} FROM content_entries WHERE deleted_at IS NULL AND kind='idiom' ORDER BY (id=ANY($1::uuid[])),random() LIMIT 40`, [seenIds]) as Entry[]).map(withLanguageNames);
 }
 export async function insertRoom(game: Game) { await database()`INSERT INTO game_rooms(code,state) VALUES (${game.code}, ${JSON.stringify(game)}::jsonb)`; }
 export async function getRoom(code: string,includePrompts=true) {

@@ -96,12 +96,12 @@ export function Header({
             }
           }}
         >
-          {t("Spiele")}
+          {t("Spielen")}
         </a>
         <a
           className={active === "discover" ? "active" : ""}
           aria-current={active === "discover" ? "location" : undefined}
-          href="/#entdecken"
+          href={locale==='de'?'/lernen':'/en/learn'}
           onClick={(e) => {
             if (onDiscover) {
               e.preventDefault();
@@ -109,7 +109,7 @@ export function Header({
             }
           }}
         >
-          {t("Entdecken")}
+          {t("Lernen")}
         </a>
       </nav>
       <div className="header-actions">
@@ -158,7 +158,7 @@ export function Header({
         )}
         {session?.user ? (
           <>
-            <a href="/me" className="button small outline">
+            <a href={active==='discover'?'/me?area=learn':"/me"} className="button small outline">
               {t("Meine Beiträge")}
             </a>
             {admin && (
@@ -175,10 +175,10 @@ export function Header({
                 )}
               </a>
             )}
-            <span className="account-name">
+            <a href="/profile" className="button small outline profile-link" aria-label={t("Profil bearbeiten")}>
               <UserRound size={16} />
-              {session.user.name}
-            </span>
+              {t("Profil")}
+            </a>
             <button
               className="icon-button"
               aria-label={t("Abmelden")}

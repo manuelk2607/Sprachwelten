@@ -6,6 +6,7 @@ import type { RoomAction, Entry } from "../../lib/content";
 import { entryPreview } from "../../lib/content-public";
 import { entryInput } from "../../lib/content";
 
+test.beforeEach(async({page})=>{await page.route('**/api/learning/vocabulary?*',r=>r.fulfill({json:{cards:[],more:false,topics:[],levels:[]}}));});
 test("new idioms submit canonical text and show bold words and translated hints in discovery", async ({
   page,
 }) => {
@@ -68,6 +69,7 @@ test("new idioms submit canonical text and show bold words and translated hints 
     .click();
   await expect.poll(() => saved?.phrase).toBe(entry.phrase);
   expect(saved?.phraseMarkup).toBe(entry.phraseMarkup);
+  await page.goto('/lernen');
   await page
     .getByRole("button", { name: "Sammlung öffnen", exact: true })
     .click();
@@ -157,6 +159,7 @@ test("idiom hints and highlighted words survive editing and keep the submitted o
     .fill("Da liegt der Hund **begraben**.");
   await expect(dialog.locator(".phrase-preview strong")).toHaveText("begraben");
   await dialog.locator('[name="hint"]').fill("Ein Hinweis auf die Ursache.");
+  await dialog.locator('.inline-hint-translation summary').click();
   await dialog
     .getByLabel("Tipp fürs Spiel · Englisch", { exact: true })
     .fill("A clue to the cause.");

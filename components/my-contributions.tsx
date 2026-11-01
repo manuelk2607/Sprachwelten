@@ -24,6 +24,11 @@ export function MyContributions() {
     [offset, setOffset] = useState(0),
     [refresh, setRefresh] = useState(0),
     [editing, setEditing] = useKeyedState<Entry | null>(userId ?? "", null);
+  const [area,setArea]=useState<'play'|'learn'>('play');
+  useEffect(()=>{if(new URLSearchParams(window.location.search).get('area')==='learn'){
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore the explicitly linked contribution area.
+    setArea('learn');
+  }},[]);
   const [query, setQuery] = useState(""),
     [search, setSearch] = useState("");
   const [error, setError] = useKeyedState(
@@ -41,7 +46,7 @@ export function MyContributions() {
   const resource = useApiResource<{ entries: Entry[]; more: boolean }>(
     userId
       ? "/api/me/entries?" +
-          new URLSearchParams({ offset: String(offset), q: search })
+          new URLSearchParams({ offset: String(offset), q: search,area })
       : null,
     userId + ":" + refresh,
   );
@@ -125,6 +130,7 @@ export function MyContributions() {
         )}
         {session?.user && tab === "entries" && (
           <div className="own-entry-search">
+            <div className="learning-actions" role="group" aria-label={t('Beitragsbereich')}>{(['play','learn'] as const).map(value=><button className={'button '+(value===area?'dark':'outline')} key={value} aria-pressed={value===area} onClick={()=>{setArea(value);setOffset(0);setEditing(null);}}>{t(value==='play'?'Spielbeiträge':'Lernbeiträge')}</button>)}</div>
             <label htmlFor="own-entry-query">
               {t("Eigene Beiträge durchsuchen")}
             </label>

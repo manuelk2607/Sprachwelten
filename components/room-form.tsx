@@ -1,5 +1,7 @@
 "use client";
-import {LanguageSetPicker} from "./language-set-picker";
+import type {DifficultyLevel} from '@/lib/editorial-difficulty';
+import {GameLanguagePicker} from "./game-language-picker";
+import {useKeyedState} from '@/lib/use-keyed-state';
 import { useAuthSession } from "@/lib/auth/provider";
 import { familyFor, gameFamilies } from "@/lib/game-families";
 import { Select } from "./select";
@@ -9,7 +11,6 @@ import { useI18n } from "@/lib/i18n";
 import { modeInfo, type PlayableGameMode } from "@/lib/modes";
 import { Dialog } from "./dialog";
 import { meaningCategories } from "@/lib/meaning-categories";
-import { LanguagePicker } from "./language-picker";
 import {
   roomStorageKey,
   savedRoomToken,
@@ -38,10 +39,11 @@ export function RoomForm({
     () => null,
   );
   const [mode, setMode] = useState<PlayableGameMode>(initialMode);
-  const [pronunciationLanguage, setPronunciationLanguage] = useState(
-    locale as string,
-  );
-  const [tabooLanguages,setTabooLanguages]=useState<string[]>([locale]);
+  const [gameLanguages,setGameLanguages]=useKeyedState<string[]|undefined>(mode,undefined);
+  const [meaningCategory,setMeaningCategory]=useState('all');
+  const [pronunciationCategory,setPronunciationCategory]=useState('both');
+  const [attributionCategory,setAttributionCategory]=useState('both');
+  const [difficulty,setDifficulty]=useKeyedState<DifficultyLevel|undefined>(JSON.stringify([mode,gameLanguages,meaningCategory,pronunciationCategory,attributionCategory]),undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const info = modeInfo(mode);
@@ -67,13 +69,15 @@ export function RoomForm({
             name: data.get("name"),
             locale: data.get("locale") ?? locale,
             mode,
-            tabooLanguages:mode==="taboo"?tabooLanguages:undefined,
+            difficulty,
+            gameLanguages:mode==='word-chain'?undefined:gameLanguages,
             meaningCategory: data.get("meaningCategory") ?? undefined,
             pronunciationCategory:
               data.get("pronunciationCategory") ?? undefined,
             pronunciationLanguage:
               data.get("pronunciationLanguage") ?? undefined,
             attributionCategory: data.get("attributionCategory") ?? undefined,
+            sentenceLanguage:data.get('sentenceLanguage')??undefined,
           }),
         },
       );
@@ -162,7 +166,7 @@ export function RoomForm({
         {!join && mode === "meaning-quiz" && (
           <label>
             {t("Kategorie")}
-            <Select name="meaningCategory" defaultValue="all">
+            <Select name="meaningCategory" value={meaningCategory} onValueChange={setMeaningCategory}>
               {Object.entries(meaningCategories).map(([id, title]) => (
                 <option key={id} value={id}>
                   {t(title)}
@@ -174,28 +178,19 @@ export function RoomForm({
         {!join && mode === "tongue-twisters" && (
           <label>
             {t("Kategorie")}
-            <Select name="pronunciationCategory" defaultValue="both">
+            <Select name="pronunciationCategory" value={pronunciationCategory} onValueChange={setPronunciationCategory}>
               <option value="both">{t("Beide Kategorien")}</option>
               <option value="twister">{t("Zungenknoten")}</option>
               <option value="sound">{t("Klangfallen")}</option>
             </Select>
           </label>
         )}
-        {!join && mode === "tongue-twisters" && (
-          <LanguagePicker
-            label="Sprache der Zungenbrecher"
-            name="pronunciationLanguage"
-            value={pronunciationLanguage}
-            onChange={setPronunciationLanguage}
-            allowAll
-            preserveSelectionWhileSearching
-          />
-        )}
-        {!join&&mode==="taboo"&&<LanguageSetPicker value={tabooLanguages} onChange={setTabooLanguages} disabled={busy}/>}
+        {!join&&mode!=='word-chain'&&<GameLanguagePicker key={mode} mode={mode} value={gameLanguages} onChange={setGameLanguages} disabled={busy} remember difficulty={difficulty} onDifficultyChange={value=>setDifficulty(value??undefined)} meaningCategory={mode==='meaning-quiz'?meaningCategory:undefined} pronunciationCategory={mode==='tongue-twisters'?pronunciationCategory:undefined} attributionCategory={mode==='who-said-it'?attributionCategory:undefined}/>}
+        {!join&&mode==='word-chain'&&<label>{t('Sprache des gemeinsamen Satzes')}<Select name="sentenceLanguage" defaultValue={locale}><option value="de">{t('Deutsch')}</option><option value="en">{t('Englisch')}</option></Select></label>}
         {!join && mode === "who-said-it" && (
           <label>
             {t("Kategorie")}
-            <Select name="attributionCategory" defaultValue="both">
+            <Select name="attributionCategory" value={attributionCategory} onValueChange={setAttributionCategory}>
               <option value="both">{t("Beide Kategorien")}</option>
               <option value="person">{t("Personenzitat")}</option>
               <option value="song">{t("Liedstelle")}</option>
@@ -265,7 +260,7 @@ export function RoomForm({
             {error}
           </p>
         )}
-        <button disabled={busy} className="button primary full">
+        <button disabled={busy||!join&&mode!=='word-chain'&&(!gameLanguages?.length||mode==='language-quiz'&&gameLanguages.length<4)} className="button primary full">
           {t(busy ? "Einen Moment …" : join ? "Mitspielen" : "Raum erstellen")}
           <ArrowRight size={18} />
         </button>

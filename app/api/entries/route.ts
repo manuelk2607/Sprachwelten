@@ -10,6 +10,6 @@ export const GET = (request: Request) => safe(async () => {
   return respond({ entries: await listEntries(kind,language,search,offset) });
 });
 export const POST = (request: Request) => safe(async () => {
-  const input=await body(request,entryInput),user=await contributor(request);await limitContribution(request,user,'entry');
+  const input=await body(request,entryInput.refine(v=>!['vocabulary','grammar'].includes(v.kind),'Bitte Lernbeiträge über das Lernformular einreichen.')),user=await contributor(request);await limitContribution(request,user,'entry');
   const entry=await addEntry(input,user.id,user.name);return withContributor(respond({entry:publicEntry(entry)},201),request,user);
 });

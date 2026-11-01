@@ -22,7 +22,7 @@ test('text, audio and combined input validate independently; legacy submissions 
  for(const input of [{literal:'Test translation',kind:'word',language:'en',presentation:'text'},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'both'},{literal:'Test translation',kind:'word',language:'en',presentation:'audio'},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'text',audioId:clip},{literal:'Test translation',kind:'word',phrase:'word',language:'en',presentation:'unknown'}])assert.equal(entryInput.safeParse(input).success,false,JSON.stringify(input));
 });
 test('each contribution kind accepts audio without an original text while retaining its required solution metadata',()=>{
- for(const kind of contentKinds){const sample=samples.find(e=>e.kind===kind);assert.ok(sample,kind);const input=entryInput.parse({...sample,literal:sample.literal||'Test translation',presentation:'audio',phrase:'',audioId:clip});assert.equal(input.phrase,'');assert.equal(input.presentation,'audio');if(sample.challenge)assert.deepEqual(input.challenge,sample.challenge);}
+ for(const kind of contentKinds.filter(kind=>kind!=='vocabulary'&&kind!=='grammar')){const sample=samples.find(e=>e.kind===kind);assert.ok(sample,kind);const input=entryInput.parse({...sample,literal:sample.literal||'Test translation',presentation:'audio',phrase:'',audioId:clip});assert.equal(input.phrase,'');assert.equal(input.presentation,'audio');if(sample.challenge)assert.deepEqual(input.challenge,sample.challenge);}
  assert.equal(entryInput.safeParse({kind:'idiom',language:'de',presentation:'audio',audioId:clip}).success,false,'A contribution still needs a literal translation.');
 });
 test('saved legacy rounds infer their original presentation without losing recordings',()=>{
@@ -34,6 +34,7 @@ test('audio-only prompts remain distinct and hide source text in every game proj
   if(mode.id==='who-said-it')prompts=prepareAttributionEntries(samples.filter(e=>e.kind==='attribution')).map(e=>({...e,presentation:'audio' as const,phrase:'',literal:'Hidden transcript',audioId:crypto.randomUUID()}));
   assert.ok(prompts.length>=2,mode.id);const p=player(1),g=createGame('ABC234',p,'en',mode.id);if(mode.id==='tongue-twisters')g.pronunciationLanguage='';for(let i=2;i<=mode.minPlayers;i++)joinGame(g,player(i));act(g,p.id,{action:'start'},prompts);
   assert.equal(g.prompts.length,2,mode.id);assert.notEqual(g.prompts[0].audioId,g.prompts[1].audioId);
+  if(g.round?.pronunciation?.selection){g.round.pronunciation.selection.endsAt=Date.now()-1;act(g,p.id,{action:'heartbeat'});}
   const view=viewGame(g,p.id);assert.equal(view.prompt?.phrase,'');assert.equal(view.prompt?.audioId,g.round!.entry.audioId);assert.ok(!view.prompt?.literal);assert.equal(view.prompt?.presentation,'audio');assert.equal(view.revelation,null);
   if(view.friends)assert.equal(view.friends.otherWord,'');if(view.wordOrder)assert.equal(view.wordOrder.source,'');if(view.team){assert.equal(view.team.briefing?.phrase,'');const receiver=viewGame(g,g.players[1].id);assert.equal(receiver.prompt?.audioId,undefined);assert.equal(receiver.team?.briefing,null);}
  }

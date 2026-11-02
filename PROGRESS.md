@@ -1,26 +1,44 @@
-# Sprachwelten – Fortsetzungsstand, 1. November 2026
+# Sprachwelten – Fortsetzungsstand, 2. November 2026
+
+## Beitragswarteschlange – erster Produktionslauf abgeschlossen
+
+Der authentifizierte Lauf am 2. November hat das reguläre Kontingent vollständig
+genutzt: **20 neu erstellt, 24 ausstehend, 0 fehlgeschlagen**. Alle 20 neuen
+Einträge sind `gaming_mission`-Beiträge, wurden nach dem POST über die Anwendung
+erneut eingelesen und anschließend zusätzlich direkt in Produktion geprüft:
+20/20 IDs vorhanden und eindeutig, 20/20 aktiv, 20/20 der unveränderlichen
+Konto-ID `365f639e-7f9f-4c42-8260-a3398cceb219` zugeordnet, 20/20 mit sichtbarer
+Angabe `Manuel`. Keine Gast- oder Testkontobeiträge und keine Überschreibungen.
+
+Die Warteschlange hat den nächsten zulässigen Zeitpunkt aus der serverseitigen
+Quote als `2026-11-02T16:01:58.000Z` gespeichert (17:01:58 Uhr Stockholm).
+Bis dahin keine weiteren Versuche und keine Quoten­umgehung. `Swag` und die
+übrigen Jugend-/Hochschulbeiträge bleiben persistent `pending`; der nächste Lauf
+gleicht Dubletten erneut ab und quittiert bereits vorhandene Inhalte idempotent.
 
 ## Produktionslauf der Beitragswarteschlange – Vorprüfung 2. November
 
 Queue-Integrität erneut erfolgreich geprüft: 44 valide Einträge, Status lokal
-weiterhin 44 `pending`, 0 `published`, 0 `failed`. Lesender Produktionsabgleich
+jetzt 24 `pending`, 20 `published`, 0 `failed`. Lesender Produktionsabgleich
 zeigt eine zwischenzeitliche Veröffentlichung: `Swag` ist bereits als
 `youth_chat` vorhanden, mit Autor-ID `365f639e-7f9f-4c42-8260-a3398cceb219`
 und sichtbarer Angabe `Manuel`. Die übrigen 43 Queue-Inhalte sind nicht vorhanden.
 Der Runner soll `Swag` beim nächsten authentifizierten Lauf idempotent als
 `existing` quittieren; keine zweite Veröffentlichung.
 
-Produktionsblocker: `/api/me/contribution-limit` liefert noch 404, daher stoppt
-der Runner absichtlich vor jedem POST. Der vorbereitete Backendstand muss zuerst
-auf den bestehenden Worker `sprachwelten` deployt werden. Wrangler-OAuth wurde
-gestartet; die Cloudflare-Seite wartet auf die ausdrücklich vom Benutzer selbst
-zu bestätigende Freigabe. `.env.auth-test.local` mit den persönlichen, nur lokal
-verwendeten Zugangsdaten ist noch nicht vorhanden. Bis beide Voraussetzungen
-erfüllt sind, wurde kein Queue-POST gesendet und kein Limit umgangen.
+Cloudflare-Deployment am 2. November abgeschlossen: Nach einem ersten Lauf mit
+veraltetem Build wurde der aktuelle Stand neu gebaut und als Worker-Version
+`d338d61d-c429-4358-982a-5d4108d4af7b` auf `sprachwelten` veröffentlicht. Der
+Quoten-Endpunkt antwortet live anonym korrekt mit HTTP 401 und `no-store` statt
+404. Bestehende Worker-Secrets, Bindings und Cron-Trigger wurden erhalten.
+
+Die persönlichen Zugangsdaten liegen ausschließlich in der gitignorierten Datei
+`.env.auth-test.local` mit Modus 0600. Sie wurden weder ausgegeben noch versioniert.
 
 ## Veröffentlichungswarteschlange vorbereitet
 
-`publication-queue.json`: **44 pending, 0 published, 0 failed** (dieses Paket).
+`publication-queue.json`: **24 pending, 20 published, 0 failed** nach dem ersten
+Produktionslauf.
 Enthalten: vier restliche Jugendwörter sowie die ausdrücklich zur Vorbereitung
 freigegebenen 20 Gaming- und 20 Hochschulbegriffe. Die zuvor gespeicherten 18
 Beiträge bleiben separat abgeschlossen. Produktionsbestand lesend abgeglichen;
@@ -47,16 +65,13 @@ Typprüfung, Lint und Build bestanden (bestehende Framework-/Sourcemap-Warnungen
 Noch keine realen Queue-POSTs; echte Login-/Netzfehler-/Parallelprozessintegration
 nicht behaupten. Keine Datenbankmigration erforderlich.
 
-Commit `4b751c6` sichert das vollständige vorbereitete Paket. Deployment mit
-`npm run deploy:cloudflare` versucht, aber vor Veröffentlichung abgebrochen:
-kein nutzbarer Cloudflare-Zugang im nichtinteraktiven Prozess (Wrangler verlangt
-`CLOUDFLARE_API_TOKEN`). Kein temporäres Konto oder Ersatz-Worker angelegt.
+Commits `4b751c6` bis `a212c9e` sichern Paket und Produktionsvorprüfung. Der
+aktuelle Build und die fünf gezielten Queue-Tests bestehen. Kein temporäres Konto
+oder Ersatz-Worker angelegt.
 
-Nächster Schritt: bestehenden Cloudflare-Zugang wiederherstellen und
-Backendänderungen veröffentlichen; danach autorisierte lokale
-Kontozugangsdaten bereitstellen und `--publish` starten. `.env.auth-test.local`
-ist aktuell nicht vorhanden. Der Lauf stoppt bei fehlender Anmeldung oder noch
-nicht bereitgestelltem Quoten-Endpunkt vor der ersten Veröffentlichung.
+Nächster Schritt: frühestens nach 17:01:58 Uhr Stockholm denselben `--publish`-
+Lauf fortsetzen. Er prüft vor dem ersten POST erneut Sitzung, unveränderliche
+Konto-ID, Dubletten und die tatsächliche Restquote.
 
 ## Inhalte – schwedische Redewendungen und Jugendwörter
 

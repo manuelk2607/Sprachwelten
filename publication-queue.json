@@ -2,11 +2,11 @@
   "version": 1,
   "ownerId": "365f639e-7f9f-4c42-8260-a3398cceb219",
   "origin": "https://sprachwelten.maki26.workers.dev",
-  "notBefore": "2026-11-01T16:28:48.000Z",
+  "notBefore": "2026-11-02T16:01:58.000Z",
   "items": [
     {
       "id": "7ddc6425522677a0286da52ebaea6285b9038b33c145f056ca40f1155fe96168",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -46,11 +46,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "86e71801-f742-43af-8ccb-608c3cf822df",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:56.607Z"
     },
     {
       "id": "ec29b942fc5970fb0d80dc361a63d2149306f488e766b730c0f057a98939278e",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -90,11 +93,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "837535f5-2dfe-436c-950b-8dfcafad1cee",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:57.597Z"
     },
     {
       "id": "4b8b44f84bd2eb5c82ba468f5ade39c03d353116e4a91bd48485e92dde57e2ac",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -134,11 +140,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "cd008806-6dc8-4e5b-9fb5-46e1d95df91a",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:58.168Z"
     },
     {
       "id": "0d86a861845b77c171d9f07447620b7aba7af58b0d3228b04f16821048f72f7c",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -178,11 +187,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "385c614c-92b2-4cb8-ae26-d14f59425a6d",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:58.791Z"
     },
     {
       "id": "92c5af041ad9eea0980992ce70ad2da458d3c61b6090039e14ce6adaab1d5c4c",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -222,11 +234,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "659f35a2-6740-4669-bda6-00fb2fc2bf58",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:59.286Z"
     },
     {
       "id": "b893b86d5dabd00351096f9b020d60a473afa19537961d480f8454196d655f3d",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -266,11 +281,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "bc962541-78ca-42d3-bb5e-ea55f1f0fce5",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:01:59.823Z"
     },
     {
       "id": "33c6477abbd2e97085408a3b0c61fea4320bd8617600138bf1d336a2764f4d07",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -310,11 +328,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "228ce6d0-5660-422d-8d33-425407f66bbc",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:00.334Z"
     },
     {
       "id": "45cc12c9b245c2a0cdedfcc4477e38c9a57beb48cf49481342a963633f923607",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -354,11 +375,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "a683585e-7927-4ddd-a13d-3b86c18a1740",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:00.955Z"
     },
     {
       "id": "d70624d7d88cfd45501a26f08bccf2350c2a715a8a914450733fb7fc5cc78cd6",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -398,11 +422,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "2cd78bee-afb6-4e4c-a7c0-0400813c6fea",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:01.518Z"
     },
     {
       "id": "18a768ebd96850dda601f2cc91813b238a6184942a22648539c53eba673639f3",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -442,11 +469,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "28abc3d2-9ad0-4f22-8d28-92423a2198f1",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:02.038Z"
     },
     {
       "id": "fc6b92eb08f457d2a6c3b54c7ece86e126741efd5badeb674d4be055f1da5102",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -486,11 +516,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "1edb5a01-4869-4437-acb9-c90038c02605",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:02.592Z"
     },
     {
       "id": "be0652c2a628ccfb7dfde22dcd17e20b32a54ac15d8c6c6bc714b64a75982b06",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -530,11 +563,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "4d3e783d-c0da-40b4-b2cd-fbbe6c04019c",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:02.977Z"
     },
     {
       "id": "3847e184dc76c99bab318f276817663f32c08343f1d2209ed63c53d435f0fff7",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -574,11 +610,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "4a9f7dca-ff59-4b77-b837-90b31625a77c",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:03.498Z"
     },
     {
       "id": "7075b0a94e87130354299d9e07a2064442b762fa211401485d36d4287ae953d2",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -618,11 +657,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "8e478463-506b-4eb0-8811-cbb1811e19a4",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:03.923Z"
     },
     {
       "id": "0b1662d8e6bde35b1521a1b802b8f064dae55b93b11d10bfcb6e4da8ad867569",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -662,11 +704,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "abdd3db5-18b8-4aa5-a7a9-b74338930465",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:04.471Z"
     },
     {
       "id": "23b6407d8134b9168edb807f60602824e64ad7842cc75a117cdde7a95e656fa1",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -706,11 +751,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "d666253c-5c96-496d-a465-ce800f7a4c00",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:04.970Z"
     },
     {
       "id": "b5fbec8b74b8a18ca50be06758b0eed52212c2754f519e0e827f72ba6d2a30ba",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -750,11 +798,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "c426b905-13e1-4b3f-9f8c-5ca89c2cb8b5",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:05.551Z"
     },
     {
       "id": "ae2c0cc231d683b31cad3a954f31c4c305231c1c9190fd416a72244328df6650",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -794,11 +845,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "9a525c8e-0b80-42c7-96a1-ccdb7436ecbc",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:06.070Z"
     },
     {
       "id": "745e4cdc7cc0897b7ff876747098641386883897228dddaeb8df9dd8f98f8224",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -838,11 +892,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "a9e27405-2d80-445d-98be-83c75d279035",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:06.596Z"
     },
     {
       "id": "18cb50229654426c336082ac643d04602434a2fa734a11a40a20940c0e174c67",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -882,7 +939,10 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "956f1f8f-3c89-4b44-b175-aea34ee885f8",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T15:02:07.039Z"
     },
     {
       "id": "079a20d535ffdabde701ea9ea6ff1f224d5ceb87c826109e99ae3d76d0fba18b",

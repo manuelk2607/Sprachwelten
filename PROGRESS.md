@@ -1,5 +1,23 @@
 # Sprachwelten – Fortsetzungsstand, 1. November 2026
 
+## Produktionslauf der Beitragswarteschlange – Vorprüfung 2. November
+
+Queue-Integrität erneut erfolgreich geprüft: 44 valide Einträge, Status lokal
+weiterhin 44 `pending`, 0 `published`, 0 `failed`. Lesender Produktionsabgleich
+zeigt eine zwischenzeitliche Veröffentlichung: `Swag` ist bereits als
+`youth_chat` vorhanden, mit Autor-ID `365f639e-7f9f-4c42-8260-a3398cceb219`
+und sichtbarer Angabe `Manuel`. Die übrigen 43 Queue-Inhalte sind nicht vorhanden.
+Der Runner soll `Swag` beim nächsten authentifizierten Lauf idempotent als
+`existing` quittieren; keine zweite Veröffentlichung.
+
+Produktionsblocker: `/api/me/contribution-limit` liefert noch 404, daher stoppt
+der Runner absichtlich vor jedem POST. Der vorbereitete Backendstand muss zuerst
+auf den bestehenden Worker `sprachwelten` deployt werden. Wrangler-OAuth wurde
+gestartet; die Cloudflare-Seite wartet auf die ausdrücklich vom Benutzer selbst
+zu bestätigende Freigabe. `.env.auth-test.local` mit den persönlichen, nur lokal
+verwendeten Zugangsdaten ist noch nicht vorhanden. Bis beide Voraussetzungen
+erfüllt sind, wurde kein Queue-POST gesendet und kein Limit umgangen.
+
 ## Veröffentlichungswarteschlange vorbereitet
 
 `publication-queue.json`: **44 pending, 0 published, 0 failed** (dieses Paket).

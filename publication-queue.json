@@ -988,8 +988,8 @@
       },
       "attempts": 1,
       "entryId": "9ab206f5-7262-4a63-b38e-149ea5be8735",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:53.810Z"
+      "verifiedAt": "2026-11-02T20:14:53.810Z",
+      "disposition": "created"
     },
     {
       "id": "fb50f07772413fcb8f9ab2a51cbc4f6a0426a4f87728af73e13496700e1ffc1f",
@@ -1035,8 +1035,8 @@
       },
       "attempts": 1,
       "entryId": "85de07b2-5869-4fde-bef3-c6fd57723872",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:54.675Z"
+      "verifiedAt": "2026-11-02T20:14:54.675Z",
+      "disposition": "created"
     },
     {
       "id": "deb25b2dfb572cabeabf94b458650de2405f53a57e5ee2ff9b1fb4a35813b6ba",
@@ -1082,8 +1082,8 @@
       },
       "attempts": 1,
       "entryId": "7369ad5f-b235-4034-9fba-730d24b5f3fa",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:55.729Z"
+      "verifiedAt": "2026-11-02T20:14:55.729Z",
+      "disposition": "created"
     },
     {
       "id": "8aac5273e056fdc674146ba4b6f4a1c8763c91ef9bda872a12ad05a1d6176f0e",
@@ -1129,8 +1129,8 @@
       },
       "attempts": 1,
       "entryId": "26732b69-6387-4094-8988-87a06127f1b8",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:56.414Z"
+      "verifiedAt": "2026-11-02T20:14:56.414Z",
+      "disposition": "created"
     },
     {
       "id": "25a3cd849ab22fa1358fe3a49bd6fe3b1603223af0163e9a5b21a144aa7837df",
@@ -1176,8 +1176,8 @@
       },
       "attempts": 1,
       "entryId": "9bdb7d1a-d076-4b36-99f1-2f5c8eca7b95",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:57.071Z"
+      "verifiedAt": "2026-11-02T20:14:57.071Z",
+      "disposition": "created"
     },
     {
       "id": "10a9fefc9361b107af7e0171debfe9512bfee85863f027e078d1ed1b06caa87b",
@@ -1223,8 +1223,8 @@
       },
       "attempts": 1,
       "entryId": "11b8eece-1c64-404a-82e5-ff8ceb7f7d14",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:57.693Z"
+      "verifiedAt": "2026-11-02T20:14:57.693Z",
+      "disposition": "created"
     },
     {
       "id": "56dc8ae0fe5f5f86176f7959049f4432ba367835f821eb650da675d7e1685e38",
@@ -1270,8 +1270,8 @@
       },
       "attempts": 1,
       "entryId": "03bdd154-548d-41bb-a5fd-a6102f0e9043",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:58.332Z"
+      "verifiedAt": "2026-11-02T20:14:58.332Z",
+      "disposition": "created"
     },
     {
       "id": "477dd0c9d1990b4c0bd6c0dc509d15ac917131364eb76638e88a6fba8d7557f8",
@@ -1317,8 +1317,8 @@
       },
       "attempts": 1,
       "entryId": "43f09a6c-873a-4d7e-9788-f37d39c05c97",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:58.876Z"
+      "verifiedAt": "2026-11-02T20:14:58.876Z",
+      "disposition": "created"
     },
     {
       "id": "95ceaa6528dfc5371fa66af63262b338da18ad234e82d714a9b3a59dba311073",
@@ -1364,8 +1364,8 @@
       },
       "attempts": 1,
       "entryId": "328ee1fe-199e-4890-9f3e-a3bbf7852c0d",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:14:59.567Z"
+      "verifiedAt": "2026-11-02T20:14:59.567Z",
+      "disposition": "created"
     },
     {
       "id": "ddc1f1b8d9f9014ed8720a0ee6ae6b4cbc5263b256aa67a12a1dd8f0cb9239ae",
@@ -1411,8 +1411,8 @@
       },
       "attempts": 1,
       "entryId": "f1a5eac3-13a9-4b2f-89b7-6eb11ffc4f0e",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:00.156Z"
+      "verifiedAt": "2026-11-02T20:15:00.156Z",
+      "disposition": "created"
     },
     {
       "id": "5bd55c898b3c125cab7bcb72943ddadd20a9609c396b22d67c8f3cbfeb152fd6",
@@ -1458,8 +1458,8 @@
       },
       "attempts": 1,
       "entryId": "388e6c9a-4807-488d-9f2b-40c8030f61d6",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:00.741Z"
+      "verifiedAt": "2026-11-02T20:15:00.741Z",
+      "disposition": "created"
     },
     {
       "id": "123c6c72c9db35b056dd9652837d72ccf3b9f7f9fdc8417ec6dd0c91fd48d0da",
@@ -1505,8 +1505,8 @@
       },
       "attempts": 1,
       "entryId": "2ddaf4db-f736-4688-9c43-442f3e697fc8",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:01.304Z"
+      "verifiedAt": "2026-11-02T20:15:01.304Z",
+      "disposition": "created"
     },
     {
       "id": "7b808ce3b4bcd9ab123c4a605cf0b75c4b0ffef3f6ec9bc8c6b49618497523c8",
@@ -1552,8 +1552,8 @@
       },
       "attempts": 1,
       "entryId": "9c2b40fc-429a-4e6f-9b67-b9eb547b0a1c",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:01.898Z"
+      "verifiedAt": "2026-11-02T20:15:01.898Z",
+      "disposition": "created"
     },
     {
       "id": "eaa221a7d289dcb33ff5a3c8c0097ba94da3d87ea83e4522a4ee202d7891fca1",
@@ -1599,8 +1599,8 @@
       },
       "attempts": 1,
       "entryId": "2f3e745a-05af-4352-80e2-46236f343564",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:02.533Z"
+      "verifiedAt": "2026-11-02T20:15:02.533Z",
+      "disposition": "created"
     },
     {
       "id": "8e10f13fb46d1f531c963d8626dbae5a55c2971383c1b90b5dfb3815ba12e268",
@@ -1646,8 +1646,8 @@
       },
       "attempts": 1,
       "entryId": "77618e0e-722f-4728-bc2e-34daaa30c386",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:03.082Z"
+      "verifiedAt": "2026-11-02T20:15:03.082Z",
+      "disposition": "created"
     },
     {
       "id": "5806f746f5b4bc1c7d056d9e866146ddce984e93d83c7d45b1dc43142da4ee86",
@@ -1693,8 +1693,8 @@
       },
       "attempts": 1,
       "entryId": "b3fd045d-0bc3-4b90-9025-fa693363587c",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:03.588Z"
+      "verifiedAt": "2026-11-02T20:15:03.588Z",
+      "disposition": "created"
     },
     {
       "id": "c851389c32e8290c4ce3e9e9135799c61b516e1374ff352d82426a312fe026c0",
@@ -1740,8 +1740,8 @@
       },
       "attempts": 1,
       "entryId": "0ba228e1-8c80-4999-b64f-0a14f254bb21",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:04.089Z"
+      "verifiedAt": "2026-11-02T20:15:04.089Z",
+      "disposition": "created"
     },
     {
       "id": "a148bf77d9bbb63f5b30614b04a2e3d529eddb2c398f2afea0744022de6109c1",
@@ -1787,8 +1787,8 @@
       },
       "attempts": 1,
       "entryId": "60aba6fa-b47a-4719-8047-0bf661c9bd73",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:04.634Z"
+      "verifiedAt": "2026-11-02T20:15:04.634Z",
+      "disposition": "created"
     },
     {
       "id": "40c8b93241474eafd5ef86235928598d1f9ff91837f9f8c3bc2378e1f27d9960",
@@ -1834,8 +1834,8 @@
       },
       "attempts": 1,
       "entryId": "446763a5-3323-4791-a5d4-d516dc1d764a",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:05.088Z"
+      "verifiedAt": "2026-11-02T20:15:05.088Z",
+      "disposition": "created"
     },
     {
       "id": "78fc5395581e593495469bd6abb3c4e6d0283029975e32c20013dbfe03ab2456",
@@ -1881,8 +1881,8 @@
       },
       "attempts": 1,
       "entryId": "ef025596-4e71-4391-81dc-db15eb955318",
-      "disposition": "created",
-      "verifiedAt": "2026-11-02T20:15:05.670Z"
+      "verifiedAt": "2026-11-02T20:15:05.670Z",
+      "disposition": "created"
     },
     {
       "id": "b9d2ad52a676eb8781a8e817643a6a740b270a949cdb6c4cd6f65163459cb949",
@@ -1928,12 +1928,12 @@
       },
       "attempts": 0,
       "entryId": "6277342c-4187-4a60-b048-5a56c0f378f4",
-      "disposition": "existing",
-      "verifiedAt": "2026-11-02T20:15:05.937Z"
+      "verifiedAt": "2026-11-02T20:15:05.937Z",
+      "disposition": "existing"
     },
     {
       "id": "3be9f2ac29a072967101db8ea7161e6704406c27d6ae37aecd9c47b14f6f2252",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -1973,11 +1973,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "26731685-51a5-4c38-9219-187efceab06f",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T23:06:49.182Z"
     },
     {
       "id": "c79d1fc3080c6de76a112b64dd488158bc7b0c019e87d4e9c2752807dcd183f5",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -2017,11 +2020,14 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "d9cbffdd-ed4d-449a-8a11-00d2a9b5ae81",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T23:06:49.736Z"
     },
     {
       "id": "a1cfbe3fe8c051fde5a4bd082d5560c28c31b65f30c45cf48cbc3a2f8c97400e",
-      "status": "pending",
+      "status": "published",
       "input": {
         "challenge": {
           "type": "meaning",
@@ -2061,7 +2067,10 @@
         "creditName": "Manuel",
         "sourceLocale": "de"
       },
-      "attempts": 0
+      "attempts": 1,
+      "entryId": "566686c9-d77d-4111-99e6-42ce411069fa",
+      "disposition": "created",
+      "verifiedAt": "2026-11-02T23:06:50.356Z"
     }
   ]
 }

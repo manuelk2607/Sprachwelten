@@ -17,28 +17,26 @@ Desktop-/Mobil-Browserprüfungen bestanden; ein erster lokaler Browserlauf war
 ausschließlich durch macOS' eingeschränkte Chromium-Prozessschnittstelle
 blockiert und bestand unverändert außerhalb dieser Beschränkung.
 
-## Beitragswarteschlange – zweiter Produktionslauf abgeschlossen
+## Beitragswarteschlange – vollständig veröffentlicht
 
-Zwei authentifizierte Läufe am 2. November haben jeweils das reguläre Kontingent
-genutzt. Kumuliert: **40 neu erstellt, 1 vorhandener Eintrag idempotent erkannt,
-3 ausstehend, 0 fehlgeschlagen**. Der erste Lauf erstellte 20 `gaming_mission`-
-Beiträge. Der zweite erstellte 20 `academic`-Beiträge und quittierte `Swag` als
-bereits vorhandenen `youth_chat`-Beitrag, ohne Dublette oder Quotenverbrauch.
-Alle 41 verarbeiteten IDs wurden über die Anwendung erneut eingelesen und direkt
-in Produktion geprüft: 41/41 vorhanden und eindeutig, 41/41 aktiv, 41/41 der
+Drei authentifizierte Läufe haben die Warteschlange innerhalb der regulären
+Kontingente vollständig verarbeitet. Ergebnis: **43 neu erstellt, 1 vorhandener
+Eintrag idempotent erkannt, 0 ausstehend, 0 fehlgeschlagen**. Veröffentlicht wurden
+20 `gaming_mission`-, 20 `academic`- und 3 neue `youth_chat`-Beiträge; `Swag`
+wurde als bereits vorhanden quittiert, ohne Dublette oder Quotenverbrauch.
+Alle 44 verarbeiteten IDs wurden über die Anwendung erneut eingelesen und direkt
+in Produktion geprüft: 44/44 vorhanden und eindeutig, 44/44 aktiv, 44/44 der
 unveränderlichen Konto-ID `365f639e-7f9f-4c42-8260-a3398cceb219` zugeordnet,
-41/41 mit sichtbarer Angabe `Manuel`. Keine Gast- oder Testkontobeiträge und keine
+44/44 mit sichtbarer Angabe `Manuel`. Keine Gast- oder Testkontobeiträge und keine
 Überschreibungen.
 
-Die Warteschlange hat den nächsten zulässigen Zeitpunkt aus der serverseitigen
-Quote als `2026-11-02T21:14:55.000Z` gespeichert (22:14:55 Uhr Stockholm).
-Bis dahin keine weiteren Versuche und keine Quotenumgehung. Drei Jugendbeiträge
-bleiben persistent `pending`.
+Der Abschlusslauf am 3. November verarbeitete die drei restlichen Jugendbeiträge
+fehlerfrei. Kein weiterer Veröffentlichungslauf erforderlich.
 
 ## Produktionslauf der Beitragswarteschlange – Vorprüfung 2. November
 
 Queue-Integrität erneut erfolgreich geprüft: 44 valide Einträge, Status lokal
-jetzt 3 `pending`, 41 `published`, 0 `failed`. Lesender Produktionsabgleich
+jetzt 0 `pending`, 44 `published`, 0 `failed`. Lesender Produktionsabgleich
 zeigt eine zwischenzeitliche Veröffentlichung: `Swag` ist bereits als
 `youth_chat` vorhanden, mit Autor-ID `365f639e-7f9f-4c42-8260-a3398cceb219`
 und sichtbarer Angabe `Manuel`. Die übrigen 43 Queue-Inhalte sind nicht vorhanden.
@@ -56,8 +54,8 @@ Die persönlichen Zugangsdaten liegen ausschließlich in der gitignorierten Date
 
 ## Veröffentlichungswarteschlange vorbereitet
 
-`publication-queue.json`: **3 pending, 41 published, 0 failed** nach dem zweiten
-Produktionslauf; 40 davon neu erstellt und einer als bereits vorhanden erkannt.
+`publication-queue.json`: **0 pending, 44 published, 0 failed** nach dem
+Abschlusslauf; 43 davon neu erstellt und einer als bereits vorhanden erkannt.
 Enthalten: vier restliche Jugendwörter sowie die ausdrücklich zur Vorbereitung
 freigegebenen 20 Gaming- und 20 Hochschulbegriffe. Die zuvor gespeicherten 18
 Beiträge bleiben separat abgeschlossen. Produktionsbestand lesend abgeglichen;
@@ -89,9 +87,7 @@ Commits `4b751c6` bis `a212c9e` sichern Paket und Produktionsvorprüfung. Der
 aktuelle Build und die fünf gezielten Queue-Tests bestehen. Kein temporäres Konto
 oder Ersatz-Worker angelegt.
 
-Nächster Schritt: frühestens nach 22:14:55 Uhr Stockholm denselben `--publish`-
-Lauf für die drei restlichen Jugendbeiträge fortsetzen. Er prüft vor dem ersten
-POST erneut Sitzung, unveränderliche Konto-ID, Dubletten und Restquote.
+Nächster Schritt: keiner; Warteschlange vollständig und produktiv verifiziert.
 
 ## Inhalte – schwedische Redewendungen und Jugendwörter
 
@@ -115,13 +111,10 @@ Bestehende Daten wurden ausschließlich gelesen; neue
 Beiträge liefen über das öffentliche, authentifizierte Formular samt
 Rate-Limit und serverseitiger Validierung.
 
-**Offen wegen des bestehenden Limits von 20 Kontobeiträgen pro Stunde:**
-`Swag`, `Niveaulimbo`, `hartzen` und `Gammelfleischparty`. `Swag` liegt bereits
-vollständig als lokaler Browserentwurf vor, wurde aber nicht veröffentlicht.
-Das laufende Limitfenster endet am 1. November um 16:28:46 UTC; keine Umgehung
-oder direkte Datenbankeinfügung verwenden. Nächster Schritt: nach Ablauf über
-das angemeldete Formular die vier vorbereiteten Beiträge veröffentlichen und
-dieselbe Produktionsprüfung erneut ausführen.
+Die damals wegen des Stundenlimits offenen Begriffe `Swag`, `Niveaulimbo`,
+`hartzen` und `Gammelfleischparty` sind inzwischen verarbeitet: `Swag` wurde als
+bereits vorhandener, korrekt zugeordneter Beitrag erkannt; die übrigen drei
+wurden regulär über das persönliche Konto veröffentlicht und verifiziert.
 
 ## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 

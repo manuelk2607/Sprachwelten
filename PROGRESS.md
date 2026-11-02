@@ -1,25 +1,27 @@
 # Sprachwelten – Fortsetzungsstand, 2. November 2026
 
-## Beitragswarteschlange – erster Produktionslauf abgeschlossen
+## Beitragswarteschlange – zweiter Produktionslauf abgeschlossen
 
-Der authentifizierte Lauf am 2. November hat das reguläre Kontingent vollständig
-genutzt: **20 neu erstellt, 24 ausstehend, 0 fehlgeschlagen**. Alle 20 neuen
-Einträge sind `gaming_mission`-Beiträge, wurden nach dem POST über die Anwendung
-erneut eingelesen und anschließend zusätzlich direkt in Produktion geprüft:
-20/20 IDs vorhanden und eindeutig, 20/20 aktiv, 20/20 der unveränderlichen
-Konto-ID `365f639e-7f9f-4c42-8260-a3398cceb219` zugeordnet, 20/20 mit sichtbarer
-Angabe `Manuel`. Keine Gast- oder Testkontobeiträge und keine Überschreibungen.
+Zwei authentifizierte Läufe am 2. November haben jeweils das reguläre Kontingent
+genutzt. Kumuliert: **40 neu erstellt, 1 vorhandener Eintrag idempotent erkannt,
+3 ausstehend, 0 fehlgeschlagen**. Der erste Lauf erstellte 20 `gaming_mission`-
+Beiträge. Der zweite erstellte 20 `academic`-Beiträge und quittierte `Swag` als
+bereits vorhandenen `youth_chat`-Beitrag, ohne Dublette oder Quotenverbrauch.
+Alle 41 verarbeiteten IDs wurden über die Anwendung erneut eingelesen und direkt
+in Produktion geprüft: 41/41 vorhanden und eindeutig, 41/41 aktiv, 41/41 der
+unveränderlichen Konto-ID `365f639e-7f9f-4c42-8260-a3398cceb219` zugeordnet,
+41/41 mit sichtbarer Angabe `Manuel`. Keine Gast- oder Testkontobeiträge und keine
+Überschreibungen.
 
 Die Warteschlange hat den nächsten zulässigen Zeitpunkt aus der serverseitigen
-Quote als `2026-11-02T16:01:58.000Z` gespeichert (17:01:58 Uhr Stockholm).
-Bis dahin keine weiteren Versuche und keine Quoten­umgehung. `Swag` und die
-übrigen Jugend-/Hochschulbeiträge bleiben persistent `pending`; der nächste Lauf
-gleicht Dubletten erneut ab und quittiert bereits vorhandene Inhalte idempotent.
+Quote als `2026-11-02T21:14:55.000Z` gespeichert (22:14:55 Uhr Stockholm).
+Bis dahin keine weiteren Versuche und keine Quotenumgehung. Drei Jugendbeiträge
+bleiben persistent `pending`.
 
 ## Produktionslauf der Beitragswarteschlange – Vorprüfung 2. November
 
 Queue-Integrität erneut erfolgreich geprüft: 44 valide Einträge, Status lokal
-jetzt 24 `pending`, 20 `published`, 0 `failed`. Lesender Produktionsabgleich
+jetzt 3 `pending`, 41 `published`, 0 `failed`. Lesender Produktionsabgleich
 zeigt eine zwischenzeitliche Veröffentlichung: `Swag` ist bereits als
 `youth_chat` vorhanden, mit Autor-ID `365f639e-7f9f-4c42-8260-a3398cceb219`
 und sichtbarer Angabe `Manuel`. Die übrigen 43 Queue-Inhalte sind nicht vorhanden.
@@ -37,8 +39,8 @@ Die persönlichen Zugangsdaten liegen ausschließlich in der gitignorierten Date
 
 ## Veröffentlichungswarteschlange vorbereitet
 
-`publication-queue.json`: **24 pending, 20 published, 0 failed** nach dem ersten
-Produktionslauf.
+`publication-queue.json`: **3 pending, 41 published, 0 failed** nach dem zweiten
+Produktionslauf; 40 davon neu erstellt und einer als bereits vorhanden erkannt.
 Enthalten: vier restliche Jugendwörter sowie die ausdrücklich zur Vorbereitung
 freigegebenen 20 Gaming- und 20 Hochschulbegriffe. Die zuvor gespeicherten 18
 Beiträge bleiben separat abgeschlossen. Produktionsbestand lesend abgeglichen;
@@ -62,16 +64,17 @@ ohne gestarteten Prozess oder dauerhafte Kontozugangsdaten eingerichtet.
 Prüfungen: vollständige bestehende Unit-Suite bestanden; zusätzlich fünf gezielte
 Tests zu Queue-Integrität, Wiederaufnahme, Kontoschutz und exakter Limitgrenze.
 Typprüfung, Lint und Build bestanden (bestehende Framework-/Sourcemap-Warnungen).
-Noch keine realen Queue-POSTs; echte Login-/Netzfehler-/Parallelprozessintegration
-nicht behaupten. Keine Datenbankmigration erforderlich.
+Zwei echte Login-/Quoten-/POST-Läufe und deren Datenbankzuordnung bestätigt;
+Netzfehler-/Parallelprozessintegration nicht behaupten. Keine Datenbankmigration
+erforderlich.
 
 Commits `4b751c6` bis `a212c9e` sichern Paket und Produktionsvorprüfung. Der
 aktuelle Build und die fünf gezielten Queue-Tests bestehen. Kein temporäres Konto
 oder Ersatz-Worker angelegt.
 
-Nächster Schritt: frühestens nach 17:01:58 Uhr Stockholm denselben `--publish`-
-Lauf fortsetzen. Er prüft vor dem ersten POST erneut Sitzung, unveränderliche
-Konto-ID, Dubletten und die tatsächliche Restquote.
+Nächster Schritt: frühestens nach 22:14:55 Uhr Stockholm denselben `--publish`-
+Lauf für die drei restlichen Jugendbeiträge fortsetzen. Er prüft vor dem ersten
+POST erneut Sitzung, unveränderliche Konto-ID, Dubletten und Restquote.
 
 ## Inhalte – schwedische Redewendungen und Jugendwörter
 

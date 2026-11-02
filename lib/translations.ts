@@ -55,6 +55,7 @@ export const english: Record<string, string> = {
   'Mit einem Konto verwaltest du deine Beiträge auf allen Geräten: bearbeiten, löschen und Verbesserungsvorschläge verfolgen. Spielen und neue Beiträge einreichen geht auch ohne Konto.':'An account lets you manage your contributions across devices: edit, delete and track improvement suggestions. Playing and submitting new contributions work without an account too.',
   'Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.':'Automatic translation suggestions are available with an account. Without an account, you can add the second language yourself or display the labelled original text.',
   'Bitte melde dich an, um diese Funktion zu nutzen.':'Please sign in to use this feature.',
+  'Die erwartete Anmeldung ist nicht mehr aktiv.':'The expected sign-in is no longer active.',
   'Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.':'Your sign-in could not be checked. Please try again.',
   'Vor der nächsten Partie könnt ihr Spiel, Kategorie und Rundenzahl in der Lobby ändern.':'Before the next match, you can change the game, category and number of rounds in the lobby.',
   'Keine ungespielten Aufgaben in dieser Kategorie. Wählt ein anderes Spiel oder eine andere Kategorie.':'There are no unplayed tasks in this category. Choose another game or category.',

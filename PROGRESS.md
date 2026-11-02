@@ -1,5 +1,22 @@
 # Sprachwelten – Fortsetzungsstand, 2. November 2026
 
+## GitHub Actions – Abhängigkeitsaudit repariert
+
+Die Runs `41467830033` und `41517577257` scheiterten ausschließlich im
+vollständigen Abhängigkeitsaudit an der neu veröffentlichten
+`minimatch`-Schwachstelle `GHSA-g3hv-75wg-m249` (DoS durch Glob-Verstärkung,
+betroffen `<11.0.1`). Die ESLint-Werkzeugkette zog sowohl 10.2.6 als auch eine
+alte 3.x-Ausgabe ein. Ein zentraler npm-Override auf die kompatible gepatchte
+Version 11.0.4 vereinheitlicht alle ESLint-Pfade; keine Ausnahme und keine
+Abschwächung des Audits. Zusätzlich erhielt die neue kontogebundene
+Sitzungsfehlermeldung ihre fehlende englische Übersetzung.
+
+Frische `npm ci`-Installation erfolgreich. Vollständiger Audit ohne Befund,
+Lint, Typprüfung, Übersetzungsprüfung, Unit-Suite und Build bestanden. Alle 154
+Desktop-/Mobil-Browserprüfungen bestanden; ein erster lokaler Browserlauf war
+ausschließlich durch macOS' eingeschränkte Chromium-Prozessschnittstelle
+blockiert und bestand unverändert außerhalb dieser Beschränkung.
+
 ## Beitragswarteschlange – zweiter Produktionslauf abgeschlossen
 
 Zwei authentifizierte Läufe am 2. November haben jeweils das reguläre Kontingent

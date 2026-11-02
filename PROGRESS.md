@@ -1,4 +1,4 @@
-# Sprachwelten – Fortsetzungsstand, 1. November 2026
+# Sprachwelten – Fortsetzungsstand, 2. November 2026
 
 ## CI-Korrektur – letzter fehlgeschlagener Actions-Lauf
 
@@ -23,9 +23,11 @@ Isolation lief die Suite regulär.
 
 Lokal bestanden: vollständiges Abhängigkeitsaudit, Lint, DE/EN-Abdeckung,
 Typprüfung, 193 Unit-Tests und Offline-Build. Vollständiger Browserlauf vor dem
-Race-Fix: 153/154; gezielte Verifikation nach dem Fix: 5/5. Nächster Schritt:
-Commit pushen und den dadurch gestarteten Actions-Lauf bis zum tatsächlichen
-Ergebnis prüfen; Erfolg erst bei grüner vollständiger CI dokumentieren.
+Race-Fix: 153/154; gezielte Verifikation nach dem Fix: 5/5. Fix-Commit
+`95d7fb9` ist auf `codex/drafts-reports-taboo-local` gepusht. Der neue Actions-
+Run `41351717784` ist vollständig erfolgreich: Installation, Audit, Lint,
+Übersetzungsprüfung, Typprüfung, 193 Unit-Tests, Build und alle 154 Desktop-/
+Mobilfälle bestanden. Keine Tests deaktiviert oder Qualitätsprüfungen gelockert.
 
 ## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 

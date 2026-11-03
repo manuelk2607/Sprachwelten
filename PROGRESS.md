@@ -1,5 +1,30 @@
 # Sprachwelten – Fortsetzungsstand, 2. November 2026
 
+## Music-Worlds – Übertragung vorbereitet, produktive Entfernung ausstehend
+
+Bestandsaufnahme und Integrationsplan in `docs/music-worlds-transfer.md`.
+Liedstellen sind eine Kategorie von `who-said-it`, kein eigener Modus oder
+API-Dienst. Gemeinsame Attribution-/Raumengine muss für Personenzitate bleiben.
+`transfer/music-worlds/quiz.ts` enthält einen unabhängigen TypeScript-Kern für
+Audio-/Textaufgaben mit Rechtebeleg, vier Titeln, opaken Antwort-IDs, +1-Wertung
+und Tipp-vor-Album. Keine Musikdateien oder Liedtexte übernommen.
+`scripts/package-music-transfer.mts` archiviert die eingecheckte Referenz-
+Implementierung samt relevanter UI/API/Engine/Tests und Prüfsumme unter dem
+gitignorierten `outputs/music-worlds`; keine Seeds oder Produktionsdaten.
+
+Ziel-Repository `manuelk2607/Music-Worlds` per GitHub abgefragt: nicht erreichbar.
+Deshalb keine produktive Entfernung oder Datenlöschung; bestehende Liedkarten,
+Räume und Besitzerrechte bleiben erhalten. Das Quellpaket ist vorbereitet,
+die vollständige Migration inklusive Daten und Zielintegration ist noch offen.
+Nächster Schritt: Zielrepository klären; zugriffsgeschütztes, checksummiertes
+Archiv der Liedkarten und abhängigen Daten erstellen und isoliert rückspielen;
+danach neue Sprachwelten-Partien/Pool/Selektoren auf Personen beschränken,
+DE/EN-Beschreibungen bereinigen und Ziel-Multiplayerparität prüfen.
+
+Verifikation: Typprüfung, Lint, 199 Unit-Tests einschließlich fünf gezielter
+Kern-/Song-Regressionsfälle und Build bestanden. Kein Deployment für
+diesen vorbereitenden Stand, da die Produktion unverändert bleibt.
+
 ## GitHub Actions – Abhängigkeitsaudit repariert
 
 Die Runs `41467830033` und `41517577257` scheiterten ausschließlich im

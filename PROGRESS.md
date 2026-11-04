@@ -223,3 +223,6 @@ Einstufungen erfassen. Keine erneute Grundlagenanalyse oder Kern-Neuimplementier
 
 Keine bestätigte P0-Anwendungsstörung. Neue Auditbefunde sind behoben, vollständiger Audit ohne Ausnahme bestanden.
 Weitere Skalierungsumbauten nur bei gemessenem Engpass. Sprachraum bleibt außerhalb.
+
+## Music-Worlds cutover — 04.11.2026
+Music-Worlds als getrennte Plattform produktiv eingerichtet und echt geprüft. Alle acht Source-Songrows read-only archiviert, SHA-256/QA-Restore sowie erneuter unveränderter Rowvergleich bestätigt. Ziel erhält alle Original-IDs: vier historische englische Textfragen mit individueller Gemeinfreiheitsprüfung, vier französische privat in Rechteprüfung; keine Audioübernahme. Neue Source-Auswahl/Beiträge/Pools/Sammlung wechseln zu Personenzitaten, gespeicherte Schema-/Engine- und Altbearbeitungskompatibilität bleibt erhalten. Keine Source-Rows gelöscht. Minimatch 11.0.1 beseitigt eine bestehende Auditmeldung. Nach korrigierter abschließender Diffprüfung: 196 Unit-Tests, Typprüfung, Lint, Übersetzungen, vollständiger Audit und Produktions-Build erfolgreich. Veröffentlichung und anschließende Source-/Ziel-Smoketests sind der nächste Schritt; Details docs/music-worlds-transfer.md.

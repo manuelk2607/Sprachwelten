@@ -1,3 +1,4 @@
+import {musicMovedMessage} from '@/lib/music-transfer';
 import {withRoomAudio} from '@/lib/room-audio';
 import {resolvePlayerName} from '@/lib/player-name';
 import { z } from 'zod';
@@ -11,6 +12,7 @@ import {gameLanguagesInput} from '@/lib/game-languages';
 import {difficultyLevels} from '@/lib/editorial-difficulty';
 export const POST = (request: Request) => safe(async () => {
   const {name:givenName,locale,mode,difficulty,gameLanguages,meaningCategory,pronunciationCategory,pronunciationLanguage,sentenceLanguage,tabooLanguages,attributionCategory}=await body(request,z.object({name:z.string().trim().max(24).optional(),locale:z.enum(['de','en']).default('de'),mode:z.enum(playableModeIds).default('meaning-quiz'),difficulty:z.enum(difficultyLevels).optional(),gameLanguages:gameLanguagesInput.optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),sentenceLanguage:z.enum(['de','en']).optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional()}));
+  if(mode==='who-said-it'&&attributionCategory==='song')throw new GameError(musicMovedMessage,410);
   if(gameLanguages&&(mode==='word-chain'||mode==='language-quiz'&&gameLanguages.length<4))throw new GameError('Wähle eine gültige Sprachauswahl; das Sprachenquiz benötigt mindestens vier Sprachen.',422);
   const name=await resolvePlayerName(givenName);
   const ip=request.headers.get('cf-connecting-ip')??'local'; await rateLimit(`room:${await hashToken(ip)}`,30);
@@ -19,7 +21,7 @@ export const POST = (request: Request) => safe(async () => {
   const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for(let i=0;i<5;i++) {
     const code=Array.from(crypto.getRandomValues(new Uint8Array(6)), n=>alphabet[n%alphabet.length]).join('');
-    const game=createGame(code,player,locale,mode);if(mode==='meaning-quiz')game.meaningCategory=meaningCategory??'all';if(mode==='tongue-twisters'){game.pronunciationCategory=pronunciationCategory??'both';game.pronunciationLanguage=pronunciationLanguage??locale;}if(mode==='taboo')game.tabooLanguages=tabooLanguages??[locale];if(mode==='who-said-it')game.attributionCategory=attributionCategory??'both';
+    const game=createGame(code,player,locale,mode);if(mode==='meaning-quiz')game.meaningCategory=meaningCategory??'all';if(mode==='tongue-twisters'){game.pronunciationCategory=pronunciationCategory??'both';game.pronunciationLanguage=pronunciationLanguage??locale;}if(mode==='taboo')game.tabooLanguages=tabooLanguages??[locale];if(mode==='who-said-it')game.attributionCategory='person';
     if(mode==='word-chain')game.sentenceLanguage=sentenceLanguage??locale;
     if(gameLanguages)game.gameLanguages=gameLanguages;
     if(difficulty)game.difficulty=difficulty;

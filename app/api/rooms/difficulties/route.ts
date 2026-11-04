@@ -19,5 +19,6 @@ export const GET = (request: Request) =>
         ...params,
         gameLanguages: (params.languages ?? "").split(","),
       });
+    if(input.mode==='who-said-it')input.attributionCategory='person';
     return respond({ levels: await readyGameDifficulties(input.mode, input) });
   });

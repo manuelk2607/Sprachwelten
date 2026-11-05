@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { Notebook, VocabularyCard } from "@/lib/vocabulary";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useLearningUser } from "@/lib/auth/provider";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useI18n } from "@/lib/i18n";
 import { languageLabel } from "@/lib/language-label";
@@ -48,8 +48,8 @@ export function VocabularyWorkspace({
   openEntry:(id:string)=>Promise<void>;
 }) {
   const { t, locale } = useI18n(),
-    session = useAuthSession(),
-    owner = session?.user?.id ?? "";
+    user = useLearningUser(),
+    owner = user?.id ?? "";
   const pairKey = sourceLanguage + "|" + targetLanguage;
   const [refresh, setRefresh] = useState(0),
     [query, setQuery] = useState(""),

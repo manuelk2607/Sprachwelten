@@ -25,7 +25,7 @@ const input = z.discriminatedUnion("action", [
 export const POST = (request: Request) =>
   safe(async () => {
     const value = await body(request, input),
-      user = await contributor(request);
+      user = await contributor(request, "learning");
     if (user.guest)
       await rateLimit(
         "learning-ip:" +

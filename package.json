@@ -30,6 +30,7 @@
   "dependencies": {
     "@neondatabase/auth": "0.6.0-beta",
     "@neondatabase/serverless": "1.2.0",
+    "@worlds-hub/auth": "https://codeload.github.com/manuelk2607/Worlds-Hub/tar.gz/5274e2524883fd215f248643c41b9f1c18058871",
     "lucide-react": "^1.31.0",
     "next": "16.4.2",
     "react": "19.3.1",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.64.0",
     "@cloudflare/workers-types": "5.20261019.1",
+    "@electric-sql/pglite": "^0.5.15",
     "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",

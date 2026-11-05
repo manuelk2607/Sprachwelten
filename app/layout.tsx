@@ -5,6 +5,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth/provider";
+import { worldsConfig } from "@/lib/auth/learning-session";
 import { themeBootstrap } from "@/lib/theme-bootstrap";
 
 const baseMetadata: Metadata = {
@@ -45,7 +46,7 @@ export default async function RootLayout({
       </head>
       <body className="antialiased">
         <ThemeProvider>
-          <AuthProvider>
+          <AuthProvider worldsEnabled={Boolean(worldsConfig())}>
             <I18nProvider initialLocale={locale}>{children}</I18nProvider>
           </AuthProvider>
         </ThemeProvider>

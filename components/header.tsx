@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Globe2, LogOut, Moon, Plus, Sun, UserRound } from "lucide-react";
 import { getAuthClient } from "@/lib/auth/client";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useAuthSession, useWorldsPilot } from "@/lib/auth/provider";
 import { useTheme } from "@/lib/theme";
 import { site } from "@/lib/site";
 export function Header({
@@ -40,6 +40,7 @@ export function Header({
   }, []);
   const session = useAuthSession(),
     userId = session?.user?.id;
+  const worldsPilot = useWorldsPilot();
   const [access, setAccess] = useState<{
     userId: string;
     isAdmin: boolean;
@@ -155,6 +156,11 @@ export function Header({
             <Plus size={16} />
             {t("Beitragen")}
           </button>
+        )}
+        {worldsPilot && (
+          <a href={locale === "en" ? "/auth/worlds-en" : "/auth/worlds"} className="button small outline">
+            {locale === "en" ? "Worlds account" : "Worlds-Konto"}
+          </a>
         )}
         {session?.user ? (
           <>

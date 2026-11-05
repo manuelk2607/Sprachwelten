@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { Entry } from "@/lib/content";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useLearningUser } from "@/lib/auth/provider";
 import { useI18n } from "@/lib/i18n";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { learningLevels, learningText } from "@/lib/learning-content";
@@ -49,7 +49,7 @@ export function LearningDashboard({
   embedded?:boolean;
 }) {
   const { t, locale } = useI18n(),
-    session = useAuthSession();
+    user = useLearningUser();
   const [savedLanguage, setLanguage] = useState("en"),
     [domainChoice, setDomain] = useState(""),
     [level, setLevel] = useState(""),
@@ -61,7 +61,7 @@ export function LearningDashboard({
     domain,
     level,
     topic,
-    session?.user.id,
+    user?.id,
     refresh,
     version,
   ]);
@@ -74,7 +74,7 @@ export function LearningDashboard({
     domain,
     level,
     topic,
-    session?.user.id,
+    user?.id,
   ]);
   const [task, setTask] = useKeyedState<Task | null>(taskKey, null),
     [result, setResult] = useKeyedState<Result | null>(taskKey, null),
@@ -316,7 +316,7 @@ export function LearningDashboard({
           </span>
         </div>
       )}
-      {!session?.user && (
+      {!user && (
         <p className="form-note">
           {t(
             "Du kannst ohne Konto üben. Angemeldet werden Fortschritt und fällige Wiederholungen für dich gespeichert.",
@@ -336,7 +336,7 @@ export function LearningDashboard({
         </button>
         <button
           className="button outline"
-          disabled={busy || !session?.user || !catalog?.stats?.due}
+          disabled={busy || !user || !catalog?.stats?.due}
           onClick={() => void practice(true)}
         >
           {t("Fällige Aufgaben wiederholen")}

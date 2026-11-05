@@ -1,14 +1,16 @@
 import {getAuth} from './auth/server';
+import {learningIdentity} from './auth/learning-session';
 import {GameError} from './game';
 import {hashToken,randomToken} from './http';
 import {guestCredential,withGuestCredential} from './guest-contributor';
 import {rateLimit} from '@/db/repository';
 
 export type Contributor={id:string;name:string;guest:boolean;token?:string};
-export async function contributor(request:Request):Promise<Contributor>{
-  const {data,error}=await getAuth().getSession();
+export async function contributor(request:Request, scope?: "learning"):Promise<Contributor>{
+  const {user,error}=scope==="learning" ? await learningIdentity(request) :
+    await getAuth().getSession().then(({data,error})=>({user:data?.user,error}));
   if(error)throw new GameError('Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.',503);
-  if(data?.user)return {id:data.user.id,name:data.user.name?.trim().slice(0,60)||'Mitglied',guest:false};
+  if(user)return {id:user.id,name:user.name?.trim().slice(0,60)||'Mitglied',guest:false};
   const token=guestCredential(request)??randomToken();
   return {id:'guest:'+await hashToken(token),name:'Gast',guest:true,token};
 }

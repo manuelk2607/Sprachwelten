@@ -14,6 +14,14 @@ den Zugriff auf sein privates Testheft. Tests bestätigten Ausstellertrennung,
 fehlende Adminrechte, die Ablehnung unbekannter UUIDs und Rollback bei Konflikten.
 Die isolierten Lern-, Heft-, Spielraum-, Redaktions- und Managed-Auth-Tests sowie
 193 Unit-Tests, Typprüfung, Lint, Übersetzungsabdeckung und Build bestanden.
+Die unveränderten Worlds-Postgres-Adapter bestanden auf demselben Schema
+konkurrierenden Proof- und State-Verbrauch, einen einzelnen Audit-Eintrag,
+Replay-Schutz und auf den Aussteller begrenzten Sitzungswiderruf. Die
+OIDC-Nachweise in dieser Adapterprüfung waren synthetisch.
+
+Die Branch-CI meldete `GHSA-g3hv-75wg-m249` im Entwicklungswerkzeug `minimatch`.
+Die betroffene 10er-Version ist gezielt auf 11.0.1 angehoben. Vollständiger Audit,
+Lint, Typprüfung, 193 Unit-Tests und Build liefen mit dem neuen Lockfile durch.
 
 Offen sind die OIDC-Routen, die Anbindung des gemeinsamen Auth-Moduls und die
 echte Bestätigung beider Konten. Die Migration lief ausschließlich im QA-Projekt.

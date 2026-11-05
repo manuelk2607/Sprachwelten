@@ -1,5 +1,23 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## Worlds-SSO: Datenbankbasis im Testzweig (5. November)
+
+Migration `027_worlds_identity.sql` auf `feature/worlds-hub-sso` ergänzt private
+OIDC-Sitzungen, einmalige Nachweise und die eindeutige Zuordnung von OIDC-Aussteller
+und Subject zur vorhandenen Neon-Auth-UUID. Die Zuordnung verwendet einen
+Fremdschlüssel auf das verwaltete Konto. Das Audit speichert die lokale UUID auch
+nach einer Kontolöschung. Rollen bleiben in `app_admins`.
+
+Im befristeten Neon-QA-Branch `br-falling-recipe-bawlzpit` liefen alle 27
+Migrationen. Ein echtes synthetisches Managed-Auth-Konto behielt seine UUID und
+den Zugriff auf sein privates Testheft. Tests bestätigten Ausstellertrennung,
+fehlende Adminrechte, die Ablehnung unbekannter UUIDs und Rollback bei Konflikten.
+Die isolierten Lern-, Heft-, Spielraum-, Redaktions- und Managed-Auth-Tests sowie
+193 Unit-Tests, Typprüfung, Lint, Übersetzungsabdeckung und Build bestanden.
+
+Offen sind die OIDC-Routen, die Anbindung des gemeinsamen Auth-Moduls und die
+echte Bestätigung beider Konten. Die Migration lief ausschließlich im QA-Projekt.
+
 ## Veröffentlicht – Passwort statt Profilbild; Mail-Freigabe extern offen
 
 Branch `feature/account-email-password`, Basis `c795bce`. Profilbild-Eingabe/

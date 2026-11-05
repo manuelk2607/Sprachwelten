@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { isolatedAuthTarget } from "../lib/qa-target.ts";
+import { neon } from "@neondatabase/serverless";
+import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
 import { z } from "zod";
 
 const base = isolatedAuthTarget(process.env).href;
@@ -34,6 +35,51 @@ async function request(path: string, body?: unknown, useCookies = true) {
     }
   return { status: res.status, data: authResponse.parse(await res.json()) };
 }
+
+async function verifyWorldsMapping(userId: string) {
+  const sql = neon(isolatedDatabaseTarget(process.env).href);
+  const issuer = "https://worlds-qa.invalid/auth";
+  const subject = crypto.randomUUID();
+  const notebook = crypto.randomUUID();
+  const proof = crypto.randomUUID();
+  const insert = (iss: string, sub: string, id: string) =>
+    sql`INSERT INTO worlds_identity_links (issuer, subject, local_user_id)
+        VALUES (${iss}, ${sub}, ${id}::uuid)`;
+  try {
+    await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)
+              VALUES (${notebook}::uuid, ${userId}, 'QA Worlds', 'de', 'en')`;
+    await insert(issuer, subject, userId);
+    const rows = await sql`
+      SELECT link.local_user_id, notebook.id AS notebook_id,
+             EXISTS(SELECT 1 FROM app_admins WHERE user_id=link.local_user_id) AS is_admin
+      FROM worlds_identity_links link
+      JOIN vocabulary_notebooks notebook ON notebook.owner_id=link.local_user_id::text
+      WHERE link.issuer=${issuer} AND link.subject=${subject} AND notebook.id=${notebook}::uuid`;
+    assert.deepEqual(rows, [{local_user_id: userId, notebook_id: notebook, is_admin: false}]);
+    assert.equal((await sql`SELECT 1 FROM worlds_identity_links
+      WHERE issuer='https://other-qa.invalid/auth' AND subject=${subject}`).length, 0);
+
+    await assert.rejects(() => insert(issuer, subject, userId), {code: "23505"});
+    await assert.rejects(() => insert(issuer, crypto.randomUUID(), userId), {code: "23505"});
+    await assert.rejects(() => insert(issuer, crypto.randomUUID(), crypto.randomUUID()), {code: "23503"});
+    await sql`INSERT INTO worlds_link_proofs
+      (proof_hash, issuer, subject, local_user_id, session_hash, expires_at)
+      VALUES (${proof}, ${issuer}, ${subject}, ${userId}::uuid, 'fixture', now()+interval '1 minute')`;
+    await assert.rejects(async () => sql.transaction([
+      sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof}`,
+      insert(issuer, subject, userId),
+    ]), {code: "23505"});
+    assert.equal((await sql`SELECT 1 FROM worlds_link_proofs WHERE proof_hash=${proof}`).length, 1);
+    console.log("PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.");
+  } finally {
+    await sql.transaction([
+      sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof}`,
+      sql`DELETE FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`,
+      sql`DELETE FROM vocabulary_notebooks WHERE id=${notebook}::uuid AND owner_id=${userId}`,
+    ]);
+  }
+}
+
 // One synthetic, non-deliverable identity in the expiring QA branch only.
 const email = `qa-${crypto.randomUUID()}@sprachwelten.invalid`,
   password = crypto.randomUUID() + "!Aa1";
@@ -50,6 +96,7 @@ try {
   );
   const userId = signup.data?.user?.id;
   assert.ok(userId);
+  await verifyWorldsMapping(userId);
   await request("/sign-out", {});
   const denied = await request("/sign-in/email", {
     email,

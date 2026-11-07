@@ -1,5 +1,29 @@
 # Sprachwelten – Fortsetzungsstand, 2. November 2026
 
+## Migrationsprüfung erneut aufgenommen – 7. November 2026
+
+Zielauftrag vollständig aus der lokalen goal-objective.md gelesen. Music-Worlds
+ist jetzt erreichbar; separater unveränderter Review-Checkout unter
+`../music-worlds-review`, HEAD `67403f9`. Dessen Berichte nennen acht archivierte
+und importierte Ursprungsfragen (vier öffentlich geprüft, vier privat), keine
+Audio-Dateien und erfolgreiche isolierte Wiederherstellung. Diese Datenaussagen
+noch unabhängig anhand privatem Archiv/Produktionsmapping verifizieren.
+
+`origin/main` enthält den tatsächlich veröffentlichten Cutover `a31f117` und
+Bericht `edee8a0`. In den hiesigen Arbeitsbranch mit Merge `eacd9f7` integriert;
+Konflikte in Dokumentation und minimatch aufgelöst, neuere 11.0.4 erhalten.
+Alle nicht versionierten Fremddateien unverändert. Aktuelle lokale Nachprüfung:
+Sprachwelten 202 Unit-Tests, Typprüfung und Übersetzungsprüfung bestanden;
+Music-Worlds frische Installation/Audit ohne Befund, 22 Tests, Typprüfung und
+Lint bestanden. Ziel-Health live gesund, Commit `1c9ac77`, Hub/Uploads aus.
+Letzte Actions beider Projekte grün; Source-Pilot `2ef8b15` separat auf
+`origin/feature/worlds-hub-sso`, noch nicht in diesem Branch integriert.
+
+Nächster konkreter Schritt: aktuelle Cutover-UI mit Browser-Suite verifizieren,
+private Archiv-/Importbelege auffinden und lesend abgleichen; Source-Pilotbranch
+auf SSO-Vertrag/Tests prüfen. Danach verbleibende Integrations-/Build-/Livechecks
+und gezielte Fehlerkorrekturen. Vollständige Abnahme noch NICHT behauptet.
+
 ## Music-Worlds – Übertragung vorbereitet, produktive Entfernung ausstehend
 
 Bestandsaufnahme und Integrationsplan in `docs/music-worlds-transfer.md`.

@@ -28,10 +28,31 @@ SSO-Pilot `2ef8b15` anhand Code und grüner CI geprüft: isolierte Origin/DB,
 standardmäßig deaktiviert; kein produktiver Hub-Login behauptet. Echte zentrale
 Identitätsverknüpfung bleibt externe Pilotabnahme außerhalb der Spielmigration.
 
-Laufend: Source-Browser-Gesamtlauf (erste Läufe zeigten veralteten Song-Test und
-intermittierende Zeitüberschreitungen bei zeitgesteuerten Mehrspielerfällen;
-gezielte Wiederholung der Multiplayerfälle bestand). Danach exakte Branch-CI,
-isolierte Source-QA und Deployment/Live-Abnahme der Korrekturen.
+Codecommit `80df997` ist gepusht und beide exakten GitHub-Läufe bestanden:
+Checks `42409743925` mit 202 Unit-Tests und 156 Desktop-/Mobil-Browserfällen,
+Audit/Lint/Übersetzungen/Typen/Build; isolierte Integration `42409745221` mit
+Migrationen, Lernen, Heften/SRS, parallelen Spiel-/Voting-Aktionen, Redaktion und
+echtem Managed-Auth-Profil-/Passwort-/Sitzungsablauf. QA-Fixtures bereinigt.
+Lokale Gesamtläufe hatten einzelne zeitabhängige Desktop-Ausfälle; unveränderte
+gezielte Wiederholungen und die vollständige CI bestanden. Keine Tests oder
+Qualitätsgrenzen abgeschwächt. OTP-Mailzustellung mangels Testpostfach nicht
+getestet; optionale historische Heft-Migrationsfixtures im leeren QA-Template
+nicht vorhanden. Vollständiger gespeicherter QA-Archivsnapshot nochmals mit dem
+gesamten privaten Archiv verglichen: identisch.
+
+Aktuelle Produktion zusätzlich lesend geprüft: elf Haupt-/Privat-/SEO-Pfade
+200, Songraumerstellung und archivierter Songdetailzugriff anonym 410, Sammlung
+ohne archivierte Songs. Music-Worlds-Health/SEO/Assets/Privatsphäre gesund.
+Keine Produktionsdaten oder Konten verändert, keine Migration nötig.
+
+DEPLOYMENTBLOCKER: `npm run deploy:cloudflare` für `80df997` am 7. November
+vor Upload gescheitert: kein aktiver Wrangler-OAuth-Zugang und kein lokaler
+`CLOUDFLARE_API_TOKEN`. Keine Ersatzressource anlegen. Geprüfter aktueller Build
+liegt unter dist. Nach Gerätefreigabe denselben Deploymentweg erneut ausführen,
+Version protokollieren und neue DE/EN-Guide-URLs sowie alte 308-Weiterleitungen,
+Music-Worlds-Link/Personenformular und bestehende Sperren live bestätigen.
+Zielrepository unverändert, daher kein Zieldeployment erforderlich. Gesamte
+Migrationsabnahme erst nach dieser ausstehenden Source-Veröffentlichung beenden.
 
 ## Migrationsprüfung erneut aufgenommen – 7. November 2026
 

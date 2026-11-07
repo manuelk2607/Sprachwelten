@@ -1,3 +1,5 @@
+Current verification (7 November 2026): all eight source rows and eight unique destination mappings independently reconciled against the SHA-256-verified private archive; the complete restored QA snapshot also matches. Four questions approved, four quarantined for missing rights evidence. The portable core is identical to the destination's actively used `ported-quiz.ts`. Destination: 22 unit tests, 73 isolated PostgreSQL assertions, type/lint/audit/build and live DE/EN desktop/mobile smoke passed. Source `80df997`: 202 unit tests, 156 browser cases and isolated managed-Auth/persistence CI passed. Residual public song wording and contribution labels corrected; canonical quote guide URLs replace music slugs with permanent legacy redirects. Publication of these final public-facing corrections awaits renewed Cloudflare authentication; the earlier source cutover remains live. No destination runtime modifications were needed.
+
 Historical preparation notes (superseded by the cutover record below):
 # Music-Worlds transfer checkpoint
 

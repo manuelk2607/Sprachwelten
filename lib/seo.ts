@@ -17,7 +17,7 @@ export const publicGames: { mode: PlayableGameMode; de: string; en: string }[] =
     { mode: "word-outsider", de: "wortverwandtschaft", en: "odd-word-out" },
     { mode: "word-chain", de: "wortketten", en: "word-chains" },
     { mode: "taboo", de: "tabu", en: "taboo" },
-    { mode: "who-said-it", de: "zitate-und-lieder", en: "quotes-and-songs" },
+    { mode: "who-said-it", de: "personenzitate", en: "person-quotes" },
     { mode: "false-friends", de: "false-friends", en: "false-friends" },
     { mode: "word-builder", de: "satzbaukasten", en: "sentence-builder" },
     { mode: "joke-quiz", de: "pointe-bitte", en: "jokes" },
@@ -29,7 +29,7 @@ export const guideIndex = (locale: Locale) =>
 export const guidePath = (game: PublicGame, locale: Locale) =>
   guideIndex(locale) + "/" + game[locale];
 export const findGuide = (slug: string, locale: Locale) =>
-  publicGames.find((game) => game[locale] === slug);
+  publicGames.find((game) => game[locale] === slug || game.mode === 'who-said-it' && slug === (locale === 'de' ? 'zitate-und-lieder' : 'quotes-and-songs'));
 export function pageMetadata(
   title: string,
   description: string,

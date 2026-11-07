@@ -1,5 +1,38 @@
 # Sprachwelten – Fortsetzungsstand, 2. November 2026
 
+## Unabhängige Music-Worlds-Abnahme – 7. November
+
+Produktionsabgleich über `scripts/verify-music-migration.mts` (ausschließlich
+lesend): private Archivprüfsumme stimmt; alle acht kompletten Quellrows weiterhin
+exakt unverändert; acht eindeutige Ziel-IDs/Legacy-Mappings mit Quellrevision,
+Autorbezug, Sprache, Titel, Interpret, Album und Text geprüft. Vier freigegeben,
+vier privat/ungeklärt. Keine Audio-Bytes kopiert. Zielkern `ported-quiz.ts`
+ist identisch mit dem vorbereiteten Kern und wird in der Zielengine verwendet.
+Echte Music-Worlds-QA: 73 PostgreSQL-Assertions bestanden; 22 Unit-Tests,
+Typprüfung, Lint, Audit und Build bestanden. Produktiver Smoke bestätigt alle
+DE/EN-Seiten, Health/DB, Katalog, private 401/no-store und CSRF 403; Desktop und
+390px-Mobilansicht in DE/EN ohne horizontalen Überlauf geprüft.
+
+Nachgewiesene Cutover-Lücken korrigiert: öffentliche Anleitung erwähnte weiterhin
+Liedstellen, Beitragsart hieß weiterhin Zitat oder Liedstelle. Jetzt reine
+Personenzitate, Musik-Link im Beitragseditor, neue kanonische DE/EN-Anleitungs-
+URLs mit 308 von alten Lesezeichen. Neuer Browser-Regressionsfall prüft beide
+Sprachen/Weiterleitungen. Veralteter Browserfall für neue Songbeiträge prüft jetzt
+Personenzitate, fehlende Songauswahl und Music-Worlds-Link; vorhandene Legacy-
+Songraumtests bleiben unverändert.
+
+Echte produktive Neon-Anmeldung, Sitzungswiederherstellung, Logout/Replay und
+Origin-/Eingabegrenzen bestanden. Testkonto ist Admin, daher normale Mitglied-
+Adminverweigerung hier nicht behaupten; keine KI-Kosten/Modellaufrufe.
+SSO-Pilot `2ef8b15` anhand Code und grüner CI geprüft: isolierte Origin/DB,
+standardmäßig deaktiviert; kein produktiver Hub-Login behauptet. Echte zentrale
+Identitätsverknüpfung bleibt externe Pilotabnahme außerhalb der Spielmigration.
+
+Laufend: Source-Browser-Gesamtlauf (erste Läufe zeigten veralteten Song-Test und
+intermittierende Zeitüberschreitungen bei zeitgesteuerten Mehrspielerfällen;
+gezielte Wiederholung der Multiplayerfälle bestand). Danach exakte Branch-CI,
+isolierte Source-QA und Deployment/Live-Abnahme der Korrekturen.
+
 ## Migrationsprüfung erneut aufgenommen – 7. November 2026
 
 Zielauftrag vollständig aus der lokalen goal-objective.md gelesen. Music-Worlds
@@ -24,7 +57,7 @@ private Archiv-/Importbelege auffinden und lesend abgleichen; Source-Pilotbranch
 auf SSO-Vertrag/Tests prüfen. Danach verbleibende Integrations-/Build-/Livechecks
 und gezielte Fehlerkorrekturen. Vollständige Abnahme noch NICHT behauptet.
 
-## Music-Worlds – Übertragung vorbereitet, produktive Entfernung ausstehend
+## Historischer Vorbereitungsstand – durch Cutover und Abnahme oben ersetzt
 
 Bestandsaufnahme und Integrationsplan in `docs/music-worlds-transfer.md`.
 Liedstellen sind eine Kategorie von `who-said-it`, kein eigener Modus oder

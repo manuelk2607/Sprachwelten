@@ -141,7 +141,7 @@ test("songs without custom hints offer the artist first and album-only songs rem
   ).toBeVisible();
 });
 
-test("song contributions save optional albums and reviewed bilingual hints", async ({
+test("new contributions offer person quotes and route music authors to Music-Worlds", async ({
   page,
 }) => {
   let saved: ReturnType<typeof entryInput.parse> | undefined;
@@ -174,31 +174,20 @@ test("song contributions save optional albums and reviewed bilingual hints", asy
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("combobox").first().click();
   await page
-    .getByRole("option", { name: "Zitat oder Liedstelle", exact: true })
+    .getByRole("option", { name: "Personenzitat", exact: true })
     .click();
   await expect(dialog.locator('[name="hint"]')).toHaveCount(0);
   await dialog
     .getByRole("combobox", { name: "Kategorie", exact: true })
     .click();
-  await page.getByRole("option", { name: "Liedstelle", exact: true }).click();
-  await dialog.locator('[name="phrase"]').fill("Eine erfundene Liedstelle");
-  await dialog.locator('[name="challenge.answer"]').fill("Testlied");
-  await dialog.locator('[name="challenge.artist"]').fill("Testinterpret");
-  await dialog.locator('[name="challenge.album"]').fill("Testalbum");
-  await dialog.locator('[name="hint"]').fill("Ein Lied über Fernweh.");
-  await dialog.locator('.inline-hint-translation summary').click();
-  await dialog
-    .getByLabel("Tipp fürs Spiel · Englisch", { exact: true })
-    .fill("A song about wanderlust.");
-  await dialog
-    .getByLabel("Ich habe die zweite Sprachfassung geprüft.", { exact: true })
-    .check();
+  await expect(page.getByRole("option", { name: "Liedstelle", exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog.getByRole('link',{name:'Musikspiele jetzt in Music-Worlds ↗',exact:true})).toHaveAttribute('href','https://music-worlds.maki26.workers.dev/');
+  await expect(dialog.locator('[name="challenge.album"]')).toHaveCount(0);
+  await dialog.locator('[name="phrase"]').fill("Ein frei erfundenes Testzitat");
+  await dialog.locator('[name="challenge.answer"]').fill("Testperson");
   await dialog
     .getByRole("button", { name: "Beitrag veröffentlichen", exact: true })
     .click();
-  await expect.poll(() => saved?.hint).toBe("Ein Lied über Fernweh.");
-  expect(saved?.translation?.hint).toBe("A song about wanderlust.");
-  expect(
-    saved?.challenge?.type === "attribution" && saved.challenge.album,
-  ).toBe("Testalbum");
+  await expect.poll(() => saved?.challenge?.type==='attribution'&&saved.challenge.category).toBe('person');
 });

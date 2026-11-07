@@ -352,6 +352,7 @@ export function ChallengeEditor({
                 {value.category === "song" && <option value="song">{t("Liedstelle")}</option>}
               </Select>
             </label>
+            {value.category === 'person' && <p className="form-note"><a href="https://music-worlds.maki26.workers.dev/" target="_blank" rel="noreferrer">{t('Musikspiele jetzt in Music-Worlds ↗')}</a></p>}
             <label>
               {t(
                 value.category === "person"

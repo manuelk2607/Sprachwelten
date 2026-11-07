@@ -41,9 +41,7 @@ export const GET = (request: Request) =>
               : ["tongue_twister", "sound_pair"]
           : [modeInfo(input.mode).kind];
     const category =
-      input.mode === "who-said-it" && input.attributionCategory !== "both"
-        ? (input.attributionCategory ?? "")
-        : "";
+      input.mode === "who-said-it" ? "person" : "";
     const field =
       input.mode === "word-builder"
         ? "challenge->>'targetLanguage'"

@@ -8,6 +8,13 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Ein Zitat, vier Personen – wer hat das gesagt?':'One quote, four people — who said it?',
+  'Findet die Person hinter dem Zitat. Musikspiele und Songhinweise sind jetzt in Music-Worlds zu Hause.':'Identify the person behind the quote. Music games and song clues now live in Music-Worlds.',
+  '1–10 Personen · Personenzitate':'1–10 players · Quotes by people',
+  'Wählt die Person hinter dem Zitat. Drei andere Personen stehen zur Wahl. Jede richtige Antwort bringt 1 Punkt.':'Choose the person behind the quote from four people. Each correct answer earns 1 point.',
+  'Musikspiele jetzt in Music-Worlds ↗':'Music games now in Music-Worlds ↗',
+  'Musikspiele und neue Songbeiträge findet ihr jetzt in Music-Worlds.':'Music games and new song contributions now live in Music-Worlds.',
+
   ...notebookTranslations,
   ...learningTranslations,
   ...gameRedesignTranslations,

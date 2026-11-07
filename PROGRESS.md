@@ -2,6 +2,15 @@
 
 ## Worlds-SSO: Datenbankbasis im Testzweig (5. November)
 
+Nachprüfung 07.11.2026. Das versionierte gemeinsame Auth-Paket ist auf
+`auth-v0.1.1` mit Quellrevision
+`386bd19de441b8ecf9453ba5d592a3b5b40843dc` aktualisiert. Der Client
+fordert den frischen Login über `max_age=300` an und validiert den
+signierten Anmeldezeitpunkt. Der reale Hub-QA-Anbieter bestätigte aktuelle
+und ältere Sitzungen mit positivem Zeitfenster. 195 Tests, Typprüfung,
+Lint, Übersetzungsabdeckung, Build und vollständiger Dependency-Audit
+bestanden. Die reale Browserabnahme in Sprachwelten bleibt offen.
+
 Migration `027_worlds_identity.sql` auf `feature/worlds-hub-sso` ergänzt private
 OIDC-Sitzungen, einmalige Nachweise und die eindeutige Zuordnung von OIDC-Aussteller
 und Subject zur vorhandenen Neon-Auth-UUID. Die Zuordnung verwendet einen

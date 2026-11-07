@@ -2,9 +2,11 @@
 
 Sprachwelten installiert `@worlds-hub/auth` über das versionierte Paket im
 Repository Worlds-Hub. Die URL verweist auf den Commit des Pakets und die
-Lockdatei sichert die Prüfsumme. `auth-v0.1.0` bezeichnet
-`5274e2524883fd215f248643c41b9f1c18058871`. Das Paket enthält den
+Lockdatei sichert die Prüfsumme. `auth-v0.1.1` bezeichnet
+`386bd19de441b8ecf9453ba5d592a3b5b40843dc`. Das Paket enthält den
 OIDC-Codeflow mit PKCE sowie widerrufbare Sessions in PostgreSQL.
+Eine höchstens fünf Minuten alte Anmeldung wird mit `max_age=300`
+angefordert und über den signierten `auth_time` geprüft.
 
 Die Routen unter `/auth/` und der Menülink sind standardmäßig deaktiviert.
 Für den Pilot werden Migration 027, eine separate HTTPS-Origin, eine

@@ -12,7 +12,7 @@ async function handle(request: Request) {
   else {
     try {
       const ip = await hashToken(request.headers.get("cf-connecting-ip") ?? "local");
-      await rateLimit("worlds:" + url.pathname + ":" + ip, url.pathname === "/auth/login" ? 12 : 60, 60);
+      await rateLimit("worlds:" + url.pathname + ":" + ip, ["/auth/login","/auth/start"].includes(url.pathname) ? 12 : 60, 60);
       response = await worldsRoute(request, config, worldsQuery);
     } catch (error) {
       response = new Response(null, {status: error instanceof GameError ? error.status : 400});

@@ -1,5 +1,31 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+
+## Zentrale Anmeldelinks – 08.11.2026
+
+Der Worlds-Modus bietet in Navigation und Auth-Dialog ausschließlich einen
+zentralen Anmeldelink. Registrierung und Kontoverwaltung werden dort erklärt;
+bestehende Reset-/Verifikationsrücksprünge bleiben während des Übergangs gültig.
+`/auth/start` verwendet den gemeinsamen Client 0.1.3 aus dem geprüften Subtree
+`b0e6eac7bc6fdd46317dc933a83936c16ecde816`: PKCE, sichere Rücksprünge und
+hostgebundene Transaktion bleiben erhalten. Nur Dokumentnavigationen sind erlaubt.
+Der bestehende isolierte Konfigurationsschutz bleibt aktiv; kein Produktiv-Cutover.
+
+197 Tests, Typprüfung, Lint, Übersetzungsabdeckung, vollständiger Dependency-Audit
+und Offline-Build bestanden. Chromium/WebKit prüften die tatsächlichen Header-/
+Dialogkomponenten mit Testantworten in DE/EN bei 320 und 1280 px: direkte Links,
+Sprach-/Designwechsel, Dialog ohne Zugangsdatenfelder und bestehendes Formular bei
+deaktiviertem Worlds-Modus. Dies ist kein produktiver Provider-/Migrationsnachweis.
+
+Aktuelle read-only Produktion: 3 Auth-Konten, davon eines verifiziert und eines
+mit aktiver Sitzung; 515 Beiträge, ein Admin-Grant, keine Heft-/Fortschrittszeilen.
+Keine Konten oder Anmeldedaten kopiert, keine produktiven Zuordnungen geschrieben.
+Offen: tatsächliche zentrale Übernahme aller Eigentümer, Beiträge-/Admin-Autorisierung,
+Providerfehler als vollständige Dokumentansicht und projektübergreifender Logout.
+Vor produktiver Aktivierung sind eigene Sicherung, echte SSO-/Daten-/Rollenabnahme
+und validierte Rücknahme erforderlich. Isolierte Integrations-CI wird für diesen
+Featurestand separat gestartet; bisheriger Stand ist kein neuer Testerfolg.
+
 ## Worlds-SSO: Datenbankbasis im Testzweig (5. November)
 
 Nachprüfung 07.11.2026. Das versionierte gemeinsame Auth-Paket ist auf

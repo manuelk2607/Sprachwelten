@@ -69,3 +69,16 @@ test("Worlds resolves only an explicitly mapped local learner and revokes access
     assert.equal(await mappedLearningUser(request, config, query), undefined);
   } finally { await db.close(); }
 });
+
+test('the central sign-in link starts only a top-level document navigation with PKCE and a host-only binding',async t=>{
+  const queries:string[]=[];
+  const config=createWorldsConfig(env,async(sql:string)=>{queries.push(sql);return []})!;
+  let requests=0;
+  t.mock.method(globalThis,'fetch',async()=>{requests++;return Response.json({issuer,authorization_endpoint:issuer+'/authorize',token_endpoint:issuer+'/token',jwks_uri:issuer+'/jwks',response_types_supported:['code'],subject_types_supported:['public'],id_token_signing_alg_values_supported:['EdDSA'],code_challenge_methods_supported:['S256']});});
+  assert.equal((await worldsRoute(new Request(origin+'/auth/start'),config,async()=>[])).status,403);
+  assert.equal(requests,0);assert.equal(queries.length,0);
+  const response=await worldsRoute(new Request(origin+'/auth/start?ui_locales=en&next=/auth/worlds-en',{headers:{'sec-fetch-mode':'navigate','sec-fetch-dest':'document'}}),config,async()=>[]);
+  assert.equal(response.status,303);const target=new URL(response.headers.get('location')!);
+  assert.equal(target.searchParams.get('redirect_uri'),origin+'/auth/callback');assert.equal(target.searchParams.get('code_challenge_method'),'S256');assert.equal(target.searchParams.get('ui_locales'),'en');
+  assert.match(response.headers.get('set-cookie')!,/HttpOnly; Secure; SameSite=Lax/);assert.doesNotMatch(response.headers.get('set-cookie')!,/Domain=/);assert.equal(queries.length,1);
+});

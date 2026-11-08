@@ -8,6 +8,8 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Anmeldung, Registrierung und Kontoverwaltung erfolgen über Worlds Hub.':'Sign-in, registration and account management are handled by Worlds Hub.',
+  'Dein Konto':'Your account',
   ...notebookTranslations,
   ...learningTranslations,
   ...gameRedesignTranslations,

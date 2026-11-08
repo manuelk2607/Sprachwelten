@@ -1,9 +1,9 @@
-import { backchannelLogout, callback, logout, session, startLogin, type AuthConfig } from "@worlds-hub/auth";
+import { backchannelLogout, callback, logout, session, startLogin, startLoginLink, type AuthConfig } from "@worlds-hub/auth";
 import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 import { PostgresAuthStore } from "@worlds-hub/auth/postgres-store";
 
 export type LearningUser = { id: string; name: string };
-export const worldsPaths = ["/auth/login", "/auth/callback", "/auth/logout", "/auth/backchannel-logout",
+export const worldsPaths = ["/auth/login", "/auth/start", "/auth/callback", "/auth/logout", "/auth/backchannel-logout",
   "/auth/status", "/auth/worlds", "/auth/worlds-en"];
 export const hasManagedSessionCookie = (request: Request) => (request.headers.get("cookie") ?? "").split(";")
   .some(value => value.trim().startsWith("__Secure-neon-auth.session_token="));
@@ -49,6 +49,7 @@ export async function mappedLearningUser(request: Request, config: AuthConfig, q
 export async function worldsRoute(request: Request, config: AuthConfig, query: PgQuery) {
   const {pathname} = new URL(request.url);
   if (new URL(request.url).origin !== config.origin) return new Response(null, {status: 404});
+  if (pathname === "/auth/start") return startLoginLink(request, config);
   if (pathname === "/auth/login") return startLogin(request, config);
   if (pathname === "/auth/callback") return callback(request, config);
   if (pathname === "/auth/logout") return logout(request, config);
@@ -69,7 +70,7 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
     ? `<p>${en ? "Sign out of your current Sprachwelten account before switching to Worlds." : "Melde dich vor dem Wechsel zu Worlds von deinem aktuellen Sprachwelten-Konto ab."}</p><p><a href="${learning}">${en ? "Return to learning" : "Zurück zum Lernen"}</a></p>`
     : user ? `<p><a href="${learning}">${continueLabel}</a></p>` : identity
     ? `<p>${en ? "This Worlds identity has no linked Sprachwelten account." : "Diese Worlds-Identität ist noch keinem Sprachwelten-Konto zugeordnet."}</p>`
-    : `<form method="post" action="/auth/login?next=${pathname}&amp;ui_locales=${locale}"><button>${loginLabel}</button></form>`;
+    : `<a href="/auth/start?next=${pathname}&amp;ui_locales=${locale}">${loginLabel}</a>`;
   const signOut = identity && /^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)
     ? `<form method="post" action="/auth/logout?locale=${locale}"><input type="hidden" name="csrf" value="${identity.csrf}"><button>${logoutLabel}</button></form>`
     : "";

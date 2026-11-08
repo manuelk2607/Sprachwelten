@@ -41,6 +41,7 @@ export function AuthProvider({ children, worldsEnabled = false }: { children: Re
 }
 
 export const useAuthSession = () => useContext(SessionContext);
+export const useWorldsUser = () => useContext(WorldsContext).user;
 export const useWorldsPilot = () => useContext(WorldsContext).enabled;
 export function useLearningUser() {
   const session = useAuthSession();

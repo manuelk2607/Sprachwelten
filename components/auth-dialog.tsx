@@ -2,9 +2,12 @@
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
 import { getAuthClient } from '@/lib/auth/client';
+import {useWorldsPilot} from '@/lib/auth/provider';
+import {worldsLoginHref} from '@/lib/auth/worlds-link';
 import { Dialog } from './dialog';
 export function AuthDialog({close, initial = 'signin', email = '', resetToken = ''}: {close:()=>void; initial?:'signin'|'verify'|'reset'|'forgot';email?:string;resetToken?:string}) {
-  const { t } = useI18n();
+  const { t,locale } = useI18n();
+  const worlds=useWorldsPilot();
   const [mode,setMode]=useState<'signin'|'signup'|'forgot'|'verify'|'reset'>(initial);
   const [cooldown,setCooldown]=useState(false);
   const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [message,setMessage]=useState('');
@@ -32,6 +35,10 @@ export function AuthDialog({close, initial = 'signin', email = '', resetToken = 
     } catch(err) {setError(err instanceof Error?t(err.message):t("Das hat gerade nicht geklappt."));} finally {setBusy(false);}
   }
   async function sendCode(){setBusy(true);setError('');try{const {error}=await (await getAuthClient()).emailOtp.sendVerificationOtp({email,type:'email-verification'});if(error)throw new Error(error.message);setMessage(t('Bestätigungscode gesendet. Bitte prüfe auch deinen Spam-Ordner.'));setCooldown(true);setTimeout(()=>setCooldown(false),60000);}catch(e){setError(t((e as Error).message));}finally{setBusy(false);}}
+  if(worlds&&(!['reset','verify'].includes(initial)||['signin','signup','forgot'].includes(mode)))return <Dialog title={t('Anmelden')} close={close}>
+    <p className="muted">{t('Anmeldung, Registrierung und Kontoverwaltung erfolgen über Worlds Hub.')}</p>
+    <a className="button primary full" href={worldsLoginHref(locale)}>{t('Anmelden')}</a>
+  </Dialog>;
   return <Dialog title={title} close={close}>
     <p className="muted">{mode==='signup'||mode==='signin'?t('Mit einem Konto verwaltest du deine Beiträge auf allen Geräten: bearbeiten, löschen und Verbesserungsvorschläge verfolgen. Spielen und neue Beiträge einreichen geht auch ohne Konto.'):mode==='verify'?t("Gib den Bestätigungscode aus deiner E-Mail ein."):t("Wir helfen dir, wieder Zugang zu deinem Konto zu bekommen.")}</p>
     {mode==='verify'&&<button className="button outline" disabled={busy||cooldown} onClick={()=>void sendCode()}>{t('Bestätigungscode anfordern')}</button>}

@@ -4,7 +4,8 @@ import { ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Globe2, LogOut, Moon, Plus, Sun, UserRound } from "lucide-react";
 import { getAuthClient } from "@/lib/auth/client";
-import { useAuthSession, useWorldsPilot } from "@/lib/auth/provider";
+import { useAuthSession, useWorldsPilot, useWorldsUser } from "@/lib/auth/provider";
+import {worldsLoginHref} from "@/lib/auth/worlds-link";
 import { useTheme } from "@/lib/theme";
 import { site } from "@/lib/site";
 export function Header({
@@ -40,7 +41,7 @@ export function Header({
   }, []);
   const session = useAuthSession(),
     userId = session?.user?.id;
-  const worldsPilot = useWorldsPilot();
+  const worldsPilot = useWorldsPilot(), worldsUser=useWorldsUser();
   const [access, setAccess] = useState<{
     userId: string;
     isAdmin: boolean;
@@ -157,7 +158,7 @@ export function Header({
             {t("Beitragen")}
           </button>
         )}
-        {worldsPilot && (
+        {worldsPilot && session?.user && (
           <a href={locale === "en" ? "/auth/worlds-en" : "/auth/worlds"} className="button small outline">
             {locale === "en" ? "Worlds account" : "Worlds-Konto"}
           </a>
@@ -195,6 +196,10 @@ export function Header({
               <LogOut size={18} />
             </button>
           </>
+        ) : worldsPilot ? (
+          <a className="button small dark login-button" href={worldsUser?(locale==='en'?'/auth/worlds-en':'/auth/worlds'):worldsLoginHref(locale)}>
+            <UserRound size={16} />{t(worldsUser?'Dein Konto':'Anmelden')}
+          </a>
         ) : (
           <button className="button small dark login-button" onClick={onLogin}>
             <UserRound size={16} />

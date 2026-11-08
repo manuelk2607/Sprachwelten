@@ -23,8 +23,10 @@ Keine Konten oder Anmeldedaten kopiert, keine produktiven Zuordnungen geschriebe
 Offen: tatsächliche zentrale Übernahme aller Eigentümer, Beiträge-/Admin-Autorisierung,
 Providerfehler als vollständige Dokumentansicht und projektübergreifender Logout.
 Vor produktiver Aktivierung sind eigene Sicherung, echte SSO-/Daten-/Rollenabnahme
-und validierte Rücknahme erforderlich. Isolierte Integrations-CI wird für diesen
-Featurestand separat gestartet; bisheriger Stand ist kein neuer Testerfolg.
+und validierte Rücknahme erforderlich. Vollständige GitHub-CI `42514779942` und echte separate QA-Integration
+`42514846060` für Anwendungscommit `9d46f15` erfolgreich. Migrationen, Persistenz,
+Rechtetrennung und vorhandenes Managed Auth sind im isolierten Ziel geprüft;
+dies ersetzt die noch offene zentrale Produktionsmigration nicht.
 
 ## Worlds-SSO: Datenbankbasis im Testzweig (5. November)
 

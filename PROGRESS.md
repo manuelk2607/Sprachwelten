@@ -1,4 +1,40 @@
-# Sprachwelten – Fortsetzungsstand, 2. November 2026
+# Sprachwelten – Fortsetzungsstand, 8. November 2026
+
+## Abschluss: Musikmigration geprüft und Korrekturen live
+
+Auftrag aus `goal-objective.md` abgeschlossen. Vollständige technische Übernahme
+des vorhandenen Liedspiels bestätigt: Zielkern identisch, Ziel-Engine/UI/API an
+Music-Worlds angepasst; Antworten/Einzelpunkte/Mehrspieler/Fristen/Wiederverbindung
+und Rematch-Historie durch Zieltests und echte isolierte Integration geprüft.
+Alle acht Quellkarten samt Zuordnung erhalten; vier rechtegeprüft freigegeben,
+vier ausdrücklich privat quarantänisiert. Keine Audio-Dateien übernommen.
+Nach Source-Deployment erneut lesend gegen private Archivprüfsumme und Ziel-
+Mappings abgeglichen: acht unverändert, acht eindeutig, keine neuen Dubletten.
+
+Geprüfter Anwendungscode `80df997`, dokumentarischer Stand `95dacbd` frisch
+gebaut und am 8. November auf dem bestehenden Worker veröffentlicht:
+**Version `b21920f5-ee96-4dab-b7ce-be6b05e7ee24`**. Bestehende Bindings,
+Secrets, Cron und Datenbank erhalten; keine Migration nötig. Cloudflare-Zugang
+wieder aktiv. Vollständige CI/isolierte QA siehe unten, beide für `80df997` grün.
+
+Live nach Veröffentlichung: `/spiele/personenzitate` und
+`/en/games/person-quotes` 200/passender Canonical; alte Musik-Guide-URLs 308 auf
+jeweilige neue Sprachfassung, Sitemap bereinigt. Anonymes Anlegen neuer Songräume
+410, private Konto-/Admin-APIs 401/no-store. Echter Browser DE/EN bei 1280px und
+390px: Personenzitat-Formular, keine Song-/Albumeingabe, sichtbarer gültiger
+Music-Worlds-Link, kein horizontaler Überlauf. Keine Testbeiträge veröffentlicht.
+Der frühere Cutover hält vorhandene Songdaten und gespeicherte Engine kompatibel;
+neue Partien, Beiträge und öffentliche Sammlung verwenden nur Personenzitate.
+
+Music-Worlds blieb unverändert (Review-HEAD `67403f9`, produktiver Code
+`1c9ac77`); kein erneutes Zieldeployment erforderlich. Produktions-Smoke,
+DE/EN-Desktop-/Mobilansichten und Gesundheitsprüfung des Ziels bestanden.
+
+Externe Folgepunkte, keine Migrationsblocker: vier französische Fragen erst bei
+datierter Rechte-Evidenz freigeben; privates Audio erst nach Speicher-/Rechte-
+Freigabe aktivieren; zentrale Worlds-SSO-Verknüpfung weiter im isolierten Pilot
+abnehmen. OTP-Mailzustellung wurde ohne autorisiertes Testpostfach nicht getestet.
+Kein weiterer Schritt für diese Migrationsabnahme erforderlich.
 
 ## Unabhängige Music-Worlds-Abnahme – 7. November
 
@@ -45,14 +81,14 @@ Aktuelle Produktion zusätzlich lesend geprüft: elf Haupt-/Privat-/SEO-Pfade
 ohne archivierte Songs. Music-Worlds-Health/SEO/Assets/Privatsphäre gesund.
 Keine Produktionsdaten oder Konten verändert, keine Migration nötig.
 
-DEPLOYMENTBLOCKER: `npm run deploy:cloudflare` für `80df997` am 7. November
+Historischer, inzwischen behobener Deploymentblocker: für `80df997` am 7. November
 vor Upload gescheitert: kein aktiver Wrangler-OAuth-Zugang und kein lokaler
 `CLOUDFLARE_API_TOKEN`. Keine Ersatzressource anlegen. Geprüfter aktueller Build
 liegt unter dist. Nach Gerätefreigabe denselben Deploymentweg erneut ausführen,
 Version protokollieren und neue DE/EN-Guide-URLs sowie alte 308-Weiterleitungen,
 Music-Worlds-Link/Personenformular und bestehende Sperren live bestätigen.
-Zielrepository unverändert, daher kein Zieldeployment erforderlich. Gesamte
-Migrationsabnahme erst nach dieser ausstehenden Source-Veröffentlichung beenden.
+Zielrepository unverändert, daher kein Zieldeployment erforderlich. Dieser
+Zwischenstand ist durch den erfolgreichen Abschluss vom 8. November oben ersetzt.
 
 ## Migrationsprüfung erneut aufgenommen – 7. November 2026
 

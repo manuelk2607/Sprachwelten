@@ -1,5 +1,7 @@
 import type { TestPayload } from "./test-payload";
 import assert from "node:assert/strict";
+import {isolatedDatabaseTarget} from "../lib/qa-target.ts";
+isolatedDatabaseTarget(process.env);
 import { neon } from "@neondatabase/serverless";
 import { gamePrompts } from "../db/repository";
 import { textsOf } from "../lib/content-translations";

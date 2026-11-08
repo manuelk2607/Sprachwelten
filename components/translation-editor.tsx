@@ -7,7 +7,7 @@ import {
   translationFields,
   type TranslationTexts,
 } from "@/lib/content-translations";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 export type TranslationField = {
   key: keyof TranslationTexts;
   label: string;
@@ -35,7 +35,7 @@ export function TranslationEditor({
   compact?: boolean;
 }) {
   const { t } = useI18n();
-  const session = useAuthSession();
+  const user = useApplicationUser();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -43,7 +43,7 @@ export function TranslationEditor({
     snapshot: string;
     texts: TranslationTexts;
   } | null>(null);
-  const snapshot=JSON.stringify([sourceLocale,revision,fields.map(field=>field.key),translation,session?.user?.id]);
+  const snapshot=JSON.stringify([sourceLocale,revision,fields.map(field=>field.key),translation,user?.id]);
   const version = useRef(snapshot);
   const request = useRef<AbortController|null>(null);
   const preview=suggestion?.snapshot===snapshot ? suggestion : null;
@@ -138,14 +138,14 @@ export function TranslationEditor({
         disabled={
           busy ||
           available !== true ||
-          !session?.user ||
+          !user ||
           !fields.some((field) => getSource()[field.key]?.trim())
         }
         onClick={() => void suggest()}
       >
         {busy ? t("Wird übersetzt …") : t("Übersetzung vorschlagen")}
       </button>
-      {!session?.user && (
+      {!user && (
         <p className="form-note">
           {t(
             "Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.",

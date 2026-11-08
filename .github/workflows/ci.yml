@@ -18,8 +18,9 @@ jobs:
       - run: npm run build
         env:
           SPRACHWELTEN_OFFLINE_PREVIEW: '1'
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
+      - run: npm run test:worlds-browser
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

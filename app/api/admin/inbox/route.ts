@@ -6,11 +6,11 @@ import {
   markInboxSeen,
 } from "@/db/community-repository";
 import { z } from "zod";
-export const GET = () =>
-  safe(async () => respond(await inbox(await requireAdministrator())));
+export const GET = (request:Request) =>
+  safe(async () => respond(await inbox(await requireAdministrator(request))));
 export const POST = (request: Request) =>
   safe(async () => {
-    const admin = await requireAdministrator();
+    const admin = await requireAdministrator(request);
     const input = await body(
       request,
       z

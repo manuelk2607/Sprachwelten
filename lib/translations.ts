@@ -8,6 +8,11 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Verwalte dein Konto im Worlds Hub.':'Manage your account in Worlds Hub.',
+  'Dein Worlds-Konto':'Your Worlds account',
+  'Name, E-Mail und Passwort verwaltest du zentral im Worlds Hub. Deine Beiträge und Lernstände bleiben bei Sprachwelten.':'Manage your name, email and password centrally in Worlds Hub. Your contributions and learning records stay in Sprachwelten.',
+  'Konto im Worlds Hub verwalten':'Manage account in Worlds Hub',
+  'Anmeldung in Sprachwelten verwalten':'Manage sign-in in Sprachwelten',
   'Anmeldung, Registrierung und Kontoverwaltung erfolgen über Worlds Hub.':'Sign-in, registration and account management are handled by Worlds Hub.',
   'Dein Konto':'Your account',
   ...notebookTranslations,

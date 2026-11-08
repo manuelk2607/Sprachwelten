@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { getAuth } from '@/lib/auth/server';
+import {projectIdentity} from '@/lib/auth/learning-session';
+import {requireProjectUser} from '@/lib/auth/project-identity';
 import { GameError } from '@/lib/game';
 import { DuplicateEntryError } from '@/lib/entry-duplicates';
 
@@ -24,10 +25,9 @@ export async function body<S extends z.ZodTypeAny>(request: Request, schema: S):
   let data: unknown; try { data = JSON.parse(new TextDecoder().decode(bytes)); } catch { throw new GameError('Die Anfrage konnte nicht gelesen werden.', 400); }
   return schema.parse(data);
 }
-export async function account() {
-  const { data, error } = await getAuth().getSession();
-  if (error || !data?.user) throw new GameError('Bitte melde dich an, um diese Funktion zu nutzen.', 401);
-  return { id: data.user.id, name: data.user.name?.trim().slice(0,60) || 'Mitglied' };
+export async function account(request:Request) {
+  const user=requireProjectUser(await projectIdentity(request));
+  return {id:user.id,name:user.name?.trim().slice(0,60)||'Mitglied'};
 }
 export async function hashToken(token: string) {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)); return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2,'0')).join('');

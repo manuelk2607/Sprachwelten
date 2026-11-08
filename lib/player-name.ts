@@ -1,4 +1,4 @@
 import {playerName} from './content';
-import {getAuth} from './auth/server';
+import {projectIdentity} from './auth/learning-session';
 import {GameError} from './game';
-export async function resolvePlayerName(value?:string){if(value?.trim())return playerName.parse(value);const {data}=await getAuth().getSession();const name=data?.user?.name?.trim().slice(0,24);if(!name)throw new GameError('Bitte einen Spielnamen eingeben oder anmelden.',422);return playerName.parse(name);}
+export async function resolvePlayerName(request:Request,value?:string){if(value?.trim())return playerName.parse(value);const {user,error}=await projectIdentity(request);if(error)throw new GameError('Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.',503);const name=user?.name?.trim().slice(0,24);if(!name)throw new GameError('Bitte einen Spielnamen eingeben oder anmelden.',422);return playerName.parse(name);}

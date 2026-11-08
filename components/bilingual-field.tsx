@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { Bilingual } from "@/lib/challenges";
 import { useI18n, type Locale } from "@/lib/i18n";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 
 const TranslationAvailable = createContext(false);
 
@@ -22,7 +22,7 @@ export function AnswerTranslationProvider({
   enabled?: boolean;
 }) {
   const { t } = useI18n();
-  const session = useAuthSession();
+  const user = useApplicationUser();
   const [available, setAvailable] = useState<boolean | null>(null);
   useEffect(() => {
     if (!enabled) return;
@@ -40,14 +40,14 @@ export function AnswerTranslationProvider({
   if (!enabled) return children;
   return (
     <TranslationAvailable.Provider
-      value={available === true && !!session?.user}
+      value={available === true && !!user}
     >
       <p className="form-note">
         {t(
           "Übersetzungsvorschläge für Antworttexte kannst du prüfen, bearbeiten und einzeln übernehmen.",
         )}
       </p>
-      {!session?.user && (
+      {!user && (
         <p className="form-note">
           {t(
             "Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.",

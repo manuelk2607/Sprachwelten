@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useAuthSession,useWorldsPilot,useApplicationUser } from "@/lib/auth/provider";
 import { getAuthClient } from "@/lib/auth/client";
 import { useI18n } from "@/lib/i18n";
 import { profileInput } from "@/lib/profile";
@@ -144,7 +144,7 @@ function ProfileEditor({
     </>
   );
 }
-export function Profile() {
+function LegacyProfile() {
   const session = useAuthSession(),
     { t } = useI18n(),
     [auth, setAuth] = useState(false),
@@ -153,7 +153,7 @@ export function Profile() {
     [resetPassword, setResetPassword] = useState(false);
   return (
     <>
-      <Header onLogin={() => setAuth(true)} />
+      <Header loginReturn="/profile" onLogin={() => setAuth(true)} />
       <main
         className="page-shell"
         style={{ maxWidth: 760, margin: "2rem auto", padding: "0 1rem" }}
@@ -205,3 +205,17 @@ export function Profile() {
     </>
   );
 }
+
+function WorldsProfile(){
+  const {t,locale}=useI18n(),user=useApplicationUser();
+  return <><Header loginReturn="/profile"/><main className="page-shell" style={{maxWidth:760,margin:'2rem auto',padding:'0 1rem'}}>
+    <h1>{t('Dein Worlds-Konto')}</h1>
+    <div className="panel form-stack">
+      {user&&<p>{user.name}</p>}
+      <p>{t('Name, E-Mail und Passwort verwaltest du zentral im Worlds Hub. Deine Beiträge und Lernstände bleiben bei Sprachwelten.')}</p>
+      <a className="button primary" href={'https://worlds-hub.maki26.workers.dev'+(locale==='en'?'/en/account':'/konto')}>{t('Konto im Worlds Hub verwalten')}</a>
+      <a className="text-link" href={locale==='en'?'/auth/worlds-en':'/auth/worlds'}>{t('Anmeldung in Sprachwelten verwalten')}</a>
+    </div>
+  </main></>;
+}
+export function Profile(){return useWorldsPilot()?<WorldsProfile/>:<LegacyProfile/>;}

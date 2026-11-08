@@ -17,7 +17,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 import { site } from "@/lib/site";
 import { kindLabels, type Entry } from "@/lib/content";
 import type { EntryPreview } from "@/lib/content-public";
@@ -41,7 +41,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
     () => false,
   );
   const { t,locale } = useI18n();
-  const session = useAuthSession();
+  const user = useApplicationUser();
   const [auth, setAuth] = useState(false);
   const [contribute, setContribute] = useState(false);
   const [contributionKind,setContributionKind]=useState<ContentKind>('idiom');
@@ -577,7 +577,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
             setSelected(null);
             setAuth(true);
           }}
-          signedIn={!!session?.user}
+          signedIn={!!user}
         />
       )}
     </>

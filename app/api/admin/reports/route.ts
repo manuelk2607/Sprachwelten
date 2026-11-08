@@ -3,7 +3,7 @@ import { respond, safe } from "@/lib/http";
 import { reports } from "@/db/report-repository";
 export const GET = (request: Request) =>
   safe(async () => {
-    await requireAdministrator();
+    await requireAdministrator(request);
     return respond({
       reports: await reports(
         new URL(request.url).searchParams.get("resolved") === "true",

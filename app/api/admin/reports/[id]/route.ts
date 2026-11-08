@@ -7,7 +7,7 @@ export const PATCH = (
   ctx: { params: Promise<{ id: string }> },
 ) =>
   safe(async () => {
-    const admin = await requireAdministrator(),
+    const admin = await requireAdministrator(request),
       id = z.uuid().parse((await ctx.params).id),
       input = await body(
         request,

@@ -49,3 +49,12 @@ jobs:
           DATABASE_URL: ${{ steps.branch.outputs.db_url }}
           DATABASE_URL_UNPOOLED: ${{ steps.branch.outputs.db_url }}
           NEON_AUTH_BASE_URL: ${{ steps.branch.outputs.auth_url }}
+      - name: Real managed application HTTP integration on isolated loopback server
+        run: node --import tsx scripts/test-qa-http-integration.mts
+        env:
+          QA_DATABASE_APPROVED: '1'
+          TEST_DATABASE_HOST: ${{ steps.branch.outputs.db_host }}
+          TEST_NEON_BRANCH: ${{ steps.branch.outputs.branch_id }}
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+          DATABASE_URL_UNPOOLED: ${{ steps.branch.outputs.db_url }}
+          NEON_AUTH_BASE_URL: ${{ steps.branch.outputs.auth_url }}

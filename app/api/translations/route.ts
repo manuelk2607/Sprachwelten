@@ -4,7 +4,7 @@ import { suggestTranslation, translationAvailable, translationRequest } from '@/
 import { getTranslationAI } from '@/lib/cloudflare-ai';
 export const GET=async()=>respond({available:translationAvailable(await getTranslationAI())});
 export const POST=(request:Request)=>safe(async()=>{
-  const user=await account();const input=await body(request,translationRequest);
+  const user=await account(request);const input=await body(request,translationRequest);
   await rateLimit(`translation:${user.id}`,20);
   return respond(await suggestTranslation(input.texts,input.sourceLocale,await getTranslationAI()));
 });

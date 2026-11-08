@@ -1,4 +1,6 @@
-import { account } from "@/lib/http";
+import {projectIdentity} from "@/lib/auth/learning-session";
+import {requireProjectUser} from "@/lib/auth/project-identity";
+import {GameError} from "@/lib/game";
 import { updateOwnProfile, accountMutationSchema } from "@/lib/profile-handler";
 import { getAuth } from "@/lib/auth/server";
 type Handler = (
@@ -12,7 +14,11 @@ const handler =
     if (schema)
       return updateOwnProfile(
         request,
-        account,
+        async()=>{
+          const identity=await projectIdentity(request);
+          if(identity.source==='worlds')throw new GameError('Verwalte dein Konto im Worlds Hub.',403);
+          return requireProjectUser(identity);
+        },
         (validated) => getAuth().handler().POST(validated, context),
         schema,
       );

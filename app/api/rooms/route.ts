@@ -12,7 +12,7 @@ import {difficultyLevels} from '@/lib/editorial-difficulty';
 export const POST = (request: Request) => safe(async () => {
   const {name:givenName,locale,mode,difficulty,gameLanguages,meaningCategory,pronunciationCategory,pronunciationLanguage,sentenceLanguage,tabooLanguages,attributionCategory}=await body(request,z.object({name:z.string().trim().max(24).optional(),locale:z.enum(['de','en']).default('de'),mode:z.enum(playableModeIds).default('meaning-quiz'),difficulty:z.enum(difficultyLevels).optional(),gameLanguages:gameLanguagesInput.optional(),meaningCategory:z.enum(['all','expression','gaming','youth','academic']).optional(),pronunciationCategory:z.enum(['both','twister','sound']).optional(),pronunciationLanguage:pronunciationLanguageInput.optional(),sentenceLanguage:z.enum(['de','en']).optional(),tabooLanguages:tabooLanguagesInput.optional(),attributionCategory:z.enum(['both','person','song']).optional()}));
   if(gameLanguages&&(mode==='word-chain'||mode==='language-quiz'&&gameLanguages.length<4))throw new GameError('Wähle eine gültige Sprachauswahl; das Sprachenquiz benötigt mindestens vier Sprachen.',422);
-  const name=await resolvePlayerName(givenName);
+  const name=await resolvePlayerName(request,givenName);
   const ip=request.headers.get('cf-connecting-ip')??'local'; await rateLimit(`room:${await hashToken(ip)}`,30);
   const token=randomToken(); const player={id:crypto.randomUUID(),name,tokenHash:await hashToken(token),score:0};
   const prompts=await gamePrompts(mode,{locale,difficulty,gameLanguages,meaningCategory,pronunciationCategory,pronunciationLanguage:pronunciationLanguage??locale,sentenceLanguage:sentenceLanguage??locale,tabooLanguages:tabooLanguages??[locale],attributionCategory});

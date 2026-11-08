@@ -5,7 +5,7 @@ import { getAuthClient } from '@/lib/auth/client';
 import {useWorldsPilot} from '@/lib/auth/provider';
 import {worldsLoginHref} from '@/lib/auth/worlds-link';
 import { Dialog } from './dialog';
-export function AuthDialog({close, initial = 'signin', email = '', resetToken = ''}: {close:()=>void; initial?:'signin'|'verify'|'reset'|'forgot';email?:string;resetToken?:string}) {
+export function AuthDialog({close, initial = 'signin', email = '', resetToken = '',returnTo}: {close:()=>void; initial?:'signin'|'verify'|'reset'|'forgot';email?:string;resetToken?:string;returnTo?:string}) {
   const { t,locale } = useI18n();
   const worlds=useWorldsPilot();
   const [mode,setMode]=useState<'signin'|'signup'|'forgot'|'verify'|'reset'>(initial);
@@ -37,7 +37,7 @@ export function AuthDialog({close, initial = 'signin', email = '', resetToken = 
   async function sendCode(){setBusy(true);setError('');try{const {error}=await (await getAuthClient()).emailOtp.sendVerificationOtp({email,type:'email-verification'});if(error)throw new Error(error.message);setMessage(t('Bestätigungscode gesendet. Bitte prüfe auch deinen Spam-Ordner.'));setCooldown(true);setTimeout(()=>setCooldown(false),60000);}catch(e){setError(t((e as Error).message));}finally{setBusy(false);}}
   if(worlds&&(!['reset','verify'].includes(initial)||['signin','signup','forgot'].includes(mode)))return <Dialog title={t('Anmelden')} close={close}>
     <p className="muted">{t('Anmeldung, Registrierung und Kontoverwaltung erfolgen über Worlds Hub.')}</p>
-    <a className="button primary full" href={worldsLoginHref(locale)}>{t('Anmelden')}</a>
+    <a className="button primary full" href={worldsLoginHref(locale,returnTo)}>{t('Anmelden')}</a>
   </Dialog>;
   return <Dialog title={title} close={close}>
     <p className="muted">{mode==='signup'||mode==='signin'?t('Mit einem Konto verwaltest du deine Beiträge auf allen Geräten: bearbeiten, löschen und Verbesserungsvorschläge verfolgen. Spielen und neue Beiträge einreichen geht auch ohne Konto.'):mode==='verify'?t("Gib den Bestätigungscode aus deiner E-Mail ein."):t("Wir helfen dir, wieder Zugang zu deinem Konto zu bekommen.")}</p>

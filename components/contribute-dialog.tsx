@@ -35,7 +35,7 @@ import {
   duplicateEntryMessage,
   type ExistingEntry,
 } from "@/lib/entry-duplicates";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 export function ContributeDialog({
   close,
   saved,
@@ -58,7 +58,7 @@ export function ContributeDialog({
   review?: { id: string; revision: number };
 }) {
   const { t, locale } = useI18n();
-  const session = useAuthSession();
+  const user = useApplicationUser();
   const formRef = useRef<HTMLFormElement>(null);
   const validation = useFormErrors(formRef);
   const [media, setMedia] = useState<MediaChoice>({
@@ -243,7 +243,7 @@ export function ContributeDialog({
         ? Object.fromEntries(new FormData(formRef.current).entries())
         : (initialEntry ?? {}),
     );
-  const draftOwner = session?.user?.id ?? "guest";
+  const draftOwner = user?.id ?? "guest";
   const [pendingDraft, setPendingDraft] = useState<ContributionDraft | null>(
     null,
   );
@@ -503,7 +503,7 @@ export function ContributeDialog({
           contributionArea==='learn'?"Teile ein bestätigtes Sprachpaar oder eine Grammatikregel. Lernbeiträge bleiben von Spielaufgaben getrennt.":"Eine Redewendung von deiner Oma? Ein Wort aus deiner Heimat? Gib ihm hier einen Platz.",
         )}
       </p>
-      {!initialEntry && !session?.user && (
+      {!initialEntry && !user && (
         <p className="notice">
           {t(
             "Du kannst ohne Konto beitragen. Mit einem Konto kannst du deine Beiträge später geräteübergreifend bearbeiten und löschen sowie den Stand deiner Verbesserungsvorschläge verfolgen. Melde dich dafür vor dem Einreichen an. Gastbeiträge werden keinem später erstellten Konto automatisch zugeordnet.",
@@ -983,7 +983,7 @@ export function ContributeDialog({
               )}
         </button>
       </form>
-      {initialEntry&&editTarget==='admin'&&!review&&session?.user?.id&&!['vocabulary','grammar'].includes(initialEntry.kind)&&<EditorialReviewEditor key={initialEntry.id+':'+initialEntry.revision} entry={initialEntry}/>}
+      {initialEntry&&editTarget==='admin'&&!review&&user?.id&&!['vocabulary','grammar'].includes(initialEntry.kind)&&<EditorialReviewEditor key={initialEntry.id+':'+initialEntry.revision} entry={initialEntry}/>}
     </Dialog>
   );
 }

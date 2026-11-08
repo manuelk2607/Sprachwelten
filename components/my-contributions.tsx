@@ -3,7 +3,7 @@ import {PhraseText} from "./phrase-text";
 import { useApiResource } from "@/lib/use-api-resource";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useEffect, useState } from "react";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useAuthSession,useApplicationUser,useWorldsPilot } from "@/lib/auth/provider";
 import { useI18n } from "@/lib/i18n";
 import { kindLabels, type Entry } from "@/lib/content";
 import { MySuggestions } from "./my-suggestions";
@@ -15,7 +15,9 @@ import { Search } from "lucide-react";
 export function MyContributions() {
   const { t } = useI18n(),
     session = useAuthSession(),
-    userId = session?.user?.id;
+    user=useApplicationUser(),
+    worlds=useWorldsPilot(),
+    userId = user?.id;
   const [tab, setTab] = useState<"entries" | "suggestions">("entries"),
     [verify, setVerify] = useState(false),
     [removing, setRemoving] = useKeyedState<Entry | null>(userId ?? "", null),
@@ -76,7 +78,7 @@ export function MyContributions() {
   }
   return (
     <>
-      <Header active="me" onLogin={() => setAuth(true)} />
+      <Header loginReturn="/me" active="me" onLogin={() => setAuth(true)} />
       <main className="admin-panel">
         <a className="text-link" href="/">
           ← {t("Zur Startseite")}
@@ -85,7 +87,7 @@ export function MyContributions() {
         <p className="muted">
           {t("Eigene Beiträge kannst du direkt bearbeiten.")}
         </p>
-        {session?.user && (
+        {!worlds&&session?.user && (
           <div className="account-verification">
             <span>
               {t(
@@ -104,7 +106,7 @@ export function MyContributions() {
             )}
           </div>
         )}
-        {session?.user && (
+        {user && (
           <div
             className="dialog-actions"
             role="group"
@@ -128,7 +130,7 @@ export function MyContributions() {
             </button>
           </div>
         )}
-        {session?.user && tab === "entries" && (
+        {user && tab === "entries" && (
           <div className="own-entry-search">
             <div className="learning-actions" role="group" aria-label={t('Beitragsbereich')}>{(['play','learn'] as const).map(value=><button className={'button '+(value===area?'dark':'outline')} key={value} aria-pressed={value===area} onClick={()=>{setArea(value);setOffset(0);setEditing(null);}}>{t(value==='play'?'Spielbeiträge':'Lernbeiträge')}</button>)}</div>
             <label htmlFor="own-entry-query">
@@ -147,12 +149,12 @@ export function MyContributions() {
             </div>
           </div>
         )}
-        {!session?.user ? (
+        {!user ? (
           <button className="button dark" onClick={() => setAuth(true)}>
             {t("Anmelden")}
           </button>
         ) : tab === "suggestions" ? (
-          <MySuggestions key={session.user.id} userId={session.user.id} />
+          <MySuggestions key={user.id} userId={user.id} />
         ) : loading ? (
           <p role="status">{t("Wird geladen …")}</p>
         ) : (
@@ -261,7 +263,7 @@ export function MyContributions() {
           </div>
         </Dialog>
       )}
-      {auth && <AuthDialog close={() => setAuth(false)} />}{" "}
+      {auth && <AuthDialog returnTo="/me" close={() => setAuth(false)} />}{" "}
       {editing && (
         <ContributeDialog
           initialEntry={editing}

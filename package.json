@@ -16,7 +16,7 @@
     "test": "tsx --test tests/*.test.ts",
     "db:migrate": "node --env-file=.env.local --import tsx scripts/migrate.ts",
     "db:seed": "node --env-file=.env.local --import tsx scripts/seed.ts",
-    "test:integration": "node --env-file=.env.test.local --import tsx scripts/smoke.mts",
+    "test:integration": "node --env-file-if-exists=.env.test.local --import tsx scripts/smoke.mts",
     "test:game-integration": "node --import tsx scripts/test-game-redesign.mts",
     "test:learning-integration": "node --import tsx scripts/test-learning-integration.mts",
     "test:notebooks-integration": "node --import tsx scripts/test-notebooks-integration.mts",
@@ -25,7 +25,8 @@
     "deploy:cloudflare": "node --env-file=.env.local scripts/deploy-cloudflare.mts",
     "test:browser": "playwright test",
     "check:translations": "tsx scripts/list-missing-translations.mts --check",
-    "audit:dependencies": "tsx scripts/audit-dependencies.mts"
+    "audit:dependencies": "tsx scripts/audit-dependencies.mts",
+    "test:worlds-browser": "playwright test --config playwright.worlds.config.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "0.6.0-beta",

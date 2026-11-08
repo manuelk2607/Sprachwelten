@@ -4,7 +4,7 @@ import {qualityFilter} from "@/lib/content-quality";
 import { adminEntries } from "@/db/admin-repository";
 export const GET = (request: Request) =>
   safe(async () => {
-    const admin = await requireAdministrator();
+    const admin = await requireAdministrator(request);
     const q = new URL(request.url).searchParams;
     return respond(
       await adminEntries(

@@ -3,14 +3,14 @@ import { body, respond, safe } from "@/lib/http";
 import { bulkInput } from "@/lib/community-input";
 import { bulkEdit, undoBulkEdit, bulkHistory } from "@/db/community-repository";
 import { z } from "zod";
-export const GET = () =>
+export const GET = (request:Request) =>
   safe(async () => {
-    await requireAdministrator();
+    await requireAdministrator(request);
     return respond({ batches: await bulkHistory() });
   });
 export const POST = (request: Request) =>
   safe(async () => {
-    const admin = await requireAdministrator(),
+    const admin = await requireAdministrator(request),
       data = await body(
         request,
         z.union([bulkInput, z.object({ undoBatchId: z.uuid() })]),

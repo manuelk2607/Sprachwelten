@@ -3,7 +3,7 @@ import {PhraseText} from "./phrase-text";
 import { useApiResource } from "@/lib/use-api-resource";
 import { useKeyedState } from "@/lib/use-keyed-state";
 import { useEffect, useState } from "react";
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 import { useI18n } from "@/lib/i18n";
 import { kindLabels, type Entry } from "@/lib/content";
 import type { AdminEntry, AdminUser } from "@/lib/admin-types";
@@ -19,7 +19,7 @@ import { Dialog } from "./dialog";
 import { Select } from "./select";
 export function AdminPanel() {
   const { t, locale } = useI18n(),
-    session = useAuthSession();
+    user = useApplicationUser();
   const [auth, setAuth] = useState(false),
     [tab, setTab] = useState<"entries" | "users">("entries"),
     [removed, setRemoved] = useState(false),
@@ -39,7 +39,7 @@ export function AdminPanel() {
     }, 300);
     return () => clearTimeout(timer);
   }, [query, search]);
-  const userId = session?.user?.id;
+  const userId = user?.id;
   const [unreadFilter, setUnreadFilter] = useKeyedState(userId ?? "", false);
   const [quality,setQuality]=useKeyedState<QualityFilter>(userId ?? "", "all");
   const unreadOnly = tab === "entries" && !removed && unreadFilter;
@@ -148,7 +148,7 @@ export function AdminPanel() {
     value ? new Date(value).toLocaleString(locale) : "—";
   return (
     <>
-      <Header active="admin" onLogin={() => setAuth(true)} />
+      <Header loginReturn="/admin" active="admin" onLogin={() => setAuth(true)} />
       <main className="admin-panel">
         <a href="/" className="text-link">
           ← {t("Zur Startseite")}
@@ -157,7 +157,7 @@ export function AdminPanel() {
         <p className="muted">
           {t("Beiträge verwalten und registrierte Konten einsehen.")}
         </p>
-        {!session?.user ? (
+        {!user ? (
           <div className="empty-state">
             <p>{t("Bitte melde dich an, um den Admin-Bereich zu öffnen.")}</p>
             <button className="button dark" onClick={() => setAuth(true)}>
@@ -449,7 +449,7 @@ export function AdminPanel() {
           </>
         )}
       </main>
-      {auth && <AuthDialog close={() => setAuth(false)} />}{" "}
+      {auth && <AuthDialog returnTo="/admin" close={() => setAuth(false)} />}{" "}
       {editing && (
         <ContributeDialog
           initialEntry={editing}

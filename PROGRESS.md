@@ -1,6 +1,42 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
 
+## Bestehende Identität für die gesamte Anwendung – 08.11.2026
+
+Der isolierte Worlds-Modus verwendet die zugeordnete historische Neon-UUID jetzt
+auch für eigene Beiträge, Vorschläge, Administration, Spielnamen, Audio und
+Übersetzungsvorschläge. Lokale Rollen bleiben ausschließlich in `app_admins`.
+Aktive bisherige Sitzungen haben Vorrang; abgelaufene Cookies blockieren die
+zugeordnete Worlds-Sitzung nicht. Providerfehler, gesperrte oder nicht zugeordnete
+Konten führen nicht zu einem stillen Wechsel auf einen Gastautor.
+
+Die Oberfläche nutzt dieselbe Identität, hält Entwürfe und private Ergebnisse
+kontogetrennt und delegiert allgemeine Profileinstellungen DE/EN an Worlds Hub.
+Abmeldung erfolgt per CSRF-geschütztem Projektformular. Rücksprünge zu eigenen
+Beiträgen, Profil und Administration sind explizit erlaubt; beliebige externe
+Ziele bleiben ausgeschlossen. Native Kontomutationen mit reiner Worlds-Sitzung
+werden abgewiesen. Vorübergehende Netzfehler erhalten die sichtbare Sitzung;
+ein bestätigtes Sitzungsende entfernt die privaten Ansichten.
+
+Lokal bestanden: **200/200 Unit-Tests**, Typprüfung, Lint, DE/EN-Abdeckung,
+vollständiger Dependency-Audit und Offline-Build. **8/8 Browserfälle** mit
+synthetischen Antworten in Chromium/WebKit bei 320/1280 px prüfen Beiträge,
+Adminansicht, zentrale Profileinstellungen, DE/EN, Theme, Abmeldung und Ablauf.
+In-Memory-Postgres prüft zusätzlich tatsächliche Server-Autorisierung und
+Rollenwiderruf; dabei werden keine externen Adminrechte vergeben.
+
+Die separate, befristete QA-Integration prüft zusätzlich tatsächliche
+Beitragsrouten mit einem synthetischen nativen Konto und einer Worlds-Zuordnung:
+Erstellen, Lesen, Bearbeiten, Entfernen und Sitzungswiderruf unter derselben UUID.
+Ein gesonderter Loopback-Server führt außerdem `npm run test:integration` gegen
+Managed Auth und die echte QA-Datenbank aus. Diese neuen externen Prüfungen sind
+vorerst **ausstehend**, ebenso die vollständige GitHub-CI des neuen Codes.
+
+Keine Produktionskonfiguration, Migration oder Kontozuordnung geändert. Noch
+offen: echte zentrale Browseranmeldung in Sprachwelten, kontrollierte Übernahme
+bestehender Eigentümer, neue lokale Profile ohne historisches Neon-Konto,
+gestaltete Providerfehler, globaler Logout und validierter Deployment-Rollback.
+
 ## Zentrale Anmeldelinks – 08.11.2026
 
 Der Worlds-Modus bietet in Navigation und Auth-Dialog ausschließlich einen

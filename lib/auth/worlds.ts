@@ -2,6 +2,8 @@ import { backchannelLogout, callback, logout, session, startLogin, startLoginLin
 import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 import { PostgresAuthStore } from "@worlds-hub/auth/postgres-store";
 
+import {worldsReturnPaths} from './worlds-link';
+
 export type LearningUser = { id: string; name: string };
 export const worldsPaths = ["/auth/login", "/auth/start", "/auth/callback", "/auth/logout", "/auth/backchannel-logout",
   "/auth/status", "/auth/worlds", "/auth/worlds-en"];
@@ -27,15 +29,15 @@ export function createWorldsConfig(env: Record<string, string | undefined>, quer
     return {
       origin: origin.origin, issuer: issuer.href, resource: env.WORLDS_RESOURCE,
       clientId: env.WORLDS_CLIENT_ID, algorithm: "EdDSA", store: new PostgresAuthStore(query),
-      returnPaths: ["/auth/worlds", "/auth/worlds-en"], signedOutPaths: {de: "/lernen", en: "/en/learn"},
+      returnPaths: worldsReturnPaths, signedOutPaths: {de: "/lernen", en: "/en/learn"},
     };
   } catch { return; }
 }
 
-export async function mappedLearningUser(request: Request, config: AuthConfig, query: PgQuery): Promise<LearningUser | undefined> {
-  if (new URL(request.url).origin !== config.origin) return;
+export async function worldsIdentity(request: Request, config: AuthConfig, query: PgQuery): Promise<{user?:LearningUser;authenticated:boolean;csrf?:string}> {
+  if (new URL(request.url).origin !== config.origin) return {authenticated:false};
   const identity = await session(request, config);
-  if (!identity) return;
+  if (!identity) return {authenticated:false};
   const [row] = await query(`
     SELECT u.id, u.name
     FROM worlds_identity_links l JOIN neon_auth."user" u ON u.id=l.local_user_id
@@ -43,10 +45,14 @@ export async function mappedLearningUser(request: Request, config: AuthConfig, q
       AND (u.banned IS DISTINCT FROM true OR u."banExpires" <= now())
   `, [identity.issuer, identity.sub]);
   if (typeof row?.id === "string" && typeof row.name === "string")
-    return {id: row.id, name: row.name};
+    return {user:{id: row.id, name: row.name},authenticated:true,csrf:identity.csrf};
+  return {authenticated:true,csrf:identity.csrf};
+}
+export async function mappedLearningUser(request:Request,config:AuthConfig,query:PgQuery){
+  return (await worldsIdentity(request,config,query)).user;
 }
 
-export async function worldsRoute(request: Request, config: AuthConfig, query: PgQuery) {
+export async function worldsRoute(request: Request, config: AuthConfig, query: PgQuery, legacyActive=hasManagedSessionCookie(request)) {
   const {pathname} = new URL(request.url);
   if (new URL(request.url).origin !== config.origin) return new Response(null, {status: 404});
   if (pathname === "/auth/start") return startLoginLink(request, config);
@@ -57,7 +63,7 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
   if (!["/auth/status", "/auth/worlds", "/auth/worlds-en"].includes(pathname)) return new Response(null, {status: 404});
   if (request.method !== "GET") return new Response(null, {status: 405});
   const user = await mappedLearningUser(request, config, query);
-  if (pathname === "/auth/status") return Response.json({user: hasManagedSessionCookie(request) ? null : user ?? null});
+  if (pathname === "/auth/status") return Response.json({user: legacyActive ? null : user ?? null});
   const en = pathname === "/auth/worlds-en";
   const identity = await session(request, config);
   const title = en ? "Worlds sign-in" : "Worlds-Anmeldung";
@@ -66,7 +72,7 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
   const logoutLabel = en ? "Sign out of Worlds in Sprachwelten" : "In Sprachwelten von Worlds abmelden";
   const learning = en ? "/en/learn" : "/lernen";
   const locale = en ? "en" : "de";
-  const status = user && hasManagedSessionCookie(request)
+  const status = user && legacyActive
     ? `<p>${en ? "Sign out of your current Sprachwelten account before switching to Worlds." : "Melde dich vor dem Wechsel zu Worlds von deinem aktuellen Sprachwelten-Konto ab."}</p><p><a href="${learning}">${en ? "Return to learning" : "Zurück zum Lernen"}</a></p>`
     : user ? `<p><a href="${learning}">${continueLabel}</a></p>` : identity
     ? `<p>${en ? "This Worlds identity has no linked Sprachwelten account." : "Diese Worlds-Identität ist noch keinem Sprachwelten-Konto zugeordnet."}</p>`

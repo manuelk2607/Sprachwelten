@@ -2,7 +2,7 @@
 import type {DifficultyLevel} from '@/lib/editorial-difficulty';
 import {GameLanguagePicker} from "./game-language-picker";
 import {useKeyedState} from '@/lib/use-keyed-state';
-import { useAuthSession } from "@/lib/auth/provider";
+import { useApplicationUser } from "@/lib/auth/provider";
 import { familyFor, gameFamilies } from "@/lib/game-families";
 import { Select } from "./select";
 import { useState, useSyncExternalStore, type FormEvent } from "react";
@@ -30,7 +30,7 @@ export function RoomForm({
   joinOnly?: boolean;
 }) {
   const { t, locale } = useI18n();
-  const session = useAuthSession();
+  const user = useApplicationUser();
   const [join, setJoin] = useState(!!code || joinOnly);
   const [joinCode, setJoinCode] = useState(code);
   const existingToken = useSyncExternalStore(
@@ -201,11 +201,11 @@ export function RoomForm({
           {t("Dein Spielname")}
           <input
             name="name"
-            required={!session?.user && !(join && existingToken)}
+            required={!user && !(join && existingToken)}
             minLength={2}
             maxLength={24}
             autoComplete="nickname"
-            placeholder={session?.user?.name ?? t("Dein Name in dieser Runde")}
+            placeholder={user?.name ?? t("Dein Name in dieser Runde")}
           />
         </label>
         {join && existingToken && (
@@ -215,7 +215,7 @@ export function RoomForm({
             )}
           </p>
         )}
-        {session?.user && (
+        {user && (
           <p className="form-note">
             {t("Ohne Spielnamen verwenden wir deinen Anzeigenamen.")}
           </p>

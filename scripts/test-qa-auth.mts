@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { neon } from "@neondatabase/serverless";
 import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
 import { z } from "zod";
+import {verifyWorldsProjectAccess} from "./test-worlds-project-access.mts";
 
 const base = isolatedAuthTarget(process.env).href;
 const cookies = new Map<string, string>();
@@ -70,6 +71,7 @@ async function verifyWorldsMapping(userId: string) {
       insert(issuer, subject, userId),
     ]), {code: "23505"});
     assert.equal((await sql`SELECT 1 FROM worlds_link_proofs WHERE proof_hash=${proof}`).length, 1);
+    await verifyWorldsProjectAccess(userId,issuer,subject);
     console.log("PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.");
   } finally {
     await sql.transaction([

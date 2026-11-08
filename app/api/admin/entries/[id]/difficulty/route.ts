@@ -8,9 +8,9 @@ import {
   editorialAvailability,
 } from "@/db/editorial-repository";
 type Context = { params: Promise<{ id: string }> };
-export const GET = (_: Request, ctx: Context) =>
+export const GET = (request: Request, ctx: Context) =>
   safe(async () => {
-    await requireAdministrator();
+    await requireAdministrator(request);
     const id = z.uuid().parse((await ctx.params).id),
       state = await getEditorialReview(id);
     return respond({
@@ -20,7 +20,7 @@ export const GET = (_: Request, ctx: Context) =>
   });
 export const PUT = (request: Request, ctx: Context) =>
   safe(async () => {
-    const admin = await requireAdministrator(),
+    const admin = await requireAdministrator(request),
       id = z.uuid().parse((await ctx.params).id),
       input = await body(request, editorialReviewInput);
     await getEditorialReview(id);

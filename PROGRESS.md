@@ -20,12 +20,20 @@ gelangt in den Nachweis. Noch keine neue HTTP-Übernahmeroute veröffentlicht.
 Lokal bestanden **210 Unit-Tests**, Typprüfung, Lint, DE/EN-Abdeckung und
 Offline-Build. SDK-Tests prüfen fremde/veraltete Cookies, beide Sitzungskontexte,
 Widerruf, Metadaten, lokale Sperren, Rollen und begrenzte Antwortzeit.
-Die getrennte QA-Integration wurde um echte SDK-Eigentümerprüfung vor beiden
-Schritten, parallele einmalige Zuordnung und unveränderte native Sitzungs-ID/
-Erstellungs-/Ablaufzeiten ergänzt. Zentraler Nachweis dort weiterhin synthetisch;
-die reale QA-Ausführung und vollständige CI stehen für diese Änderung noch aus.
-Nächste Schritte: QA-Abnahme, anschließend CSRF-geschützter Übernahmeablauf und
-echte zentrale Browserabnahme. Keine produktiven Konten oder Zuordnungen geändert.
+Code **946abb4** auf `feature/worlds-hub-sso`: getrennte echte QA-Integration
+**42640109664** erfolgreich. Das neu angelegte native Testkonto wurde vor beiden
+Schritten über das offizielle SDK anhand seiner vorhandenen Sitzung geprüft;
+parallele Bestätigung erzeugte genau eine Zuordnung und ein Audit. Native
+Sitzungs-ID, Erstellungs- und Ablaufzeiten blieben unverändert, ebenso die
+historische UUID und das Heft-/Beitragseigentum. Vollständiger nativer HTTP-Test
+ebenfalls bestanden. Zentraler Nachweis dort weiterhin synthetisch; der reale
+Alters-/Erneuerungsfall einer bereits länger bestehenden Anbietersitzung und die
+zentrale Browserübernahme sind damit noch nicht bewiesen. Vollständige CI
+**42640042187** ebenfalls erfolgreich: 210 Unit-Tests, Typen, Lint,
+Übersetzungsabdeckung, vollständiger Audit, Build und 154 bisherige + 16 Worlds-
+Browserfälle. Nächste Schritte: CSRF-geschützter Übernahmeablauf und echte
+zentrale Browserabnahme.
+Keine produktiven Konten oder Zuordnungen geändert.
 
 ## Einheitliche Kontoauswahl bei der Übernahme – 09.11.2026
 

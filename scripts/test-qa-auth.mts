@@ -1,4 +1,6 @@
-import {prepareLegacyProjectAccount} from '../lib/auth/project-accounts.ts';
+import {loadManagedOwner} from '../lib/auth/managed-owner.ts';
+import {prepareManagedSessionLink,confirmManagedSessionLink} from '@worlds-hub/auth/linking';
+import {PostgresLinkStore} from '@worlds-hub/auth/postgres-links';
 import assert from "node:assert/strict";
 import { neon } from "@neondatabase/serverless";
 import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
@@ -48,10 +50,28 @@ async function verifyWorldsMapping(userId: string) {
     sql`INSERT INTO worlds_identity_links (issuer, subject, local_user_id)
         VALUES (${iss}, ${sub}, ${id}::uuid)`;
   try {
-    await prepareLegacyProjectAccount(userId,(text,values)=>sql.query(text,values));
+    const query=(text:string,values:unknown[])=>sql.query(text,values);
+    // Provider-origin requests use only this disposable QA account's own
+    // existing cookies. No new sign-in and no provider configuration change.
+    const native=isolatedAuthTarget(process.env),origin=native.origin;
+    const settings={origin,issuer:native.href,cookieSecret:crypto.randomUUID()+crypto.randomUUID()};
+    const ownerRequest=()=>new Request(origin+'/qa-managed-owner',{method:'POST',headers:{origin,cookie:[...cookies].map(([key,value])=>key+'='+value).join('; ')}});
+    const sourceSnapshot=()=>sql`SELECT id,"userId","createdAt","expiresAt" FROM neon_auth.session WHERE "userId"=${userId} ORDER BY id`;
+    const originalSessions=await sourceSnapshot();assert.ok(originalSessions.length>0);
+    const owner=await loadManagedOwner(ownerRequest(),settings,query);assert.equal(owner.proof.accountId,userId);assert.equal(owner.proof.privileged,false);
+    const central={issuer,subject,sessionId:crypto.randomUUID(),authenticatedAt:Date.now()},store=new PostgresLinkStore(query);
+    // Central proof remains synthetic here; native ownership is validated by
+    // the actual managed provider before both staging and confirmation.
+    const staged=await prepareManagedSessionLink(central,owner.proof,store);
+    const confirming=await Promise.all([loadManagedOwner(ownerRequest(),settings,query),loadManagedOwner(ownerRequest(),settings,query)]);
+    const confirmations=await Promise.allSettled(confirming.map(current=>confirmManagedSessionLink(staged,central,current.proof,store)));
+    assert.equal(confirmations.filter(result=>result.status==='fulfilled').length,1);
+    assert.equal(await store.lookup(issuer,subject),userId);
+    assert.equal((await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`)[0].n,1);
+    assert.deepEqual(await sourceSnapshot(),originalSessions,'Ownership checks must not create, replace or extend native sessions');
+    console.log('PASS: official SDK validates the existing managed owner, binds both sessions, confirms once concurrently and preserves native session IDs/creation/expiry without an extra login. Central proof is synthetic.');
     await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)
               VALUES (${notebook}::uuid, ${userId}, 'QA Worlds', 'de', 'en')`;
-    await insert(issuer, subject, userId);
     const rows = await sql`
       SELECT link.local_user_id, notebook.id AS notebook_id,
              EXISTS(SELECT 1 FROM app_admins WHERE user_id=link.local_user_id) AS is_admin
@@ -77,8 +97,9 @@ async function verifyWorldsMapping(userId: string) {
     console.log("PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.");
   } finally {
     await sql.transaction([
-      sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof}`,
+      sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof} OR (issuer=${issuer} AND subject=${subject})`,
       sql`DELETE FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`,
+      sql`DELETE FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM vocabulary_notebooks WHERE id=${notebook}::uuid AND owner_id=${userId}`,
     ]);
   }

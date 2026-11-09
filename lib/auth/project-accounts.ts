@@ -13,7 +13,7 @@ export async function prepareLegacyProjectAccount(id:string,query:PgQuery){
  const [row]=await query(`SELECT a.id FROM worlds_project_accounts a JOIN neon_auth."user" u ON u.id=a.legacy_user_id
   WHERE a.id=$1::uuid AND a.kind='legacy' AND a.disabled=false
   AND (u.banned IS DISTINCT FROM true OR u."banExpires"<=now())`,[id]);
- if(typeof row?.id!=='string')throw new Error('Authenticated legacy profile could not be prepared');
+ if(typeof row?.id!=='string')throw new GameError('Dieses Sprachwelten-Profil ist nicht verfügbar. Bitte wende dich an die Administration.',403);
  return row.id;
 }
 export async function mappedProjectAccount(identity:Identity,query:PgQuery){

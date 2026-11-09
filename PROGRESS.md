@@ -1,5 +1,32 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## Bestehende verwaltete Sitzung als Eigentumsnachweis – 09.11.2026
+
+Gemeinsames Paket **0.1.4**, fest auf eigenständigen Paket-Commit
+`2343fdaf8892fb028495064d0377f5533d67272c` samt Integritätswert gebunden.
+Es ergänzt den einmaligen, an beide Sitzungen gebundenen Übernahmenachweis für
+normale gültige Managed-Auth-Konten. Alte Anmeldedaten werden nicht als frisch
+ausgegeben; lokale Verwaltungsrechte benötigen weiterhin frische Quellanmeldung.
+
+Der neue serverinterne SDK-Adapter prüft den aktuellen Eigentümer direkt beim
+konfigurierten bisherigen Managed-Auth-Dienst. Er akzeptiert genau ein eigenes
+Native-Sitzungscookie, übergibt weder Worlds- noch Cache-Cookies und verwendet
+`disableCookieCache`/`disableRefresh`. Keine Cookieänderung im Browser, keine
+zweite Anmeldung. IDs und Zeitangaben werden geprüft, lokale Sperren bleiben
+wirksam und nur `app_admins` bestimmt die Privilegien. Ausfälle und Zeitüberschreitung
+liefern keinen Nachweis. Kein Passwort, E-Mail-Wert oder Provider-Rollenfeld
+gelangt in den Nachweis. Noch keine neue HTTP-Übernahmeroute veröffentlicht.
+
+Lokal bestanden **210 Unit-Tests**, Typprüfung, Lint, DE/EN-Abdeckung und
+Offline-Build. SDK-Tests prüfen fremde/veraltete Cookies, beide Sitzungskontexte,
+Widerruf, Metadaten, lokale Sperren, Rollen und begrenzte Antwortzeit.
+Die getrennte QA-Integration wurde um echte SDK-Eigentümerprüfung vor beiden
+Schritten, parallele einmalige Zuordnung und unveränderte native Sitzungs-ID/
+Erstellungs-/Ablaufzeiten ergänzt. Zentraler Nachweis dort weiterhin synthetisch;
+die reale QA-Ausführung und vollständige CI stehen für diese Änderung noch aus.
+Nächste Schritte: QA-Abnahme, anschließend CSRF-geschützter Übernahmeablauf und
+echte zentrale Browserabnahme. Keine produktiven Konten oder Zuordnungen geändert.
+
 ## Einheitliche Kontoauswahl bei der Übernahme – 09.11.2026
 
 Ziel bleibt die sichere Übernahme vorhandener Konten ohne weitere regelmäßige

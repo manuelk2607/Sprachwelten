@@ -31,7 +31,7 @@
   "dependencies": {
     "@neondatabase/auth": "0.6.0-beta",
     "@neondatabase/serverless": "1.2.0",
-    "@worlds-hub/auth": "https://codeload.github.com/manuelk2607/Worlds-Hub/tar.gz/b0e6eac7bc6fdd46317dc933a83936c16ecde816",
+    "@worlds-hub/auth": "https://codeload.github.com/manuelk2607/Worlds-Hub/tar.gz/2343fdaf8892fb028495064d0377f5533d67272c",
     "lucide-react": "^1.31.0",
     "next": "16.4.2",
     "react": "19.3.1",

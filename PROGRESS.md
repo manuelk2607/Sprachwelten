@@ -20,8 +20,13 @@ Offline-Build und **16 Worlds-Browserfälle** in Chromium/WebKit bei 320/1280 px
 Die Prüfungen decken widersprüchliche Browser-/Serveridentitäten, DE/EN,
 Provider-Ausfall, Ablauf, lokale Abmeldeauswahl und unveränderte Beiträge ab.
 Nur synthetische Testantworten beziehungsweise PGlite; keine Produktionsmigration.
-Nächste Schritte: vollständige GitHub-CI und getrennte echte QA-Integration,
-danach Eigentumsnachweise vorhandener Konten und echte zentrale SSO-Abnahme.
+Code **76b97e8** auf `feature/worlds-hub-sso`: getrennte echte QA-Integration
+**42606461691** erfolgreich, einschließlich aller Migrationen, tatsächlicher
+PostgreSQL-/Autorisierungsprüfungen und vollständigem nativem HTTP-Test gegen
+Managed Auth. Vollständige GitHub-CI **42606394576** erfolgreich: 206 Unit-Tests,
+Typen, Lint, Übersetzungsabdeckung, vollständiger Dependency-Audit, Build und
+154 bisherige + 16 Worlds-Browserfälle. Nächste Schritte: Eigentumsnachweise
+vorhandener Konten und echte zentrale SSO-Abnahme.
 Globale Abmeldung und der Fall zweier gleichzeitig gültiger lokaler Anmeldearten
 bleiben vor dem produktiven Wechsel gesondert abzuschließen.
 

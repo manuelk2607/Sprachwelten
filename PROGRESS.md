@@ -1,6 +1,6 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
-## HTTP-Übernahme und gemeinsamer lokaler Logout – in Prüfung
+## HTTP-Übernahme und gemeinsamer lokaler Logout – geprüfter Testzweig
 
 Der isolierte Worlds-Modus ergänzt CSRF-geschützte Schritte zum Vorbereiten und
 Bestätigen einer vorhandenen Kontoverbindung. Beide Sitzungen werden erneut
@@ -32,11 +32,20 @@ Mobil- und Desktopansichten wurden anhand der Screenshots geprüft. Eine zunäch
 fehlende Formular-Origin durch `no-referrer` wurde mit `strict-origin` behoben;
 Callback-Parameter werden nicht weitergegeben, Herkunftsprüfung bleibt streng.
 Anonyme Aufrufe ohne Anmeldedaten fragen den alten Anbieter nicht unnötig ab.
-Die erweiterte echte QA-Ausführung und vollständige CI stehen noch aus.
+Code **38afa15** auf `feature/worlds-hub-sso`: vollständige CI **42649568470**
+erfolgreich mit 215 Unit-Tests, Typen, Lint, DE/EN-Abdeckung, vollständigem Audit,
+Build und 154 bisherigen + 24 Worlds-Browserfällen. Getrennte echte QA-Integration
+**42650094132** ebenfalls erfolgreich: tatsächliche HTTP-Controller, offizieller
+Native-Eigentümernachweis vor beiden Schritten, eine parallele Bestätigung,
+unveränderte native Sitzungsmetadaten, historische Datenzuordnung und Beenden
+von Native-Sitzung und lokalem Worlds-BFF. Vollständiger nativer HTTP-Test bestand.
 Die QA prüft jetzt die tatsächlichen HTTP-Controller mit echtem Native-SDK-
 Eigentümernachweis und gemeinsamem lokalem Logout; zentrale BFF bleibt dort
-synthetisch. Produktion unverändert. Nächste Schritte: Browser, QA, CI, danach
-echte zentrale SSO-Abnahme und einmalige frische Bestätigung alter Adminsitzungen.
+synthetisch. Produktion unverändert. Nächste Schritte: einmalige frische
+Bestätigung alter Adminsitzungen, kontrollierte Stilllegung neuer lokaler
+Anmeldungen bei bereits verknüpften Konten und echte zentrale SSO-Abnahme.
+Vor produktivem Wechsel bleiben außerdem der ursprüngliche Ablauf bestehender
+nativer Übergangssitzungen und die globale Abmeldung vollständig zu prüfen.
 
 ## Bestehende verwaltete Sitzung als Eigentumsnachweis – 09.11.2026
 

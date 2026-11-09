@@ -190,10 +190,10 @@ export function Header({
               <UserRound size={16} />
               {t("Profil")}
             </a>
-            {source==='worlds'?worldsCsrf?<form method="post" action={'/auth/logout?locale='+locale}>
+            {worldsPilot&&worldsCsrf?<form method="post" action={'/auth/logout?locale='+locale}>
               <input type="hidden" name="csrf" value={worldsCsrf}/>
               <button className="icon-button" aria-label={t('Abmelden')}><LogOut size={18}/></button>
-            </form>:<a className="icon-button" href={worldsAccountHref(locale,returnAfterLogin)} aria-label={t('Anmeldung in Sprachwelten verwalten')}><LogOut size={18}/></a>:<button className="icon-button" aria-label={t('Abmelden')} onClick={async()=>{await(await getAuthClient()).signOut();}}><LogOut size={18}/></button>}
+            </form>:source==='worlds'?<a className="icon-button" href={worldsAccountHref(locale,returnAfterLogin)} aria-label={t('Anmeldung in Sprachwelten verwalten')}><LogOut size={18}/></a>:<button className="icon-button" aria-label={t('Abmelden')} onClick={async()=>{await(await getAuthClient()).signOut();}}><LogOut size={18}/></button>}
           </>
         ) : worldsPilot ? (
           <a className="button small dark login-button" href={worldsCsrf?worldsAccountHref(locale,returnAfterLogin):worldsLoginHref(locale,returnAfterLogin)}>

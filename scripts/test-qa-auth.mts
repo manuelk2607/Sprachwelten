@@ -1,6 +1,9 @@
 import {loadManagedOwner} from '../lib/auth/managed-owner.ts';
-import {prepareManagedSessionLink,confirmManagedSessionLink} from '@worlds-hub/auth/linking';
-import {PostgresLinkStore} from '@worlds-hub/auth/postgres-links';
+import {SESSION_COOKIE,token} from '@worlds-hub/auth';
+import {hash} from '@worlds-hub/auth/store';
+import {createWorldsConfig} from '../lib/auth/worlds.ts';
+import {managedLinkRoute} from '../lib/auth/worlds-managed-link.ts';
+import {projectLogout} from '../lib/auth/worlds-logout.ts';
 import assert from "node:assert/strict";
 import { neon } from "@neondatabase/serverless";
 import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
@@ -46,6 +49,7 @@ async function verifyWorldsMapping(userId: string) {
   const subject = crypto.randomUUID();
   const notebook = crypto.randomUUID();
   const proof = crypto.randomUUID();
+  const bff=token(),bffKey=await hash(bff),csrf=token();
   const insert = (iss: string, sub: string, id: string) =>
     sql`INSERT INTO worlds_identity_links (issuer, subject, local_user_id)
         VALUES (${iss}, ${sub}, ${id}::uuid)`;
@@ -56,20 +60,26 @@ async function verifyWorldsMapping(userId: string) {
     const native=isolatedAuthTarget(process.env),origin=native.origin;
     const settings={origin,issuer:native.href,cookieSecret:crypto.randomUUID()+crypto.randomUUID()};
     const ownerRequest=()=>new Request(origin+'/qa-managed-owner',{method:'POST',headers:{origin,cookie:[...cookies].map(([key,value])=>key+'='+value).join('; ')}});
+    const config=createWorldsConfig({WORLDS_PILOT_ENABLED:'true',WORLDS_PILOT_ORIGIN:origin,WORLDS_PILOT_DATABASE_HOST:isolatedDatabaseTarget(process.env).hostname,
+      DATABASE_URL:process.env.DATABASE_URL,NEON_AUTH_BASE_URL:native.href.replace(/\/$/,''),WORLDS_CLIENT_ID:'synthetic-controller-client',WORLDS_ISSUER:issuer,WORLDS_RESOURCE:origin+'/api'},query);
+    assert.ok(config);
+    await config.store.putSession(bffKey,{issuer,sub:subject,csrf,name:'QA central fixture',email:'synthetic@sprachwelten.invalid',authenticatedAt:Date.now(),expires:Date.now()+120_000});
+    const linkRequest=(action:string,form:URLSearchParams)=>new Request(origin+'/auth/'+(action==='logout'?'logout':'worlds/'+action)+'?locale=en&next=%2Fme',{method:'POST',headers:{origin,cookie:SESSION_COOKIE+'='+bff+'; '+[...cookies].map(([key,value])=>key+'='+value).join('; ')},body:form});
+    const owner=async()=>{const current=await loadManagedOwner(ownerRequest(),settings,query);assert.equal(current.proof.accountId,userId);assert.equal(current.proof.privileged,false);return current;};
     const sourceSnapshot=()=>sql`SELECT id,"userId","createdAt","expiresAt" FROM neon_auth.session WHERE "userId"=${userId} ORDER BY id`;
     const originalSessions=await sourceSnapshot();assert.ok(originalSessions.length>0);
-    const owner=await loadManagedOwner(ownerRequest(),settings,query);assert.equal(owner.proof.accountId,userId);assert.equal(owner.proof.privileged,false);
-    const central={issuer,subject,sessionId:crypto.randomUUID(),authenticatedAt:Date.now()},store=new PostgresLinkStore(query);
     // Central proof remains synthetic here; native ownership is validated by
-    // the actual managed provider before both staging and confirmation.
-    const staged=await prepareManagedSessionLink(central,owner.proof,store);
-    const confirming=await Promise.all([loadManagedOwner(ownerRequest(),settings,query),loadManagedOwner(ownerRequest(),settings,query)]);
-    const confirmations=await Promise.allSettled(confirming.map(current=>confirmManagedSessionLink(staged,central,current.proof,store)));
-    assert.equal(confirmations.filter(result=>result.status==='fulfilled').length,1);
-    assert.equal(await store.lookup(issuer,subject),userId);
+    // the actual managed provider before both HTTP controller actions. These
+    // are direct local Request objects, not callbacks/cookies sent to the IdP.
+    const staged=await managedLinkRoute(linkRequest('link',new URLSearchParams({csrf})),config,query,owner);
+    assert.equal(staged.status,200);const stagedProof=/name="proof" value="([A-Za-z0-9_-]+)"/.exec(await staged.text())?.[1];assert.ok(stagedProof);
+    const confirmations=await Promise.all([1,2].map(()=>managedLinkRoute(linkRequest('confirm',new URLSearchParams({csrf,proof:stagedProof})),config,query,owner)));
+    assert.deepEqual(confirmations.map(result=>result.status).sort(),[303,409]);
+    assert.equal(confirmations.find(result=>result.status===303)?.headers.get('location'),'/me');
+    assert.equal((await sql`SELECT local_user_id FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`)[0].local_user_id,userId);
     assert.equal((await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`)[0].n,1);
     assert.deepEqual(await sourceSnapshot(),originalSessions,'Ownership checks must not create, replace or extend native sessions');
-    console.log('PASS: official SDK validates the existing managed owner, binds both sessions, confirms once concurrently and preserves native session IDs/creation/expiry without an extra login. Central proof is synthetic.');
+    console.log('PASS: actual HTTP takeover controller validates the existing owner with the official SDK, confirms once concurrently and preserves native IDs/creation/expiry without an extra login. Central BFF is synthetic.');
     await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)
               VALUES (${notebook}::uuid, ${userId}, 'QA Worlds', 'de', 'en')`;
     const rows = await sql`
@@ -94,12 +104,18 @@ async function verifyWorldsMapping(userId: string) {
     ]), {code: "23505"});
     assert.equal((await sql`SELECT 1 FROM worlds_link_proofs WHERE proof_hash=${proof}`).length, 1);
     await verifyWorldsProjectAccess(userId,issuer,subject);
+    const signedOut=await projectLogout(linkRequest('logout',new URLSearchParams({csrf})),config,async()=>{const response=await request('/sign-out',{});return new Response(null,{status:response.status});});
+    assert.equal(signedOut.status,303);assert.equal(await config.store.getSession(bffKey),null);
+    assert.equal((await request('/get-session?disableCookieCache=true')).data?.user??null,null);
+    assert.equal((await sql`SELECT count(*)::int AS n FROM neon_auth.session WHERE "userId"=${userId}`)[0].n,0);
+    console.log('PASS: the local project logout ends the native fixture session and Worlds BFF; mapping, notebooks and contributions retain the historical owner.');
     console.log("PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.");
   } finally {
     await sql.transaction([
       sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof} OR (issuer=${issuer} AND subject=${subject})`,
       sql`DELETE FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`,
+      sql`DELETE FROM worlds_auth_sessions WHERE id=${bffKey}`,
       sql`DELETE FROM vocabulary_notebooks WHERE id=${notebook}::uuid AND owner_id=${userId}`,
     ]);
   }

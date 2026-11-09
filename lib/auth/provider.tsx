@@ -39,7 +39,7 @@ export function AuthProvider({ children, worldsEnabled = false }: { children: Re
           (data.user!==null&&(!data.user||typeof data.user.id!=='string'||typeof data.user.name!=='string'))||
           (data.source==='anonymous'&&data.user!==null))return;
         if(!controller.signal.aborted)setWorldsIdentity({user:data.user,source:data.source,
-          csrf:data.source==='worlds'&&typeof data.csrf==='string'?data.csrf:undefined});
+          csrf:typeof data.csrf==='string'?data.csrf:undefined});
       }catch{/* Preserve current state during a temporary provider/network outage. */}
       finally{pending=false;}
     };

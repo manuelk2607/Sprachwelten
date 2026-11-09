@@ -24,6 +24,9 @@ type LegacyIdentity=()=>Promise<{user?:LearningUser|null;error:unknown}>;
 export async function resolveProjectIdentity(request:Request,config:AuthConfig|undefined,query:PgQuery,legacy:LegacyIdentity):Promise<ProjectIdentity>{
   const central=config&&(request.headers.get('cookie')??'').split(';').some(value=>value.trim().startsWith(SESSION_COOKIE+'='));
   if(central&&new URL(request.url).origin!==config.origin)throw new GameError('Diese Anfrage ist nicht erlaubt.',403);
+  // With the managed token and Worlds cookie both absent, the server SDK has
+  // no credential to validate. Keep anonymous browsing independent of the IdP.
+  if(config&&!central&&!hasManagedSessionCookie(request))return {error:null,source:'anonymous',authenticated:false};
   if(!central||hasManagedSessionCookie(request)){
     const local=await legacy();
     if(local.error||local.user)return {...local,source:'legacy',authenticated:!!local.user};

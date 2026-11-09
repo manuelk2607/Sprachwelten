@@ -33,6 +33,8 @@ test('the shared project resolver preserves valid legacy identity, rejects provi
   const request=(extra='')=>new Request(origin+'/api/me/entries',{headers:{cookie:SESSION_COOKIE+'='+raw+extra}});
   let legacyReads=0;
   const legacy=async()=>{legacyReads++;return {user:null,error:null}};
+  const anonymous=await resolveProjectIdentity(new Request(origin+'/lernen'),config,query,async()=>{throw Error('No managed credential: the provider must not be called');});
+  assert.deepEqual(anonymous,{error:null,source:'anonymous',authenticated:false});
   const pending=await resolveProjectIdentity(request(),config,query,legacy);
   assert.equal(pending.source,'worlds');assert.equal(pending.authenticated,true);assert.equal(pending.user,undefined);
   assert.throws(()=>requireProjectUser(pending));assert.equal(legacyReads,0);

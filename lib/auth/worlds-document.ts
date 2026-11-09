@@ -1,0 +1,33 @@
+import {token} from '@worlds-hub/auth';
+import {translate,type Locale} from '../translations';
+import {worldsAccountHref} from './worlds-link';
+import {GameError} from '../game';
+
+export const escapeHtml=(text:string)=>text.replace(/[&<>"']/g,value=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[value]!));
+export function authDocument(locale:Locale,title:string,body:string,options:{status?:number;next?:string;stageCsrf?:string}={}){
+ const nonce=token(),t=(text:string)=>escapeHtml(translate(text,locale));
+ const languages=(['de','en'] as const).map(value=>options.stageCsrf
+  ? `<form method="post" action="/auth/worlds/link?${escapeHtml(new URLSearchParams({locale:value,next:options.next??''}).toString())}"><input type="hidden" name="csrf" value="${escapeHtml(options.stageCsrf)}"><button aria-pressed="${value===locale}"${value===locale?' disabled':''}>${value.toUpperCase()}</button></form>`
+  : `<a href="${escapeHtml(worldsAccountHref(value,options.next))}" lang="${value}" hreflang="${value}"${value===locale?' aria-current="page"':''}>${value.toUpperCase()}</a>`).join('');
+ return new Response(`<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${escapeHtml(title)} | Sprachwelten</title><style nonce="${nonce}">
+ :root{color-scheme:light;--paper:#fbf8f0;--ink:#292d27;--muted:#65695f;--line:#dedfd3;--card:#fffdf8;--coral:#df674f;font-family:Arial,Helvetica,sans-serif;background:var(--paper);color:var(--ink)}
+ @media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--paper:#181d1a;--ink:#eceee4;--muted:#b1b9ab;--line:#414c41;--card:#222a23;--coral:#ef8d77}}
+ :root[data-theme=dark]{color-scheme:dark;--paper:#181d1a;--ink:#eceee4;--muted:#b1b9ab;--line:#414c41;--card:#222a23;--coral:#ef8d77}
+ *{box-sizing:border-box}body{margin:0}a{color:inherit}a:focus-visible,button:focus-visible{outline:3px solid var(--coral);outline-offset:4px}.skip{position:absolute;left:1rem;top:-10rem}.skip:focus{top:1rem;background:var(--card);padding:1rem}header{max-width:1200px;margin:auto;padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.brand{font:28px Georgia,serif;text-decoration:none}.brand span{color:var(--coral)}nav{display:flex;align-items:center;gap:8px}nav form{margin:0}nav a,nav button,#theme{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid var(--line);border-radius:8px;font:inherit;text-decoration:none;background:var(--card);color:var(--ink)}[aria-current=page],[aria-pressed=true]{font-weight:bold}main{max-width:760px;margin:clamp(28px,7vw,72px) auto;padding:0 20px 40px}h1{font:clamp(32px,6vw,48px)/1.12 Georgia,serif;letter-spacing:-.035em;margin:0 0 28px}p{line-height:1.65;margin:16px 0;color:var(--muted)}.panel{border:1px solid var(--line);border-radius:13px;background:var(--card);padding:clamp(18px,4vw,32px);overflow-wrap:anywhere}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}button,.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:12px 18px;border-radius:9px;font:600 14px/1.4 Arial,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--ink);text-align:center;text-decoration:none;cursor:pointer}.primary{background:var(--coral);color:#20251d;border-color:var(--coral)}button:disabled{cursor:default}form{margin:20px 0}dl{display:grid;gap:8px;margin:20px 0}dt{font-size:14px;color:var(--muted)}dd{margin:0 0 16px;font-weight:bold;overflow-wrap:anywhere}footer{margin-top:32px;font-size:14px}code{overflow-wrap:anywhere}
+ </style><script nonce="${nonce}">try{localStorage.setItem('sprachwelten-language',${JSON.stringify(locale)});const v=localStorage.getItem('sprachwelten-theme');if(v==='light'||v==='dark')document.documentElement.dataset.theme=v}catch{}</script></head><body><a class="skip" href="#main">${t('Zum Inhalt springen')}</a><header><a class="brand" href="${locale==='en'?'/en':'/'}">Sprachwelten<span>.</span></a><nav aria-label="${t('Sprache wählen')}">${languages}<button id="theme" type="button" aria-label="${t('Design wechseln')}">◐</button></nav></header><main id="main"><h1>${escapeHtml(title)}</h1><div class="panel">${body}</div><footer><a href="${escapeHtml(worldsAccountHref(locale,options.next))}">${t('Zurück zur Anmeldung')}</a></footer></main><script nonce="${nonce}">const b=document.getElementById('theme');function dark(){return document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches)}b.setAttribute('aria-pressed',String(dark()));b.addEventListener('click',()=>{const v=dark()?'light':'dark';document.documentElement.dataset.theme=v;b.setAttribute('aria-pressed',String(v==='dark'));try{localStorage.setItem('sprachwelten-theme',v)}catch{}})</script></body></html>`,{status:options.status??200,headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex, nofollow','referrer-policy':'strict-origin','x-content-type-options':'nosniff',
+  'content-security-policy':`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`}});
+}
+export function authError(locale:Locale,message:string,status:number,next?:string){
+ return authDocument(locale,translate('Worlds-Anmeldung',locale),`<p role="alert">${escapeHtml(translate(message,locale))}</p>`,{status,next});
+}
+export async function readWorldsForm(request:Request,fields:readonly string[]){
+ if(request.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/x-www-form-urlencoded')throw new GameError('Diese Anfrage ist nicht erlaubt.',415);
+ const reader=request.body?.getReader();if(!reader)throw new GameError('Bitte die Eingaben prüfen.',400);
+ const chunks:Uint8Array[]=[];let length=0;
+ for(;;){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;if(length>2048){await reader.cancel();throw new GameError('Diese Eingabe ist zu lang.',413);}chunks.push(value);}
+ const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+ let text:string;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw new GameError('Bitte die Eingaben prüfen.',400);}
+ const form=new URLSearchParams(text);
+ if(form.size!==fields.length||fields.some(field=>form.getAll(field).length!==1))throw new GameError('Diese Anfrage ist nicht erlaubt.',403);
+ return form;
+}

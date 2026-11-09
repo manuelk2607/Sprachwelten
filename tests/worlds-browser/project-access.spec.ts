@@ -164,6 +164,6 @@ test('a new central account starts without another registration and returns to i
     const count=await query('SELECT (SELECT count(*) FROM neon_auth."user")::int AS native,(SELECT count(*) FROM worlds_project_accounts)::int AS profiles,(SELECT count(*) FROM worlds_link_audit)::int AS audit',[]);
     expect(count).toEqual([{native:0,profiles:1,audit:1}]);expect(nativePosts).toBe(0);
    }
-  }finally{if(!page.isClosed())await page.unrouteAll({behavior:'wait'});if(relay)await new Promise<void>(resolve=>relay!.close(()=>resolve()));await db.close();}
+  }finally{if(!page.isClosed()){await page.goto('about:blank');await page.unrouteAll({behavior:'wait'});}if(relay)await new Promise<void>(resolve=>relay!.close(()=>resolve()));await db.close();}
  }
 });

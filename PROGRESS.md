@@ -1,5 +1,43 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## HTTP-Übernahme und gemeinsamer lokaler Logout – in Prüfung
+
+Der isolierte Worlds-Modus ergänzt CSRF-geschützte Schritte zum Vorbereiten und
+Bestätigen einer vorhandenen Kontoverbindung. Beide Sitzungen werden erneut
+geprüft; nur CSRF und ein einmaliger Proof stehen im Formular. IDs bleiben
+serverseitig. Bestehende Zuordnungen werden nicht überschrieben. Nach Erfolg
+bleiben historische UUID, Beiträge und Lernstände erhalten, auch wenn später
+das bisherige Sitzungscookie fehlt. Eine bereits passende Verbindung kann
+direkt fortgesetzt werden. Alte Verwaltungsanmeldungen bleiben bis zum frischen
+Nachweis gesperrt; dafür fehlt noch ein einmaliger Bestätigungsdialog.
+
+Eine fehlende verschachtelte Framework-Route wurde ergänzt: Profilstart und
+Übernahmeschritte werden nun über den eigentlichen Router angebunden. Neue
+Dokumentansichten verwenden zentrale DE/EN-Texte, passende Sprachkennzeichnung,
+mobilen Sprachschalter, bestehende Farben/Schriften und gespeichertes Design.
+Accountnamen werden escaped und nicht übersetzt. Sprache/Design bleiben beim
+Wechsel und nach der Rückkehr erhalten; strikte CSP mit einmaligem Nonce.
+
+Projektlogout beendet beide lokalen Anmeldearten und deren Browsercookies.
+Die getrennte zentrale Hub-Anmeldung bleibt erhalten. Native Ausfälle werden
+angezeigt; kein irreführender Erfolg mit weiterhin aktivem lokalen BFF.
+
+Lokal bestanden **215 Unit-Tests**, Typprüfung, Lint, Übersetzungsabdeckung,
+vollständiger Audit, Offline-Build und **24 Worlds-Browserfälle** in Chromium/
+WebKit bei 320/1280 px. Die tatsächliche verschachtelte Framework-Anbindung
+ist über HTTP geprüft; die Kontoflüsse nutzen tatsächliche Controller/SQL mit
+synthetischen Sitzungen. DE/EN, Umschalten während der Bestätigung, gespeichertes
+Design, Rückkehr, fehlendes altes Cookie und beide lokalen Abmeldungen bestanden.
+Mobil- und Desktopansichten wurden anhand der Screenshots geprüft. Eine zunächst
+fehlende Formular-Origin durch `no-referrer` wurde mit `strict-origin` behoben;
+Callback-Parameter werden nicht weitergegeben, Herkunftsprüfung bleibt streng.
+Anonyme Aufrufe ohne Anmeldedaten fragen den alten Anbieter nicht unnötig ab.
+Die erweiterte echte QA-Ausführung und vollständige CI stehen noch aus.
+Die QA prüft jetzt die tatsächlichen HTTP-Controller mit echtem Native-SDK-
+Eigentümernachweis und gemeinsamem lokalem Logout; zentrale BFF bleibt dort
+synthetisch. Produktion unverändert. Nächste Schritte: Browser, QA, CI, danach
+echte zentrale SSO-Abnahme und einmalige frische Bestätigung alter Adminsitzungen.
+
 ## Bestehende verwaltete Sitzung als Eigentumsnachweis – 09.11.2026
 
 Gemeinsames Paket **0.1.4**, fest auf eigenständigen Paket-Commit

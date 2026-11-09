@@ -3,9 +3,13 @@ import { database } from "@/db/repository";
 import { getAuth } from "./server";
 import { createWorldsConfig } from "./worlds";
 import {resolveProjectIdentity,requireProjectUser} from "./project-identity";
+import {loadManagedOwner} from './managed-owner';
+import type {AuthConfig} from '@worlds-hub/auth';
 
 export const worldsQuery: PgQuery = async (text, values) => database().query(text, values);
 export const worldsConfig = () => createWorldsConfig(process.env, worldsQuery);
+export const projectManagedOwner=(request:Request,config:AuthConfig)=>loadManagedOwner(request,
+ {origin:config.origin,issuer:process.env.NEON_AUTH_BASE_URL!,cookieSecret:process.env.NEON_AUTH_COOKIE_SECRET!},worldsQuery);
 
 export async function projectIdentity(request:Request){
   return resolveProjectIdentity(request,worldsConfig(),worldsQuery,async()=>{

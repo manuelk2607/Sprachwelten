@@ -10,7 +10,11 @@ test('one-time recovery reuses native reset, keeps form state and translates not
  await page.route('**/auth/status',route=>route.fulfill({json:{user:null,source:'anonymous'}}));
  await page.route('**/auth/worlds/recovery',route=>route.fulfill({json:{eligible:true}}));
  try{
+  const initial=await page.request.get('/worlds-migration?lang=en&next=%2Fme');
+  expect(initial.ok()).toBeTruthy();expect(await initial.text()).toMatch(/<html[^>]*lang="en"/);
   await page.goto('/worlds-migration?lang=en&next=%2Fme');
+  await expect(page).toHaveTitle('Keep your existing account | Sprachwelten');
+  await expect(page.locator('html')).toHaveAttribute('lang','en');
   let dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
   await dialog.locator('input[name="email"]').fill('synthetic@fixture.invalid');
   await dialog.getByRole('button',{name:'Forgot your password?',exact:true}).click();

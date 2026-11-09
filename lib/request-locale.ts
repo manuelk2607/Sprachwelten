@@ -4,7 +4,7 @@ export function withRequestLocale(request: Request) {
   const locale =
     url.pathname === "/en" ||
     url.pathname.startsWith("/en/") ||
-    (url.pathname === "/" && url.searchParams.get("lang") === "en")
+    (["/", "/worlds-migration"].includes(url.pathname) && url.searchParams.get("lang") === "en")
       ? "en"
       : "de";
   headers.set("x-sprachwelten-locale", locale);

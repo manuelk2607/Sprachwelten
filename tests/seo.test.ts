@@ -54,7 +54,7 @@ test("localized requests cannot spoof the language and preserve bodies, cookies 
   assert.equal(localized.headers.get("Authorization"), "Bearer fake-test-only");
   assert.equal(localized.headers.get("Cookie"), "qa=test");
   assert.deepEqual(await localized.json(), { action: "start" });
-  for (const path of ["/en/games", "/en/games/taboo", "/?lang=en"])
+  for (const path of ["/en/games", "/en/games/taboo", "/?lang=en", "/worlds-migration?lang=en"])
     assert.equal(
       withRequestLocale(new Request("https://example.com" + path)).headers.get(
         "x-sprachwelten-locale",

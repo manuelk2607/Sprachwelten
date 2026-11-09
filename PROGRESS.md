@@ -31,9 +31,14 @@ bei 320/1280 px mit tatsächlicher Profil- und Formularlogik in PGlite und echte
 lokaler HTTP-303-Rückkehr. Kein zusätzlicher nativer Auth-Aufruf und null neu
 angelegte native Konten. Synthetische Sitzungen, kein realer OIDC-Nachweis.
 
-Neue echte QA-Prüfung und vollständige GitHub-CI sind noch **ausstehend**.
-Die QA-Prüfung ergänzt gleichzeitigen Profilstart, unveränderte native Metadaten,
-Administration, eigenen Beitrag und Widerruf in echtem PostgreSQL. Vor einer
+Code **3c1da8b** auf `feature/worlds-hub-sso`: vollständige GitHub-CI
+**42600250409** erfolgreich (206 Unit-Tests, 154 bisherige + 12 Worlds-
+Browserfälle). Echte getrennte QA-Integration **42600259412** erfolgreich,
+einschließlich Migration 028, gleichzeitigem tatsächlichem Profilstart,
+unveränderten nativen Metadaten, Administration, eigenen Beiträgen und Widerruf
+in PostgreSQL. Der vollständige native HTTP-Test gegen einen laufenden
+Loopback-Server bestand ebenfalls. Keine zusätzlichen nativen Auth-Konten oder
+Rollen aus dem Profilstart; keine Namens-/E-Mail-Zusammenführung. Vor einer
 Veröffentlichung sind außerdem echte SSO-/Migrationsabnahme und die Gestaltung
 der eigenständigen Kontozwischenseite abzuschließen. Produktion und ihre
 Zuordnungen bleiben unverändert. Migration 028 ist noch nicht produktiv

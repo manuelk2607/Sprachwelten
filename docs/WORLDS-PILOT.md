@@ -61,9 +61,11 @@ Rücksprünge stammen ausschließlich aus der bestehenden engen Routenliste.
 
 206 lokale Tests und die neuen Browserabläufe bestanden mit synthetischen
 Sitzungen; echte neue OIDC-Anmeldung und PostgreSQL-Abnahme bleiben separat
-nachzuweisen. Die native QA-Integration ist dafür erweitert, aber noch nicht
-erfolgreich ausgeführt. Migration 028 wird ausschließlich im getrennten
-Testzweig geprüft. Für Rücknahmen Datenprofile und Verknüpfungen erhalten;
+nachzuweisen. Die native QA-Integration 42600259412 ist jetzt erfolgreich, einschließlich
+Migration 028, tatsächlicher paralleler Profilrouten und vollständigem laufendem
+HTTP-System. Vollständige CI 42600250409 für 3c1da8b erfolgreich: 206 Unit-Tests
+und 166 Browserfälle. Migration 028 lief ausschließlich im getrennten,
+befristeten QA-Zweig; kein Produktionsschema geändert. Für Rücknahmen Datenprofile und Verknüpfungen erhalten;
 kein destruktiver Rückbau auf den nativen Fremdschlüssel, sobald neue zentrale
 Nutzer vorhanden sind. Eine künftig gewählte Rücknahmeversion muss dieselbe
 Datenprofilstruktur unterstützen.

@@ -1,5 +1,30 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## Einheitliche Kontoauswahl bei der Übernahme – 09.11.2026
+
+Ziel bleibt die sichere Übernahme vorhandener Konten ohne weitere regelmäßige
+Projektanmeldung. Im isolierten Worlds-Modus übernimmt die Oberfläche jetzt
+ausschließlich die vom Server ausgewählte Anwendungsidentität. Ein veralteter
+nativer SDK-Cache kann weder ein anderes Konto anzeigen noch nach bestätigtem
+Sitzungsende private Ansichten offenhalten. Tatsächlich gültige bisherige
+Sitzungen behalten ihren Vorrang, auch wenn das Browser-SDK noch keine Sitzung
+meldet. Abmeldeaktion und Kontolink folgen derselben serverseitigen Auswahl.
+
+Der private Status liefert nur lokale ID, Anzeigename, Herkunft und gegebenenfalls
+den eigenen Worlds-CSRF-Wert; keine nativen E-Mails, Rollen oder Sitzungstokens.
+SDK-Sitzungsänderungen veranlassen eine neue Serverprüfung. Vorübergehende Fehler
+oder unvollständige Statusantworten überschreiben die bisherige Anzeige nicht.
+
+Lokal bestanden: **206 Unit-Tests**, Typprüfung, Lint, DE/EN-Abdeckung,
+Offline-Build und **16 Worlds-Browserfälle** in Chromium/WebKit bei 320/1280 px.
+Die Prüfungen decken widersprüchliche Browser-/Serveridentitäten, DE/EN,
+Provider-Ausfall, Ablauf, lokale Abmeldeauswahl und unveränderte Beiträge ab.
+Nur synthetische Testantworten beziehungsweise PGlite; keine Produktionsmigration.
+Nächste Schritte: vollständige GitHub-CI und getrennte echte QA-Integration,
+danach Eigentumsnachweise vorhandener Konten und echte zentrale SSO-Abnahme.
+Globale Abmeldung und der Fall zweier gleichzeitig gültiger lokaler Anmeldearten
+bleiben vor dem produktiven Wechsel gesondert abzuschließen.
+
 
 ## Neue Worlds-Konten ohne zweite Registrierung
 

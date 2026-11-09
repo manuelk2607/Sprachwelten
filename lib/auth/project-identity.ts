@@ -10,6 +10,14 @@ export interface ProjectIdentity {
   authenticated:boolean;
   csrf?:string;
 }
+export type ProjectStatus={user:LearningUser|null;source:ProjectIdentity['source'];csrf?:string};
+// The browser receives the same selected identity as private server routes,
+// without the provider's email, roles, session token or other directory fields.
+export function projectStatus(identity:ProjectIdentity):ProjectStatus{
+  if(identity.error)throw new GameError('Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.',503);
+  return {user:identity.user?{id:identity.user.id,name:identity.user.name}:null,source:identity.source,
+    ...(identity.source==='worlds'&&identity.csrf?{csrf:identity.csrf}:{})};
+}
 type LegacyIdentity=()=>Promise<{user?:LearningUser|null;error:unknown}>;
 // Preserve an actually valid legacy identity; never switch an active person's account.
 // An expired legacy cookie is not proof of an active session and must not mask Worlds.

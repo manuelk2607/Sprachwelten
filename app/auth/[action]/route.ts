@@ -3,6 +3,7 @@ import { GameError } from "@/lib/game";
 import { hashToken } from "@/lib/http";
 import { projectIdentity, worldsConfig, worldsQuery } from "@/lib/auth/learning-session";
 import { worldsPaths, worldsRoute } from "@/lib/auth/worlds";
+import {projectStatus} from '@/lib/auth/project-identity';
 
 async function handle(request: Request) {
   const config = worldsConfig();
@@ -16,8 +17,7 @@ async function handle(request: Request) {
       const ip = await hashToken(request.headers.get("cf-connecting-ip") ?? "local");
       await rateLimit("worlds:" + url.pathname + ":" + ip, ["/auth/login","/auth/start"].includes(url.pathname) ? 12 : url.pathname==='/auth/worlds/profile'?5:60, 60);
       if(url.pathname==='/auth/status'){
-        const identity=await projectIdentity(request);if(identity.error)throw identity.error;
-        response=Response.json({user:identity.source==='worlds'?identity.user??null:null,csrf:identity.source==='worlds'?identity.csrf:undefined});
+        response=Response.json(projectStatus(await projectIdentity(request)));
       }else if(['/auth/worlds','/auth/worlds-en','/auth/worlds/profile'].includes(url.pathname)){
         const identity=await projectIdentity(request);if(identity.error)throw identity.error;
         response=await worldsRoute(request,config,worldsQuery,identity.source==='legacy'&&!!identity.user);

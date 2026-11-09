@@ -4,7 +4,7 @@ import { ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Globe2, LogOut, Moon, Plus, Sun, UserRound } from "lucide-react";
 import { getAuthClient } from "@/lib/auth/client";
-import { useAuthSession, useWorldsPilot, useApplicationUser,useWorldsCsrf } from "@/lib/auth/provider";
+import { useApplicationSource, useWorldsPilot, useApplicationUser,useWorldsCsrf } from "@/lib/auth/provider";
 import {worldsLoginHref,worldsAccountHref} from "@/lib/auth/worlds-link";
 import { useTheme } from "@/lib/theme";
 import { site } from "@/lib/site";
@@ -41,7 +41,7 @@ export function Header({
       document.documentElement.style.removeProperty("--site-header-height");
     };
   }, []);
-  const session = useAuthSession(),
+  const source = useApplicationSource(),
     user=useApplicationUser(),
     userId = user?.id;
   const worldsPilot = useWorldsPilot(),worldsCsrf=useWorldsCsrf();
@@ -162,7 +162,7 @@ export function Header({
             {t("Beitragen")}
           </button>
         )}
-        {worldsPilot && session?.user && (
+        {worldsPilot && user && source==='legacy' && (
           <a href={worldsAccountHref(locale,returnAfterLogin)} className="button small outline">
             {locale === "en" ? "Worlds account" : "Worlds-Konto"}
           </a>
@@ -190,7 +190,7 @@ export function Header({
               <UserRound size={16} />
               {t("Profil")}
             </a>
-            {!session?.user?worldsCsrf?<form method="post" action={'/auth/logout?locale='+locale}>
+            {source==='worlds'?worldsCsrf?<form method="post" action={'/auth/logout?locale='+locale}>
               <input type="hidden" name="csrf" value={worldsCsrf}/>
               <button className="icon-button" aria-label={t('Abmelden')}><LogOut size={18}/></button>
             </form>:<a className="icon-button" href={worldsAccountHref(locale,returnAfterLogin)} aria-label={t('Anmeldung in Sprachwelten verwalten')}><LogOut size={18}/></a>:<button className="icon-button" aria-label={t('Abmelden')} onClick={async()=>{await(await getAuthClient()).signOut();}}><LogOut size={18}/></button>}

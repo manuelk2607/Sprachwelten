@@ -9,12 +9,13 @@ import {entryInput} from '../../lib/content';
 const user={id:'10000000-0000-4000-8000-000000000001',name:'Existing Worlds author'};
 const entry={...entryInput.parse({kind:'word',phrase:'Unchanged original contribution',language:'de',literal:'Unchanged counterpart'}),
  id:'10000000-0000-4000-8000-000000000002',status:'community',authorName:'',createdAt:'2026-01-01T00:00:00Z',revision:0};
-async function fixture(page:Page){
- const state:{active:boolean;outage:boolean;nativePosts:number;logout:boolean}={active:true,outage:false,nativePosts:0,logout:false};
+async function fixture(page:Page,options:{nativeUser?:typeof user;source?:'legacy'|'worlds'}={}){
+ const state:{active:boolean;outage:boolean;nativePosts:number;logout:boolean;source:'legacy'|'worlds'}={active:true,outage:false,nativePosts:0,logout:false,source:options.source??'worlds'};
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname;
   if(path.startsWith('/api/auth/')){
    if(route.request().method()!=='GET')state.nativePosts++;
+   if(path==='/api/auth/get-session'&&options.nativeUser)return route.fulfill({json:{session:{id:'cached-native-fixture',userId:options.nativeUser.id,expiresAt:'2099-01-01T00:00:00Z',token:'synthetic-browser-cache-only'},user:{...options.nativeUser,email:'cached@fixture.invalid',emailVerified:false,createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'}}});
    return route.fulfill({json:null});
   }
   if(path==='/api/me/entries')return route.fulfill({json:{entries:state.active?[entry]:[],more:false}});
@@ -28,7 +29,7 @@ async function fixture(page:Page){
   if(path==='/api/translations')return route.fulfill({json:{available:true}});
   return route.fulfill({json:{entries:[],regions:[],languages:[],more:false}});
  });
- await page.route('**/auth/status',route=>route.fulfill(state.outage?{status:503,json:{error:'Fixture outage'}}:{json:{user:state.active?user:null,csrf:state.active?'synthetic-csrf-only-at-least-32-characters':undefined}}));
+ await page.route('**/auth/status',route=>route.fulfill(state.outage?{status:503,json:{error:'Fixture outage'}}:{json:{user:state.active?user:null,source:state.source,csrf:state.active&&state.source==='worlds'?'synthetic-csrf-only-at-least-32-characters':undefined}}));
  await page.route('**/auth/logout?*',route=>{
   expect(route.request().method()).toBe('POST');
   expect(new URLSearchParams(route.request().postData()??'').get('csrf')).toBe('synthetic-csrf-only-at-least-32-characters');
@@ -66,9 +67,18 @@ test('mapped Worlds identity unlocks its own contribution UI and project role UI
  expect(state.logout).toBeTruthy();expect(state.nativePosts).toBe(0);
 });
 
-test('provider interruption preserves UI state while a confirmed expired session clears private contribution UI',async({page})=>{
+test('a stale native browser identity cannot mask the server-selected Worlds account or retain private UI after expiry',async({page})=>{
  await page.clock.install();
- const state=await fixture(page);
+ const staleUser={id:'10000000-0000-4000-8000-000000000099',name:'Stale native owner'};
+ const state=await fixture(page,{nativeUser:staleUser});
+ const cached=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));
+ await page.goto('/profile');await cached;
+ await expect(page.getByText(user.name,{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'EN',exact:true}).click();
+ await expect(page.getByRole('link',{name:'Manage account in Worlds Hub',exact:true})).toBeVisible();
+ await expect(page.getByText(staleUser.name,{exact:true})).toHaveCount(0);
+ await expect(page.locator('.header form[action^="/auth/logout"]')).toBeVisible();
+ await expect(page.getByRole('link',{name:'Worlds account',exact:true})).toHaveCount(0);
  await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
  state.outage=true;
  await page.clock.fastForward(60_001);
@@ -82,6 +92,19 @@ test('provider interruption preserves UI state while a confirmed expired session
  expect(state.nativePosts).toBe(0);
 });
 
+test('the server-selected existing managed account remains visible even while the browser SDK reports no session',async({page})=>{
+ await page.clock.install();
+ const state=await fixture(page,{source:'legacy'});
+ await page.goto('/profile');await expect(page.getByText(user.name,{exact:true})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Worlds-Konto',exact:true})).toBeVisible();
+ await expect(page.locator('.header form[action^="/auth/logout"]')).toHaveCount(0);
+ await expect(page.locator('.header button[aria-label="Abmelden"]')).toBeVisible();
+ await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
+ state.active=false;await page.clock.fastForward(60_001);
+ await expect(page.getByText(entry.phrase,{exact:true})).toHaveCount(0);
+ await expect(page.locator('.header .admin-link')).toHaveCount(0);
+ expect(state.nativePosts).toBe(0);
+});
 
 test('a new central account starts without another registration and returns to its private screen in DE and EN',async({page},info)=>{
  for(const locale of ['de','en'] as const){
@@ -119,7 +142,7 @@ test('a new central account starts without another registration and returns to i
     if(incoming.pathname==='/auth/worlds/profile'&&route.request().method()==='POST'){await route.continue({url:relayOrigin+incoming.pathname+incoming.search});return;}
     const request=new Request(origin+incoming.pathname+incoming.search,{method:route.request().method(),headers:{cookie:SESSION_COOKIE+'='+raw,origin,...(route.request().method()==='POST'?{'content-type':route.request().headers()['content-type']}:{} )},...(route.request().method()==='POST'?{body:route.request().postData()??''}:{})});
     const identity=incoming.pathname==='/auth/status'?await worldsIdentity(request,config,query):undefined;
-    const response=identity?Response.json({user:identity.user??null,csrf:identity.csrf}):await worldsRoute(request,config,query,false);
+    const response=identity?Response.json({user:identity.user??null,source:'worlds',csrf:identity.csrf}):await worldsRoute(request,config,query,false);
     await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});
    });
    await page.goto('/me');

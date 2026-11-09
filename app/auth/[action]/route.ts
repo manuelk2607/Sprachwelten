@@ -9,15 +9,16 @@ async function handle(request: Request) {
   const url = new URL(request.url);
   let response: Response;
   if (!config || url.origin !== config.origin || !worldsPaths.includes(url.pathname)) response = new Response(null, {status: 404});
+  else if(url.pathname==='/auth/worlds/profile'&&request.method!=='POST')response=new Response(null,{status:405});
   else if(['/auth/status','/auth/worlds','/auth/worlds-en'].includes(url.pathname)&&request.method!=='GET')response=new Response(null,{status:405});
   else {
     try {
       const ip = await hashToken(request.headers.get("cf-connecting-ip") ?? "local");
-      await rateLimit("worlds:" + url.pathname + ":" + ip, ["/auth/login","/auth/start"].includes(url.pathname) ? 12 : 60, 60);
+      await rateLimit("worlds:" + url.pathname + ":" + ip, ["/auth/login","/auth/start"].includes(url.pathname) ? 12 : url.pathname==='/auth/worlds/profile'?5:60, 60);
       if(url.pathname==='/auth/status'){
         const identity=await projectIdentity(request);if(identity.error)throw identity.error;
         response=Response.json({user:identity.source==='worlds'?identity.user??null:null,csrf:identity.source==='worlds'?identity.csrf:undefined});
-      }else if(['/auth/worlds','/auth/worlds-en'].includes(url.pathname)){
+      }else if(['/auth/worlds','/auth/worlds-en','/auth/worlds/profile'].includes(url.pathname)){
         const identity=await projectIdentity(request);if(identity.error)throw identity.error;
         response=await worldsRoute(request,config,worldsQuery,identity.source==='legacy'&&!!identity.user);
       }else response = await worldsRoute(request, config, worldsQuery);

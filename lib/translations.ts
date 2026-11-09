@@ -8,6 +8,16 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Worlds-Anmeldung':'Worlds sign-in',
+  'Bitte die Eingaben prüfen.':'Please check your input.',
+  'Weiter zu Sprachwelten':'Continue to Sprachwelten',
+  'Dieses Sprachwelten-Profil ist nicht verfügbar. Bitte wende dich an die Administration.':'This Sprachwelten profile is unavailable. Please contact the administrators.',
+  'Im Worlds Hub verwaltet':'Managed in Worlds Hub',
+  'Bitte melde dich erneut über Worlds Hub an.':'Please sign in again through Worlds Hub.',
+  'Dein bisheriges Sprachwelten-Konto ist noch aktiv. Seine Beiträge werden keinem neuen Profil zugeordnet.':'Your previous Sprachwelten account is still active. Its contributions will not be assigned to a new profile.',
+  'Du kannst Sprachwelten mit deinem Worlds-Konto verwenden. Bestehende Beiträge anderer oder bisheriger Konten werden dabei nicht übernommen.':'You can use Sprachwelten with your Worlds account. Contributions belonging to other or previous accounts will not be transferred.',
+  'Sprachwelten mit Worlds verwenden':'Use Sprachwelten with Worlds',
+
   'Verwalte dein Konto im Worlds Hub.':'Manage your account in Worlds Hub.',
   'Dein Worlds-Konto':'Your Worlds account',
   'Name, E-Mail und Passwort verwaltest du zentral im Worlds Hub. Deine Beiträge und Lernstände bleiben bei Sprachwelten.':'Manage your name, email and password centrally in Worlds Hub. Your contributions and learning records stay in Sprachwelten.',

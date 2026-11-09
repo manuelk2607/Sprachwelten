@@ -11,8 +11,13 @@ export async function adminEntries(search:string,removed:boolean,offset:number,u
  const rows=await database().query(`SELECT ${fields},deleted_at as "deletedAt",author_id as "authorId" FROM content_entries WHERE (deleted_at IS NOT NULL)=$1 AND ($2='' OR phrase ILIKE '%'||$2||'%' OR literal ILIKE '%'||$2||'%' OR meaning ILIKE '%'||$2||'%' OR credit_name ILIKE '%'||$2||'%') AND ($4::uuid IS NULL OR (deleted_at IS NULL AND created_at>coalesce((SELECT last_seen_at FROM admin_inbox_seen WHERE user_id=$4),'1970-01-01'::timestamptz) AND NOT EXISTS (SELECT 1 FROM admin_inbox_reads r WHERE r.user_id=$4 AND r.entry_id=content_entries.id))) AND (${qualityPredicate(quality)}) ORDER BY created_at DESC,id LIMIT 31 OFFSET $3`,[removed,search,offset,unreadFor??null]);
  return {entries:(rows.slice(0,30) as AdminEntry[]).map(withLanguageNames),more:rows.length>30};
 }
-export async function adminUsers(search:string,offset:number){
- const rows=await database().query(`SELECT u.id,u.name,u.email,u."emailVerified",u."createdAt",(SELECT max(s."createdAt") FROM neon_auth.session s WHERE s."userId"=u.id) AS "lastSignIn",EXISTS(SELECT 1 FROM app_admins a WHERE a.user_id=u.id) AS "isAdmin" FROM neon_auth."user" u WHERE ($1='' OR u.email ILIKE '%'||$1||'%' OR u.name ILIKE '%'||$1||'%') ORDER BY u."createdAt" DESC,u.id LIMIT 31 OFFSET $2`,[search,offset]);
+export async function adminUsers(search:string,offset:number,includeWorlds=false){
+ const users=includeWorlds?`WITH all_users AS (
+  SELECT u.id,u.name,u.email,u."emailVerified",u."createdAt",(SELECT max(s."createdAt") FROM neon_auth.session s WHERE s."userId"=u.id) AS "lastSignIn",'legacy'::text AS "authSource" FROM neon_auth."user" u
+  UNION ALL SELECT a.id,a.display_name,''::text,true,a.created_at,NULL::timestamptz,'worlds'::text FROM worlds_project_accounts a WHERE a.kind='worlds'
+ ) SELECT u.*,EXISTS(SELECT 1 FROM app_admins a WHERE a.user_id=u.id) AS "isAdmin" FROM all_users u`
+ :`SELECT u.id,u.name,u.email,u."emailVerified",u."createdAt",(SELECT max(s."createdAt") FROM neon_auth.session s WHERE s."userId"=u.id) AS "lastSignIn",EXISTS(SELECT 1 FROM app_admins a WHERE a.user_id=u.id) AS "isAdmin" FROM neon_auth."user" u`;
+ const rows=await database().query(users+` WHERE ($1='' OR u.email ILIKE '%'||$1||'%' OR u.name ILIKE '%'||$1||'%') ORDER BY u."createdAt" DESC,u.id LIMIT 31 OFFSET $2`,[search,offset]);
  return {users:rows.slice(0,30) as AdminUser[],more:rows.length>30};
 }
 export async function editAdminEntry(id:string,input:EntryInput,revision:number,adminId:string,options:{ownerOnly?:boolean;reviewId?:string;reviewRevision?:number;reviewNote?:string;reviewFeedback?:string;audioOwnerId?:string}={}){

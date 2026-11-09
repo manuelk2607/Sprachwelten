@@ -1,3 +1,4 @@
+import {worldsAccountHref,worldsProjectReturn} from '../lib/auth/worlds-link';
 import {worldsLoginHref} from '../lib/auth/worlds-link';
 import {test} from 'node:test';import assert from 'node:assert/strict';import {createElement} from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import {Header} from '../components/header';import {AuthProvider} from '../lib/auth/provider';import {I18nProvider} from '../lib/i18n';
@@ -15,4 +16,10 @@ test('return links preserve known private screens and reject arbitrary redirect 
  for(const path of ['//evil.test','https://evil.test','/admin?user=other','/unknown','/\\evil.test']){
   assert.equal(new URL(worldsLoginHref('en',path),'https://fixture.test').searchParams.get('next'),'/auth/worlds-en');
  }
+});
+
+test('profile continuation retains reviewed project routes without returning to auth actions or external URLs',()=>{
+ assert.equal(worldsAccountHref('en','/me'),'/auth/worlds-en?next=%2Fme');
+ for(const value of ['https://foreign.test','//foreign.test','/auth/worlds/profile','/auth/logout','/me?next=external','/auth/worlds'])assert.equal(worldsProjectReturn('en',value),'/en/learn');
+ assert.equal(worldsProjectReturn('de','/profile'),'/profile');
 });

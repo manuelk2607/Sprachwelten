@@ -1,3 +1,4 @@
+import {prepareLegacyProjectAccount} from '../lib/auth/project-accounts';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';
@@ -23,9 +24,11 @@ test('the shared project resolver preserves valid legacy identity, rejects provi
  try{
   await db.exec('CREATE SCHEMA neon_auth; CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text NOT NULL,banned boolean,"banExpires" timestamptz);');
   await db.exec(await readFile(new URL('../db/migrations/027_worlds_identity.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../db/migrations/028_worlds_project_accounts.sql',import.meta.url),'utf8'));
   const query=async(sql:string,params:unknown[])=>(await db.query<Record<string,unknown>>(sql,params)).rows;
   const config=createWorldsConfig(env,query)!,raw=token(),sub=token(),csrf=token(),localId=crypto.randomUUID();
   await query('INSERT INTO neon_auth."user"(id,name) VALUES($1,$2)',[localId,'Original owner']);
+  await prepareLegacyProjectAccount(localId,query);
   await config.store.putSession(await hash(raw),{issuer,sub,csrf,expires:Date.now()+60_000});
   const request=(extra='')=>new Request(origin+'/api/me/entries',{headers:{cookie:SESSION_COOKIE+'='+raw+extra}});
   let legacyReads=0;
@@ -65,9 +68,11 @@ test('actual account, contribution, ownership and admin guards use the mapped hi
    CREATE TABLE content_entries(id uuid PRIMARY KEY,author_id text,deleted_at timestamptz);
   `);
   await db.exec(await readFile(new URL('../db/migrations/027_worlds_identity.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../db/migrations/028_worlds_project_accounts.sql',import.meta.url),'utf8'));
   const query=async(sql:string,params:unknown[])=>(await db.query<Record<string,unknown>>(sql,params)).rows;
   const config=createWorldsConfig(env,query)!,id=crypto.randomUUID(),other=crypto.randomUUID(),entry=crypto.randomUUID(),raw=token(),sub=token();
   await query('INSERT INTO neon_auth."user"(id,name) VALUES($1,$2),($3,$4)',[id,'Historical owner',other,'Other owner']);
+  await prepareLegacyProjectAccount(id,query);
   await query('INSERT INTO content_entries(id,author_id) VALUES($1,$2)',[entry,id]);
   await query('INSERT INTO worlds_identity_links(issuer,subject,local_user_id) VALUES($1,$2,$3)',[issuer,sub,id]);
   await config.store.putSession(await hash(raw),{issuer,sub,csrf:token(),expires:Date.now()+60_000});

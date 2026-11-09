@@ -26,7 +26,7 @@
     "test:browser": "playwright test",
     "check:translations": "tsx scripts/list-missing-translations.mts --check",
     "audit:dependencies": "tsx scripts/audit-dependencies.mts",
-    "test:worlds-browser": "playwright test --config playwright.worlds.config.ts"
+    "test:worlds-browser": "node --import tsx node_modules/@playwright/test/cli.js test --config playwright.worlds.config.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "0.6.0-beta",

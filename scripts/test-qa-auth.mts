@@ -1,3 +1,4 @@
+import {prepareLegacyProjectAccount} from '../lib/auth/project-accounts.ts';
 import assert from "node:assert/strict";
 import { neon } from "@neondatabase/serverless";
 import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
@@ -47,6 +48,7 @@ async function verifyWorldsMapping(userId: string) {
     sql`INSERT INTO worlds_identity_links (issuer, subject, local_user_id)
         VALUES (${iss}, ${sub}, ${id}::uuid)`;
   try {
+    await prepareLegacyProjectAccount(userId,(text,values)=>sql.query(text,values));
     await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)
               VALUES (${notebook}::uuid, ${userId}, 'QA Worlds', 'de', 'en')`;
     await insert(issuer, subject, userId);

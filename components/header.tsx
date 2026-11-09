@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { Globe2, LogOut, Moon, Plus, Sun, UserRound } from "lucide-react";
 import { getAuthClient } from "@/lib/auth/client";
 import { useAuthSession, useWorldsPilot, useApplicationUser,useWorldsCsrf } from "@/lib/auth/provider";
-import {worldsLoginHref} from "@/lib/auth/worlds-link";
+import {worldsLoginHref,worldsAccountHref} from "@/lib/auth/worlds-link";
 import { useTheme } from "@/lib/theme";
 import { site } from "@/lib/site";
 export function Header({
@@ -45,6 +45,7 @@ export function Header({
     user=useApplicationUser(),
     userId = user?.id;
   const worldsPilot = useWorldsPilot(),worldsCsrf=useWorldsCsrf();
+  const returnAfterLogin=loginReturn??(active==='play'?(locale==='en'?'/en':'/'):active==='discover'?(locale==='en'?'/en/learn':'/lernen'):undefined);
   const [access, setAccess] = useState<{
     userId: string;
     isAdmin: boolean;
@@ -162,7 +163,7 @@ export function Header({
           </button>
         )}
         {worldsPilot && session?.user && (
-          <a href={locale === "en" ? "/auth/worlds-en" : "/auth/worlds"} className="button small outline">
+          <a href={worldsAccountHref(locale,returnAfterLogin)} className="button small outline">
             {locale === "en" ? "Worlds account" : "Worlds-Konto"}
           </a>
         )}
@@ -192,10 +193,10 @@ export function Header({
             {!session?.user?worldsCsrf?<form method="post" action={'/auth/logout?locale='+locale}>
               <input type="hidden" name="csrf" value={worldsCsrf}/>
               <button className="icon-button" aria-label={t('Abmelden')}><LogOut size={18}/></button>
-            </form>:<a className="icon-button" href={locale==='en'?'/auth/worlds-en':'/auth/worlds'} aria-label={t('Anmeldung in Sprachwelten verwalten')}><LogOut size={18}/></a>:<button className="icon-button" aria-label={t('Abmelden')} onClick={async()=>{await(await getAuthClient()).signOut();}}><LogOut size={18}/></button>}
+            </form>:<a className="icon-button" href={worldsAccountHref(locale,returnAfterLogin)} aria-label={t('Anmeldung in Sprachwelten verwalten')}><LogOut size={18}/></a>:<button className="icon-button" aria-label={t('Abmelden')} onClick={async()=>{await(await getAuthClient()).signOut();}}><LogOut size={18}/></button>}
           </>
         ) : worldsPilot ? (
-          <a className="button small dark login-button" href={worldsCsrf?(locale==='en'?'/auth/worlds-en':'/auth/worlds'):worldsLoginHref(locale,loginReturn??(active==='play'?(locale==='en'?'/en':'/'):active==='discover'?(locale==='en'?'/en/learn':'/lernen'):undefined))}>
+          <a className="button small dark login-button" href={worldsCsrf?worldsAccountHref(locale,returnAfterLogin):worldsLoginHref(locale,returnAfterLogin)}>
             <UserRound size={16} />{t(worldsCsrf?'Dein Konto':'Anmelden')}
           </a>
         ) : (

@@ -1,6 +1,46 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
 
+## Neue Worlds-Konten ohne zweite Registrierung
+
+Migration **028** ergänzt ausschließlich anwendungseigene Datenprofile. Vorhandene
+native UUIDs, Rollen, Zuordnungen und Beitragseigentum bleiben unverändert.
+Native Auth-Zeilen werden weder erzeugt noch geändert. Verknüpfungen referenzieren
+jetzt das Datenprofil; entfernte oder gesperrte native Quellen bleiben für den
+Zugriff gesperrt. Bestehende native Anmeldewege bleiben bei ausgeschaltetem
+Worlds-Modus unverändert und benötigen die neue Tabelle nicht.
+
+Neue zentral angemeldete Nutzer können ein Datenprofil ohne neuen Namen,
+Projektpasswort oder E-Mail-Bestätigung bei Sprachwelten beginnen. Der Name
+kommt aus der bereits validierten zentralen Sitzung. Gleiche Namen oder E-Mails
+führen zu keiner Kontenübernahme. Profil, Zuordnung und Audit entstehen atomar;
+parallele/redundante Aufrufe erzeugen genau einen Datensatz. Lokale Sperren
+bleiben wirksam, aktive bisherige Sitzungen blockieren eine versehentliche
+Neuanlage. Es werden keine Adminrechte aus Identitätsdaten übernommen.
+
+CSRF, Origin, Methode, kleine Formulargröße und erlaubte Rücksprünge werden
+serverseitig geprüft. Profilstart kehrt zur vorher gewählten privaten Seite
+zurück. Bereits zentral angemeldete Nutzer gelangen über den Kontolink direkt
+zum Profilstart. Die Administration unterscheidet zentral verwaltete Profile
+von nativen Konten, ohne die zentrale E-Mail lokal zu duplizieren.
+
+Lokal bestanden: **206 Unit-Tests**, Typprüfung, Lint, DE/EN-Abdeckung,
+vollständiger Dependency-Audit und Offline-Build. Acht bisherige Worlds-
+Browserfälle bestanden; vier neue Fälle prüfen jeweils DE/EN in Chromium/WebKit
+bei 320/1280 px mit tatsächlicher Profil- und Formularlogik in PGlite und echter
+lokaler HTTP-303-Rückkehr. Kein zusätzlicher nativer Auth-Aufruf und null neu
+angelegte native Konten. Synthetische Sitzungen, kein realer OIDC-Nachweis.
+
+Neue echte QA-Prüfung und vollständige GitHub-CI sind noch **ausstehend**.
+Die QA-Prüfung ergänzt gleichzeitigen Profilstart, unveränderte native Metadaten,
+Administration, eigenen Beitrag und Widerruf in echtem PostgreSQL. Vor einer
+Veröffentlichung sind außerdem echte SSO-/Migrationsabnahme und die Gestaltung
+der eigenständigen Kontozwischenseite abzuschließen. Produktion und ihre
+Zuordnungen bleiben unverändert. Migration 028 ist noch nicht produktiv
+angewendet. Eine Schema-Rücknahme darf neue Profile oder Zuordnungen nicht
+entfernen beziehungsweise wieder auf den alten nativen Fremdschlüssel zwingen;
+Rücknahmeversionen müssen die Datenprofile verstehen.
+
 ## Bestehende Identität für die gesamte Anwendung – 08.11.2026
 
 Der isolierte Worlds-Modus verwendet die zugeordnete historische Neon-UUID jetzt

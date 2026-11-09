@@ -1,3 +1,4 @@
+import {prepareLegacyProjectAccount} from '../lib/auth/project-accounts';
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
@@ -38,10 +39,12 @@ test("Worlds resolves only an explicitly mapped local learner and revokes access
     `);
     const migration = await readFile(new URL("../db/migrations/027_worlds_identity.sql", import.meta.url), "utf8");
     await db.exec(migration);
+    await db.exec(await readFile(new URL("../db/migrations/028_worlds_project_accounts.sql",import.meta.url),"utf8"));
     const query = async (text: string, values: unknown[]) => (await db.query<Record<string, unknown>>(text, values)).rows;
     const config = createWorldsConfig(env, query)!;
     const id = crypto.randomUUID(), subject = token(), csrf = token(), raw = token(), sessionKey = await hash(raw);
     await query('INSERT INTO neon_auth."user" (id,name) VALUES ($1,$2)', [id, "Existing learner"]);
+    await prepareLegacyProjectAccount(id,query);
     await query("INSERT INTO vocabulary_notebooks VALUES ('old-private-notebook',$1)", [id]);
     await config.store.putSession(sessionKey, {issuer, sub:subject, expires:Date.now()+60_000, csrf, email:"example@example.test"});
     const cookie = SESSION_COOKIE + "=" + raw;

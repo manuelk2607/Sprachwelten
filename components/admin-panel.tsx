@@ -407,7 +407,7 @@ export function AdminPanel() {
                             {users.map((user) => (
                               <tr key={user.id}>
                                 <td>{user.name}</td>
-                                <td>{user.email}</td>
+                                <td>{user.authSource==='worlds'?t('Im Worlds Hub verwaltet'):user.email}</td>
                                 <td>{date(user.createdAt)}</td>
                                 <td>{date(user.lastSignIn)}</td>
                                 <td>{t(user.emailVerified ? "Ja" : "Nein")}</td>

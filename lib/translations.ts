@@ -8,6 +8,13 @@ import {simplifiedGameTranslations} from './simplified-game-translations';
 import {gameRedesignTranslations} from './game-redesign-translations';
 export type Locale = 'de' | 'en';
 export const english: Record<string, string> = {
+  'Die Anmeldung ist gerade nicht erreichbar.':'Sign-in is currently unavailable. Please try again.',
+  'du@beispiel.de':'you@example.com',
+  'Bisheriges Konto bestätigen':'Confirm your existing account',
+  'Ich habe bereits ein Sprachwelten-Konto':'I already have a Sprachwelten account',
+  'Bestätige dein bisheriges Konto einmalig, damit deine Beiträge und Lernstände erhalten bleiben.':'Confirm your existing account once to keep your contributions and learning records.',
+  'Bestätige dein bisheriges Sprachwelten-Konto nur für die einmalige Übernahme. Danach meldest du dich über Worlds Hub an. Gib hier deine bisherigen Sprachwelten-Zugangsdaten ein.':'Confirm your existing Sprachwelten account only for this one-time transfer. Afterward, sign in through Worlds Hub. Enter your previous Sprachwelten credentials here.',
+  'Öffne dein Worlds-Konto, um die Kontoübernahme fortzusetzen oder deine bestehende Verbindung zu verwenden.':'Open your Worlds account to continue transferring your account or use your existing link.',
   'Zum Inhalt springen':'Skip to content',
   'Sprache wählen':'Choose language',
   'Design wechseln':'Switch theme',

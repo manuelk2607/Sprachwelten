@@ -69,7 +69,8 @@ test('both sessions must still match; provider failure, revoked BFF and stale ad
   assert.equal((await managedLinkRoute(f.request('confirm',new URLSearchParams({csrf:f.csrf,proof})),f.config,f.query,f.owner)).status,409);
   f.state.active=false;assert.equal((await managedLinkRoute(f.request('confirm',new URLSearchParams({csrf:f.csrf,proof})),f.config,f.query,f.owner)).status,503);
   f.state.active=true;f.state.sessionId='native-session';f.state.privileged=true;
-  const oldAdmin=await managedLinkRoute(f.request(),f.config,f.query,f.owner);assert.equal(oldAdmin.status,401);assert.match(await oldAdmin.text(),/administrator account/);
+  const oldAdmin=await managedLinkRoute(f.request(),f.config,f.query,f.owner);assert.equal(oldAdmin.status,401);const html=await oldAdmin.text();assert.match(html,/administrator account/);assert.match(html,/href="\/worlds-migration\?lang=en&amp;next=%2Fme"/);
+  f.state.createdAt=Date.now();assert.equal((await managedLinkRoute(f.request(),f.config,f.query,f.owner)).status,200);
   f.state.privileged=false;await f.config.store.deleteSession(await hash(f.raw));
   assert.equal((await managedLinkRoute(f.request('confirm',new URLSearchParams({csrf:f.csrf,proof})),f.config,f.query,f.owner)).status,401);
   assert.equal((await f.query('SELECT count(*)::int AS n FROM worlds_identity_links',[]))[0].n,0);

@@ -4,7 +4,7 @@ import {PostgresLinkStore,type PgQuery} from '@worlds-hub/auth/postgres-links';
 import type {loadManagedOwner} from './managed-owner';
 import {mappedProjectAccount} from './project-accounts';
 import {authDocument,authError,escapeHtml,readWorldsForm} from './worlds-document';
-import {worldsProjectReturn,worldsManagedLinkPaths} from './worlds-link';
+import {worldsProjectReturn,worldsManagedLinkPaths,worldsRecoveryHref} from './worlds-link';
 import {translate,type Locale} from '../translations';
 import {GameError} from '../game';
 
@@ -40,7 +40,7 @@ export async function managedLinkRoute(request:Request,config:AuthConfig,query:P
    const href='/auth/start?'+new URLSearchParams({reauth:'1',next,ui_locales:locale});
    return authDocument(locale,translate('Worlds-Anmeldung bestätigen',locale),`<p role="alert">${t('Bitte bestätige deine Anmeldung im Worlds Hub erneut, bevor du dein bisheriges Konto übernimmst.')}</p><a class="button primary" href="${escapeHtml(href)}">${t('Worlds-Anmeldung bestätigen')}</a>`,{status:401,next});
   }
-  if(error instanceof Error&&error.message==='LEGACY_REAUTHENTICATION_REQUIRED')return authError(locale,'Für dieses Verwaltungskonto ist vor der Übernahme eine frische Bestätigung der bisherigen Anmeldung erforderlich.',401,next);
+  if(error instanceof Error&&error.message==='LEGACY_REAUTHENTICATION_REQUIRED')return authDocument(locale,translate('Bisheriges Konto bestätigen',locale),`<p role="alert">${t('Für dieses Verwaltungskonto ist vor der Übernahme eine frische Bestätigung der bisherigen Anmeldung erforderlich.')}</p><a class="button primary" href="${escapeHtml(worldsRecoveryHref(locale,next))}">${t('Bisheriges Konto bestätigen')}</a>`,{status:401,next});
   if(error instanceof Error&&['Expired, replayed or conflicting link','Invalid proof','MANAGED_SESSION_PROOF_REQUIRED'].includes(error.message))return authError(locale,'Die Bestätigung ist abgelaufen oder passt nicht mehr zu deinen Konten. Bitte starte die Übernahme erneut.',409,next);
   return authError(locale,error instanceof GameError?error.message:'Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.',error instanceof GameError?error.status:503,next);
  }

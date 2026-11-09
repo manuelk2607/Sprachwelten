@@ -2,7 +2,7 @@ import { backchannelLogout, callback, logout, sameOrigin, session, startLogin, s
 import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 import { PostgresAuthStore } from "@worlds-hub/auth/postgres-store";
 
-import {worldsReturnPaths,worldsProjectReturn,worldsManagedLinkPaths} from './worlds-link';
+import {worldsReturnPaths,worldsProjectReturn,worldsManagedLinkPaths,worldsRecoveryHref} from './worlds-link';
 import {GameError} from '../game';
 import {createWorldsProjectAccount,mappedProjectAccount} from './project-accounts';
 import {translate,type Locale} from '../translations';
@@ -10,7 +10,7 @@ import {authDocument,authError,escapeHtml,readWorldsForm} from './worlds-documen
 
 export type LearningUser = { id: string; name: string };
 export const worldsPaths = ["/auth/login", "/auth/start", "/auth/callback", "/auth/logout", "/auth/backchannel-logout",
-  "/auth/status", "/auth/worlds", "/auth/worlds-en", "/auth/worlds/profile",...worldsManagedLinkPaths];
+  "/auth/status", "/auth/worlds", "/auth/worlds-en", "/auth/worlds/profile", "/auth/worlds/recovery",...worldsManagedLinkPaths];
 export const hasManagedSessionCookie = (request: Request) => (request.headers.get("cookie") ?? "").split(";")
   .some(value => value.trim().startsWith("__Secure-neon-auth.session_token="));
 
@@ -76,11 +76,14 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
   if (pathname === "/auth/callback") return callback(request, config);
   if (pathname === "/auth/logout") return logout(request, config);
   if (pathname === "/auth/backchannel-logout") return backchannelLogout(request, config);
-  if (!["/auth/status", "/auth/worlds", "/auth/worlds-en"].includes(pathname)) return new Response(null, {status: 404});
+  if (!["/auth/status", "/auth/worlds", "/auth/worlds-en", "/auth/worlds/recovery"].includes(pathname)) return new Response(null, {status: 404});
   if (request.method !== "GET") return new Response(null, {status: 405});
   const identity = await session(request, config);
   const mapped=identity?await mappedProjectAccount(identity,query):undefined;
   const user=mapped?.active?{id:mapped.id,name:mapped.name}:undefined;
+  // UI eligibility only. This never authenticates a native owner or writes a
+  // mapping; both proofs are revalidated by the existing confirmation routes.
+  if(pathname==='/auth/worlds/recovery')return Response.json({eligible:!!identity&&!mapped},{status:!identity?401:mapped?409:200,headers:{'cache-control':'no-store','x-robots-tag':'noindex, nofollow'}});
   if (pathname === "/auth/status") return Response.json({user: legacyActive ? null : user ?? null});
   const en = pathname === "/auth/worlds-en";
   const title = translate('Worlds-Anmeldung',en?'en':'de');
@@ -97,7 +100,7 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
     ? `<p>${t('Diese Worlds-Identität ist noch keinem Sprachwelten-Konto zugeordnet.')}</p>`
     : `<a href="/auth/start?next=${pathname}&amp;ui_locales=${locale}">${loginLabel}</a>`;
   const create = identity&&!mapped&&!legacyActive&&/^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)
-    ? `<p>${t('Du kannst Sprachwelten mit deinem Worlds-Konto verwenden. Bestehende Beiträge anderer oder bisheriger Konten werden dabei nicht übernommen.')}</p><form method="post" action="/auth/worlds/profile?locale=${locale}&amp;next=${encodeURIComponent(learning)}"><input type="hidden" name="csrf" value="${identity.csrf}"><button>${t('Sprachwelten mit Worlds verwenden')}</button></form>` : '';
+    ? `<p><a class="button primary" href="${escapeHtml(worldsRecoveryHref(locale,learning))}">${t('Ich habe bereits ein Sprachwelten-Konto')}</a></p><p>${t('Bestätige dein bisheriges Konto einmalig, damit deine Beiträge und Lernstände erhalten bleiben.')}</p><p>${t('Du kannst Sprachwelten mit deinem Worlds-Konto verwenden. Bestehende Beiträge anderer oder bisheriger Konten werden dabei nicht übernommen.')}</p><form method="post" action="/auth/worlds/profile?locale=${locale}&amp;next=${encodeURIComponent(learning)}"><input type="hidden" name="csrf" value="${identity.csrf}"><button>${t('Sprachwelten mit Worlds verwenden')}</button></form>` : '';
   const takeover=identity&&!mapped&&legacyActive&&/^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)
     ? `<p>${t('Deine bisherige Sprachwelten-Anmeldung ist aktiv. Du kannst dein bestehendes Konto mit Worlds verbinden.')}</p><form method="post" action="/auth/worlds/link?locale=${locale}&amp;next=${encodeURIComponent(learning)}"><input type="hidden" name="csrf" value="${identity.csrf}"><button class="primary">${t('Bisheriges Konto übernehmen')}</button></form>`:'';
   const signOut = identity && /^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)

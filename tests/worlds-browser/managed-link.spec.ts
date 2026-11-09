@@ -13,7 +13,7 @@ import {entryInput} from '../../lib/content';
 test('nested account actions actually reach the protected framework handler',async({request})=>{
  // The fixture uses HTTPS configuration and fake credentials. HTTP requests
  // must reach the handler's origin refusal without touching a database/provider.
- for(const path of ['/auth/worlds/profile','/auth/worlds/link','/auth/worlds/confirm']){
+ for(const path of ['/auth/worlds/profile','/auth/worlds/link','/auth/worlds/confirm','/auth/worlds/recovery']){
   const response=await request.post(path,{form:{csrf:'not-an-authentication-proof'}});
   expect(response.status()).toBe(404);expect(await response.text()).toBe('');
   expect(response.headers()['cache-control']).toBe('no-store');
@@ -21,7 +21,7 @@ test('nested account actions actually reach the protected framework handler',asy
  }
 });
 
-test('an existing owner confirms the link in DE and EN, keeps the same data without the old cookie, and signs out both local sessions',async({page},info)=>{
+for(const recover of [false,true])test((recover?'an expired owner first confirms existing credentials, then ':'an existing owner ')+ 'confirms the link in DE and EN, keeps the same data without the old cookie, and signs out both local sessions',async({page},info)=>{
  for(const locale of ['de','en'] as const){
   const db=new PGlite();let relay:ReturnType<typeof createServer>|undefined;
   try{
@@ -33,7 +33,7 @@ test('an existing owner confirms the link in DE and EN, keeps the same data with
    const query=async(sql:string,params:unknown[])=>(await db.query<Record<string,unknown>>(sql,params)).rows;
    const config=createWorldsConfig({WORLDS_PILOT_ENABLED:'true',WORLDS_PILOT_ORIGIN:origin,WORLDS_PILOT_DATABASE_HOST:'ep-qa.neon.tech',DATABASE_URL:'postgres://fixture:fixture@ep-qa.neon.tech/sprachspiel',NEON_AUTH_BASE_URL:'https://ep-qa.neonauth.eu.neon.tech/sprachspiel/auth',WORLDS_CLIENT_ID:'fixture',WORLDS_ISSUER:issuer,WORLDS_RESOURCE:origin+'/api'},query)!;
    await config.store.putSession(await hash(raw),{issuer,sub,csrf,name:'Central reader',email:'synthetic@fixture.invalid',authenticatedAt:Date.now(),expires:Date.now()+120_000});
-   const state={nativeCookie:true,nativeActive:true,nativePosts:0,signOuts:0},nativeCreatedAt=Date.now()-86_400_000,nativeExpiresAt=Date.now()+86_400_000;
+   const state={nativeCookie:!recover,nativeActive:!recover,nativePosts:0,signOuts:0};let nativeCreatedAt=Date.now()-86_400_000;const nativeExpiresAt=Date.now()+86_400_000;
    const cookie=()=>SESSION_COOKIE+'='+raw+(state.nativeCookie?'; __Secure-neon-auth.session_token=native-fixture':'');
    const modelRequest=(path:string,method='GET',body?:string)=>new Request(origin+path,{method,headers:{origin,cookie:cookie(),...(body!==undefined?{'content-type':'application/x-www-form-urlencoded'}:{})},...(body!==undefined?{body}:{})});
    const identity=(request:Request)=>resolveProjectIdentity(request,config,query,async()=>({user:state.nativeActive&&state.nativeCookie?{id,name:'Historical author'}:null,error:null}));
@@ -53,6 +53,12 @@ test('an existing owner confirms the link in DE and EN, keeps the same data with
     const path=new URL(route.request().url()).pathname;
     if(path.startsWith('/api/auth/')){
      if(route.request().method()!=='GET')state.nativePosts++;
+     if(path==='/api/auth/sign-in/email'){
+      const body=route.request().postDataJSON();expect(body.email).toBe('native@fixture.invalid');
+      if(body.password!=='Synthetic browser password!')return route.fulfill({status:401,json:{code:'INVALID_EMAIL_OR_PASSWORD',message:'Invalid email or password'}});
+      state.nativeCookie=true;state.nativeActive=true;nativeCreatedAt=Date.now();
+      return route.fulfill({json:{token:'synthetic-fixture-only',user:{id,name:'Historical author',email:'native@fixture.invalid',emailVerified:false}}});
+     }
      return route.fulfill({json:state.nativeActive&&state.nativeCookie?{session:{id:'native-fixture-session',userId:id,expiresAt:'2099-01-01T00:00:00Z'},user:{id,name:'Historical author',email:'native@fixture.invalid',emailVerified:false}}:null});
     }
     if(path==='/api/me/entries')return route.fulfill({json:{entries:(await identity(modelRequest('/api/me/entries'))).user?.id===id?[entry]:[],more:false}});
@@ -77,10 +83,27 @@ test('an existing owner confirms the link in DE and EN, keeps the same data with
     const result=await handle(modelRequest(incoming.pathname+incoming.search,route.request().method(),route.request().method()==='POST'?route.request().postData()??'':undefined));
     return route.fulfill({status:result.status,headers:Object.fromEntries(result.headers),body:await result.text()});
    });
-   await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
-   await page.getByRole('button',{name:locale.toUpperCase(),exact:true}).click();
-   const account=page.getByRole('link',{name:locale==='en'?'Worlds account':'Worlds-Konto',exact:true});
-   await expect(account).toHaveAttribute('href',new RegExp('/auth/worlds'+(locale==='en'?'-en':'')+'\\?next=%2Fme'));await account.click();
+   if(recover){
+    await page.goto('/auth/worlds'+(locale==='en'?'-en':'')+'?next=%2Fme');
+    await page.getByRole('link',{name:locale==='en'?'I already have a Sprachwelten account':'Ich habe bereits ein Sprachwelten-Konto'}).click();
+    const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
+    await dialog.locator('input[name="email"]').fill('native@fixture.invalid');await dialog.locator('input[name="password"]').fill('Wrong synthetic password!');
+    await dialog.locator('button[type="submit"],form button').click();await expect(dialog.getByRole('alert')).toHaveText(locale==='en'?'Invalid email or password':'E-Mail oder Passwort ist nicht korrekt.');
+    const other=locale==='en'?'de':'en';await dialog.getByRole('button',{name:other.toUpperCase(),exact:true}).click();
+    await expect(dialog.locator('input[name="email"]')).toHaveValue('native@fixture.invalid');await expect(dialog.locator('input[name="password"]')).toHaveValue('Wrong synthetic password!');
+    await expect(dialog.getByRole('alert')).toHaveText(other==='en'?'Invalid email or password':'E-Mail oder Passwort ist nicht korrekt.');
+    await dialog.getByRole('button',{name:locale.toUpperCase(),exact:true}).click();
+    await expect(dialog.getByRole('button',{name:locale==='en'?'Create an account':'Jetzt registrieren',exact:true})).toHaveCount(0);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+    await page.screenshot({path:info.outputPath('managed-recovery-'+locale+'.png'),fullPage:true});
+    await dialog.locator('input[name="password"]').fill('Synthetic browser password!');await dialog.locator('form button').click();
+    await expect(page).toHaveURL(new RegExp('/auth/worlds'+(locale==='en'?'-en':'')+'\\?next=%2Fme'));
+   }else{
+    await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:locale.toUpperCase(),exact:true}).click();
+    const account=page.getByRole('link',{name:locale==='en'?'Worlds account':'Worlds-Konto',exact:true});
+    await expect(account).toHaveAttribute('href',new RegExp('/auth/worlds'+(locale==='en'?'-en':'')+'\\?next=%2Fme'));await account.click();
+   }
    await page.getByRole('button',{name:locale==='en'?'Keep your existing account':'Bisheriges Konto übernehmen',exact:true}).click();
    await expect(page.getByText('Historical author',{exact:true})).toBeVisible();await expect(page.getByText('Central reader',{exact:true})).toBeVisible();
    await expect(page.locator('input[type="email"],input[type="password"],input[name="id"],input[name="subject"]')).toHaveCount(0);
@@ -97,7 +120,7 @@ test('an existing owner confirms the link in DE and EN, keeps the same data with
    state.nativeCookie=true;await page.goto('/me');await expect(page.locator('.header form[action^="/auth/logout"]')).toBeVisible();
    await page.locator('.header form[action^="/auth/logout"] button').click();
    await expect(page.locator('a.login-button')).toBeVisible();await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toHaveCount(0);
-   expect(state.signOuts).toBe(1);expect(state.nativePosts).toBe(0);
+   expect(state.signOuts).toBe(1);expect(state.nativePosts).toBe(recover?2:0);
    expect(await query('SELECT local_user_id FROM worlds_identity_links WHERE subject=$1',[sub])).toEqual([{local_user_id:id}]);
    expect(await query('SELECT author_id FROM content_entries WHERE id=$1',[entryId])).toEqual([{author_id:id}]);
    expect(await query('SELECT (SELECT count(*) FROM neon_auth."user")::int AS native,(SELECT count(*) FROM worlds_project_accounts)::int AS profiles,(SELECT count(*) FROM worlds_link_audit)::int AS audit',[])).toEqual([{native:1,profiles:1,audit:1}]);

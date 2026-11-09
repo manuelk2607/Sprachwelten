@@ -1,5 +1,49 @@
 # Sprachwelten – Fortsetzungsstand, 29. Oktober 2026
 
+## Einmalige Bestätigung abgelaufener Bestandsanmeldungen – 09.11.2026
+
+Der isolierte Worlds-Modus bietet nicht verknüpften Nutzern jetzt zuerst
+„Ich habe bereits ein Sprachwelten-Konto“. Die private Seite `/worlds-migration`
+verwendet den vorhandenen Auth-Dialog und das vorhandene Managed-Auth-SDK für
+die einmalige bisherige Anmeldung oder Passwortwiederherstellung. Keine weitere
+Registrierung und keine neue Auth-Bibliothek. Der reguläre Login bleibt ein
+Worlds-Link. Für noch gültige bisherige Sitzungen bleibt die direkte Übernahme
+ohne neue Passworteingabe erhalten. Alte Adminsitzungen erhalten einen konkreten
+Weg zur verlangten frischen Bestätigung.
+
+Ein eigener read-only Endpunkt prüft die gültige zentrale Projektsitzung und
+verweigert das Formular bei bereits bestehender oder gesperrter Zuordnung.
+Die Seite allein authentifiziert keine Kontoinhaber und schreibt keine Zuordnung.
+Nach erfolgreicher bisheriger Anmeldung geht es zur vorhandenen ausdrücklichen
+Verbindungsbestätigung: Beide Nachweise werden erneut geprüft, bestehende IDs,
+Sperren, Rollen und Daten bleiben maßgeblich. Rücksprünge sind auf bestehende
+Projektpfade begrenzt. Keine Zusammenführung anhand von Namen oder E-Mail.
+
+DE/EN ist im Dialog per Tastatur und mit 44-px-Zielen erreichbar; Umschalten
+erhält Eingaben und übersetzt auch bereits angezeigte Meldungen. Reset-Tokens
+werden sofort aus der Adresse entfernt und nur im Komponentenspeicher gehalten.
+Bei fehlender zentraler Sitzung muss erst die Worlds-Anmeldung erneuert und
+gegebenenfalls ein neuer Wiederherstellungslink angefordert werden; kein Token
+wird dafür in Browser-Speicher oder über eine Anmeldeweiterleitung übernommen.
+Private Metadaten, unveränderte Gestaltung und gespeicherte Sprache/Design gelten
+auch hier. Kein Slop-Passwortflow und keine Produktionsänderung.
+
+Lokal bestanden **217 Unit-Tests**, Typen, Lint, DE/EN-Abdeckung, vollständiger
+Dependency-Audit, Offline-Build und **36 Worlds-Browserfälle** in Chromium und
+WebKit bei 320/1280 px. Die Browserfälle kombinieren die echte React-Oberfläche
+mit tatsächlichen Übernahme-Controllern/SQL und synthetischer Authentifizierung:
+abgelaufene Anmeldung, falsches Passwort, Sprachwechsel, Reset, ausbleibende
+Registrierung, gleiche historische Daten nach Verknüpfung und beide lokalen
+Abmeldungen. Fehlende/verknüpfte Sitzung, Ausfall und sichere Rücksprünge geprüft;
+Screenshots auf Mobil/Desktop gesichtet. Echte Native-QA und vollständige CI
+werden für den geprüften Commit ausgeführt. Produktion bleibt unverändert.
+
+Weiter offen: reale zentrale Browserabnahme im eigenen Sprachwelten-Piloten,
+kontrollierte Stilllegung neuer lokaler Anmeldungen für verknüpfte Konten,
+unveränderte ursprüngliche Laufzeit bestehender Übergangssitzungen sowie die
+projektübergreifende globale Abmeldung. Die echte QA erweitert ihren bereits
+vorhandenen Native-Nachweis um die Berechtigungsprüfung vor/nach der Übernahme.
+
 ## HTTP-Übernahme und gemeinsamer lokaler Logout – geprüfter Testzweig
 
 Der isolierte Worlds-Modus ergänzt CSRF-geschützte Schritte zum Vorbereiten und

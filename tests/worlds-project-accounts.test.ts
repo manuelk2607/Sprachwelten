@@ -32,6 +32,21 @@ async function fixture(){
  const request=(path='/auth/worlds/profile?locale=en',form:URLSearchParams=new URLSearchParams({csrf}),headers:Record<string,string>={})=>new Request(origin+path,{method:'POST',headers:{origin,cookie:SESSION_COOKIE+'='+raw,...headers},body:form});
  return {db,query,legacy,entry,before,contents,grants,config,raw,csrf,sub,key,request};
 }
+test('migration eligibility requires its own active central session, refuses existing mappings and never changes account data',async()=>{
+ const f=await fixture();try{
+  const request=(cookie=SESSION_COOKIE+'='+f.raw)=>new Request(origin+'/auth/worlds/recovery',{headers:{cookie}});
+  let response=await worldsRoute(request(),f.config,f.query,false);assert.equal(response.status,200);assert.deepEqual(await response.json(),{eligible:true});assert.equal(response.headers.get('cache-control'),'no-store');
+  response=await worldsRoute(request(''),f.config,f.query,false);assert.equal(response.status,401);assert.deepEqual(await response.json(),{eligible:false});
+  assert.equal((await worldsRoute(new Request(origin+'/auth/worlds/recovery',{method:'POST'}),f.config,f.query,false)).status,405);
+  assert.equal((await worldsRoute(new Request('https://foreign.test/auth/worlds/recovery',{headers:{cookie:SESSION_COOKIE+'='+f.raw}}),f.config,f.query,false)).status,404);
+  await f.query('UPDATE worlds_identity_links SET subject=$1 WHERE local_user_id=$2',[f.sub,f.legacy]);
+  response=await worldsRoute(request(),f.config,f.query,false);assert.equal(response.status,409);assert.deepEqual(await response.json(),{eligible:false});
+  await f.query('UPDATE worlds_project_accounts SET disabled=true WHERE id=$1',[f.legacy]);
+  assert.equal((await worldsRoute(request(),f.config,f.query,false)).status,409);
+  assert.deepEqual(await f.query('SELECT * FROM neon_auth."user"',[]),f.before);assert.deepEqual(await f.query('SELECT * FROM content_entries',[]),f.contents);assert.deepEqual(await f.query('SELECT * FROM app_admins',[]),f.grants);
+  assert.equal((await f.query('SELECT count(*)::int AS n FROM worlds_link_audit',[]))[0].n,0);
+ }finally{await f.db.close();}
+});
 test('migration retains native UUID, existing mapping, content ownership and roles without changing native Auth',async()=>{
  const f=await fixture();try{
   assert.deepEqual(await f.query('SELECT * FROM neon_auth."user"',[]),f.before);

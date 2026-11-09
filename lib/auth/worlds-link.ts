@@ -11,3 +11,6 @@ export function worldsProjectReturn(locale:Locale,next?:string|null){
 export function worldsAccountHref(locale:Locale,next?:string){
  return (locale==='en'?'/auth/worlds-en':'/auth/worlds')+'?'+new URLSearchParams({next:worldsProjectReturn(locale,next)});
 }
+export function worldsRecoveryHref(locale:Locale,next?:string){
+ return '/worlds-migration?'+new URLSearchParams({lang:locale,next:worldsProjectReturn(locale,next)});
+}

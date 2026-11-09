@@ -17,7 +17,7 @@ async function handle(request: Request) {
   let response: Response;
   if (!config || url.origin !== config.origin || !worldsPaths.includes(url.pathname)) response = new Response(null, {status: 404});
   else if((url.pathname==='/auth/worlds/profile'||worldsManagedLinkPaths.includes(url.pathname))&&request.method!=='POST')response=new Response(null,{status:405});
-  else if(['/auth/status','/auth/worlds','/auth/worlds-en'].includes(url.pathname)&&request.method!=='GET')response=new Response(null,{status:405});
+  else if(['/auth/status','/auth/worlds','/auth/worlds-en','/auth/worlds/recovery'].includes(url.pathname)&&request.method!=='GET')response=new Response(null,{status:405});
   else {
     try {
       const ip = await hashToken(request.headers.get("cf-connecting-ip") ?? "local");
@@ -29,6 +29,8 @@ async function handle(request: Request) {
           const headers=new Headers(request.headers);headers.set('content-type','application/json');headers.delete('content-length');
           return getAuth().handler().POST(new Request(new URL('/api/auth/sign-out',request.url),{method:'POST',headers,body:'{}'}),{params:Promise.resolve({path:['sign-out']})});
         });
+      }else if(url.pathname==='/auth/worlds/recovery'){
+        response=await worldsRoute(request,config,worldsQuery,false);
       }else if(url.pathname==='/auth/status'){
         const status=projectStatus(await projectIdentity(request));
         if(status.source==='legacy')status.csrf=(await worldsSession(request,config))?.csrf;

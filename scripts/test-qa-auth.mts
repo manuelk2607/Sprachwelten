@@ -1,7 +1,7 @@
 import {loadManagedOwner} from '../lib/auth/managed-owner.ts';
 import {SESSION_COOKIE,token} from '@worlds-hub/auth';
 import {hash} from '@worlds-hub/auth/store';
-import {createWorldsConfig} from '../lib/auth/worlds.ts';
+import {createWorldsConfig,worldsRoute} from '../lib/auth/worlds.ts';
 import {managedLinkRoute} from '../lib/auth/worlds-managed-link.ts';
 import {projectLogout} from '../lib/auth/worlds-logout.ts';
 import assert from "node:assert/strict";
@@ -68,6 +68,9 @@ async function verifyWorldsMapping(userId: string) {
     const owner=async()=>{const current=await loadManagedOwner(ownerRequest(),settings,query);assert.equal(current.proof.accountId,userId);assert.equal(current.proof.privileged,false);return current;};
     const sourceSnapshot=()=>sql`SELECT id,"userId","createdAt","expiresAt" FROM neon_auth.session WHERE "userId"=${userId} ORDER BY id`;
     const originalSessions=await sourceSnapshot();assert.ok(originalSessions.length>0);
+    const recoveryRequest=new Request(origin+'/auth/worlds/recovery',{headers:{cookie:SESSION_COOKIE+'='+bff}});
+    const recovery=await worldsRoute(recoveryRequest,config,query,false);
+    assert.equal(recovery.status,200);assert.deepEqual(await recovery.json(),{eligible:true});
     // Central proof remains synthetic here; native ownership is validated by
     // the actual managed provider before both HTTP controller actions. These
     // are direct local Request objects, not callbacks/cookies sent to the IdP.
@@ -78,6 +81,8 @@ async function verifyWorldsMapping(userId: string) {
     assert.equal(confirmations.find(result=>result.status===303)?.headers.get('location'),'/me');
     assert.equal((await sql`SELECT local_user_id FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`)[0].local_user_id,userId);
     assert.equal((await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`)[0].n,1);
+    const linkedRecovery=await worldsRoute(recoveryRequest,config,query,false);
+    assert.equal(linkedRecovery.status,409);assert.deepEqual(await linkedRecovery.json(),{eligible:false});
     assert.deepEqual(await sourceSnapshot(),originalSessions,'Ownership checks must not create, replace or extend native sessions');
     console.log('PASS: actual HTTP takeover controller validates the existing owner with the official SDK, confirms once concurrently and preserves native IDs/creation/expiry without an extra login. Central BFF is synthetic.');
     await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)

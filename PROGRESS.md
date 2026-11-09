@@ -29,8 +29,14 @@ Die separate, befristete QA-Integration prüft zusätzlich tatsächliche
 Beitragsrouten mit einem synthetischen nativen Konto und einer Worlds-Zuordnung:
 Erstellen, Lesen, Bearbeiten, Entfernen und Sitzungswiderruf unter derselben UUID.
 Ein gesonderter Loopback-Server führt außerdem `npm run test:integration` gegen
-Managed Auth und die echte QA-Datenbank aus. Diese neuen externen Prüfungen sind
-vorerst **ausstehend**, ebenso die vollständige GitHub-CI des neuen Codes.
+Managed Auth und die echte QA-Datenbank aus. Beide Prüfungen sind jetzt erfolgreich: Code `13fb704` auf
+`feature/worlds-hub-sso`, vollständige CI `42519675450` mit **200 Unit- und
+154 bisherigen + 8 neuen Browserfällen**; echte separate QA-Integration
+`42519682396`. Tatsächliche Route-/PostgreSQL-Prüfung bestätigt unveränderte
+UUID, Beitragseigentum, Bearbeiten/Entfernen, Heftzuordnung und Widerruf ohne
+Gast-Fallback. Der laufende Loopback-Server bestand zusätzlich den kompletten
+HTTP-Test mit echtem Managed Auth und den bisherigen Spiel-/Beitragsabläufen.
+Es wurden ausschließlich synthetische Fixtures im befristeten QA-Zweig verwendet.
 
 Keine Produktionskonfiguration, Migration oder Kontozuordnung geändert. Noch
 offen: echte zentrale Browseranmeldung in Sprachwelten, kontrollierte Übernahme

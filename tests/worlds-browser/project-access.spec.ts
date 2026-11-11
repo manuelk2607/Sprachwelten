@@ -10,11 +10,12 @@ const user={id:'10000000-0000-4000-8000-000000000001',name:'Existing Worlds auth
 const entry={...entryInput.parse({kind:'word',phrase:'Unchanged original contribution',language:'de',literal:'Unchanged counterpart'}),
  id:'10000000-0000-4000-8000-000000000002',status:'community',authorName:'',createdAt:'2026-01-01T00:00:00Z',revision:0};
 async function fixture(page:Page,options:{nativeUser?:typeof user;source?:'legacy'|'worlds'}={}){
- const state:{active:boolean;outage:boolean;nativePosts:number;logout:boolean;source:'legacy'|'worlds'}={active:true,outage:false,nativePosts:0,logout:false,source:options.source??'worlds'};
+ const state:{active:boolean;outage:boolean;nativePosts:number;nativeReads:number;logout:boolean;source:'legacy'|'worlds'}={active:true,outage:false,nativePosts:0,nativeReads:0,logout:false,source:options.source??'worlds'};
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname;
   if(path.startsWith('/api/auth/')){
    if(route.request().method()!=='GET')state.nativePosts++;
+   else state.nativeReads++;
    if(path==='/api/auth/get-session'&&options.nativeUser)return route.fulfill({json:{session:{id:'cached-native-fixture',userId:options.nativeUser.id,expiresAt:'2099-01-01T00:00:00Z',token:'synthetic-browser-cache-only'},user:{...options.nativeUser,email:'cached@fixture.invalid',emailVerified:false,createdAt:'2026-01-01T00:00:00Z',updatedAt:'2026-01-01T00:00:00Z'}}});
    return route.fulfill({json:null});
   }
@@ -71,8 +72,7 @@ test('a stale native browser identity cannot mask the server-selected Worlds acc
  await page.clock.install();
  const staleUser={id:'10000000-0000-4000-8000-000000000099',name:'Stale native owner'};
  const state=await fixture(page,{nativeUser:staleUser});
- const cached=page.waitForResponse(response=>response.url().includes('/api/auth/get-session'));
- await page.goto('/profile');await cached;
+ await page.goto('/profile');
  await expect(page.getByText(user.name,{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'EN',exact:true}).click();
  await expect(page.getByRole('link',{name:'Manage account in Worlds Hub',exact:true})).toBeVisible();
@@ -89,7 +89,7 @@ test('a stale native browser identity cannot mask the server-selected Worlds acc
  await expect(page.locator('a.login-button')).toHaveAttribute('href',/\/auth\/start\?/);
  expect(new URL((await page.locator('a.login-button').getAttribute('href'))!,'https://fixture.test').searchParams.get('next')).toBe('/me');
  await expect(page.locator('.header .admin-link')).toHaveCount(0);
- expect(state.nativePosts).toBe(0);
+ expect(state.nativePosts).toBe(0);expect(state.nativeReads).toBe(0);
 });
 
 test('the server-selected existing managed account remains visible even while the browser SDK reports no session',async({page})=>{

@@ -5,6 +5,7 @@ import { createWorldsConfig } from "./worlds";
 import {resolveProjectIdentity,requireProjectUser} from "./project-identity";
 import {loadManagedOwner} from './managed-owner';
 import type {AuthConfig} from '@worlds-hub/auth';
+import {managedTransitionIdentity} from './managed-transition';
 
 export const worldsQuery: PgQuery = async (text, values) => database().query(text, values);
 export const worldsConfig = () => createWorldsConfig(process.env, worldsQuery);
@@ -12,7 +13,9 @@ export const projectManagedOwner=(request:Request,config:AuthConfig)=>loadManage
  {origin:config.origin,issuer:process.env.NEON_AUTH_BASE_URL!,cookieSecret:process.env.NEON_AUTH_COOKIE_SECRET!},worldsQuery);
 
 export async function projectIdentity(request:Request){
-  return resolveProjectIdentity(request,worldsConfig(),worldsQuery,async()=>{
+  const config=worldsConfig();
+  return resolveProjectIdentity(request,config,worldsQuery,async()=>{
+    if(config)return managedTransitionIdentity(request,{origin:config.origin,issuer:process.env.NEON_AUTH_BASE_URL!,cookieSecret:process.env.NEON_AUTH_COOKIE_SECRET!},worldsQuery);
     const {data,error}=await getAuth().getSession();
     return {user:data?.user,error};
   });

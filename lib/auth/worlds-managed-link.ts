@@ -25,6 +25,8 @@ export async function managedLinkRoute(request:Request,config:AuthConfig,query:P
   if(form.get('csrf')!==current.csrf)return authError(locale,'Diese Anfrage ist nicht erlaubt.',403,next);
   if(confirm&&!/^[A-Za-z0-9_-]{32,128}$/.test(form.get('proof')??''))return authError(locale,'Die Bestätigung ist abgelaufen oder passt nicht mehr zu deinen Konten. Bitte starte die Übernahme erneut.',409,next);
   const central=await centralProof(request,config),owner=await loadOwner(),store=new PostgresLinkStore(query);
+  const [existing]=await query('SELECT legacy_login_eligible FROM worlds_project_accounts WHERE id=$1::uuid',[owner.proof.accountId]);
+  if(existing?.legacy_login_eligible!==true)return authError(locale,'Dieses Sprachwelten-Profil ist nicht verfügbar. Bitte wende dich an die Administration.',403,next);
   const mapped=await mappedProjectAccount(current,query);
   if(mapped&&(!mapped.active||mapped.id!==owner.proof.accountId))return authError(locale,'Dieses Worlds-Konto ist bereits einem anderen oder gesperrten Sprachwelten-Profil zugeordnet. Es werden keine Konten zusammengeführt.',409,next);
   if(confirm){

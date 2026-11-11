@@ -1,8 +1,9 @@
-import {projectIdentity} from "@/lib/auth/learning-session";
+import {projectIdentity,worldsConfig,worldsQuery} from "@/lib/auth/learning-session";
 import {requireProjectUser} from "@/lib/auth/project-identity";
 import {GameError} from "@/lib/game";
 import { updateOwnProfile, accountMutationSchema } from "@/lib/profile-handler";
 import { getAuth } from "@/lib/auth/server";
+import {nativeTransitionRoute} from '@/lib/auth/native-transition-route';
 type Handler = (
   request: Request,
   context: { params: Promise<{ path: string[] }> },
@@ -10,6 +11,12 @@ type Handler = (
 const handler =
   (method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"): Handler =>
   async (request, context) => {
+    const config=worldsConfig();
+    if(config){
+      try{return await nativeTransitionRoute(request,(await context.params).path.join('/'),config,worldsQuery,
+        (validated,override)=>getAuth().handler()[method](validated,override?{params:Promise.resolve({path:override.split('/')})}:context));}
+      catch{return Response.json({code:'IDENTITY_UNAVAILABLE',message:'Die Anmeldung ist gerade nicht erreichbar.'},{status:503,headers:{'cache-control':'no-store'}});}
+    }
     const schema = accountMutationSchema((await context.params).path);
     if (schema)
       return updateOwnProfile(

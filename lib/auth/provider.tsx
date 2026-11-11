@@ -18,12 +18,13 @@ export function AuthProvider({ children, worldsEnabled = false }: { children: Re
   const [session, setSession] = useState<AuthSession['data']>(null);
   const [worldsIdentity,setWorldsIdentity]=useState<ProjectStatus>({user:null,source:'anonymous'});
   useEffect(() => {
+    if(worldsEnabled)return;
     let active = true;
     getAuthClient().then(client => { if (active) setClient(() => client); }).catch(() => {
       // Guest browsing remains usable; login retries and reports any load error.
     });
     return () => { active = false; };
-  }, []);
+  }, [worldsEnabled]);
   useEffect(() => {
     if (!worldsEnabled) return;
     const controller=new AbortController();
@@ -50,8 +51,8 @@ export function AuthProvider({ children, worldsEnabled = false }: { children: Re
     const interval=window.setInterval(visibleRefresh,60_000);
     return()=>{controller.abort();window.clearInterval(interval);window.removeEventListener('focus',visibleRefresh);document.removeEventListener('visibilitychange',visibleRefresh);};
   }, [worldsEnabled,session]);
-  return <SessionContext.Provider value={session}>
-    {client && <SessionObserver client={client} update={setSession}/>}
+  return <SessionContext.Provider value={worldsEnabled?null:session}>
+    {!worldsEnabled && client && <SessionObserver client={client} update={setSession}/>}
     <WorldsContext.Provider value={{enabled:worldsEnabled,...worldsIdentity}}>{children}</WorldsContext.Provider>
   </SessionContext.Provider>;
 }

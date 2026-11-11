@@ -1,14 +1,25 @@
-import {loadManagedOwner} from '../lib/auth/managed-owner.ts';
-import {SESSION_COOKIE,token} from '@worlds-hub/auth';
-import {hash} from '@worlds-hub/auth/store';
-import {createWorldsConfig,worldsRoute} from '../lib/auth/worlds.ts';
-import {managedLinkRoute} from '../lib/auth/worlds-managed-link.ts';
-import {projectLogout} from '../lib/auth/worlds-logout.ts';
+import { loadManagedOwner } from "../lib/auth/managed-owner.ts";
+import { SESSION_COOKIE, token } from "@worlds-hub/auth";
+import { hash } from "@worlds-hub/auth/store";
+import { createWorldsConfig, worldsRoute } from "../lib/auth/worlds.ts";
+import { managedLinkRoute } from "../lib/auth/worlds-managed-link.ts";
+import { projectLogout } from "../lib/auth/worlds-logout.ts";
+import { managedTransitionIdentity } from "../lib/auth/managed-transition.ts";
+import { nativeTransitionRoute } from "../lib/auth/native-transition-route.ts";
+import { prepareLegacyProjectAccount } from "../lib/auth/project-accounts.ts";
+import {
+  handleAuthProxyRequest,
+  NEON_AUTH_SESSION_COOKIE_NAME,
+  resolveNeonAuthLogging,
+} from "@neondatabase/auth/server";
 import assert from "node:assert/strict";
 import { neon } from "@neondatabase/serverless";
-import { isolatedAuthTarget, isolatedDatabaseTarget } from "../lib/qa-target.ts";
+import {
+  isolatedAuthTarget,
+  isolatedDatabaseTarget,
+} from "../lib/qa-target.ts";
 import { z } from "zod";
-import {verifyWorldsProjectAccess} from "./test-worlds-project-access.mts";
+import { verifyWorldsProjectAccess } from "./test-worlds-project-access.mts";
 
 const base = isolatedAuthTarget(process.env).href;
 const cookies = new Map<string, string>();
@@ -49,42 +60,325 @@ async function verifyWorldsMapping(userId: string) {
   const subject = crypto.randomUUID();
   const notebook = crypto.randomUUID();
   const proof = crypto.randomUUID();
-  const bff=token(),bffKey=await hash(bff),csrf=token();
+  const bff = token(),
+    bffKey = await hash(bff),
+    csrf = token();
+  const deniedBff = token(),
+    deniedBffKey = await hash(deniedBff);
+  const extraDevices: string[] = [];
+  const newDevice = async () => {
+    const result = await fetch(base + "/sign-in/email", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: new URL(base).origin,
+      },
+      body: JSON.stringify({ email, password }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    assert.equal(result.status, 200);
+    const own = result.headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .filter((value) => value.startsWith(NEON_AUTH_SESSION_COOKIE_NAME + "="));
+    assert.equal(own.length, 1);
+    const cookie = own[0];
+    extraDevices.push(cookie);
+    await result.arrayBuffer();
+    return cookie;
+  };
+  const endDevice = async (cookie: string) => {
+    const result = await fetch(base + "/sign-out", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: new URL(base).origin,
+        cookie,
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(30_000),
+    });
+    assert.ok(result.ok || result.status === 401);
+    await result.arrayBuffer();
+  };
   const insert = (iss: string, sub: string, id: string) =>
     sql`INSERT INTO worlds_identity_links (issuer, subject, local_user_id)
         VALUES (${iss}, ${sub}, ${id}::uuid)`;
   try {
-    const query=(text:string,values:unknown[])=>sql.query(text,values);
+    const query = (text: string, values: unknown[]) => sql.query(text, values);
     // Provider-origin requests use only this disposable QA account's own
     // existing cookies. No new sign-in and no provider configuration change.
-    const native=isolatedAuthTarget(process.env),origin=native.origin;
-    const settings={origin,issuer:native.href,cookieSecret:crypto.randomUUID()+crypto.randomUUID()};
-    const ownerRequest=()=>new Request(origin+'/qa-managed-owner',{method:'POST',headers:{origin,cookie:[...cookies].map(([key,value])=>key+'='+value).join('; ')}});
-    const config=createWorldsConfig({WORLDS_PILOT_ENABLED:'true',WORLDS_PILOT_ORIGIN:origin,WORLDS_PILOT_DATABASE_HOST:isolatedDatabaseTarget(process.env).hostname,
-      DATABASE_URL:process.env.DATABASE_URL,NEON_AUTH_BASE_URL:native.href.replace(/\/$/,''),WORLDS_CLIENT_ID:'synthetic-controller-client',WORLDS_ISSUER:issuer,WORLDS_RESOURCE:origin+'/api'},query);
+    const native = isolatedAuthTarget(process.env),
+      origin = native.origin;
+    const settings = {
+      origin,
+      issuer: native.href,
+      cookieSecret: crypto.randomUUID() + crypto.randomUUID(),
+    };
+    const ownerRequest = () =>
+      new Request(origin + "/qa-managed-owner", {
+        method: "POST",
+        headers: {
+          origin,
+          cookie: [...cookies]
+            .map(([key, value]) => key + "=" + value)
+            .join("; "),
+        },
+      });
+    const config = createWorldsConfig(
+      {
+        WORLDS_PILOT_ENABLED: "true",
+        WORLDS_PILOT_ORIGIN: origin,
+        WORLDS_PILOT_DATABASE_HOST: isolatedDatabaseTarget(process.env)
+          .hostname,
+        DATABASE_URL: process.env.DATABASE_URL,
+        NEON_AUTH_BASE_URL: native.href.replace(/\/$/, ""),
+        WORLDS_CLIENT_ID: "synthetic-controller-client",
+        WORLDS_ISSUER: issuer,
+        WORLDS_RESOURCE: origin + "/api",
+      },
+      query,
+    );
     assert.ok(config);
-    await config.store.putSession(bffKey,{issuer,sub:subject,csrf,name:'QA central fixture',email:'synthetic@sprachwelten.invalid',authenticatedAt:Date.now(),expires:Date.now()+120_000});
-    const linkRequest=(action:string,form:URLSearchParams)=>new Request(origin+'/auth/'+(action==='logout'?'logout':'worlds/'+action)+'?locale=en&next=%2Fme',{method:'POST',headers:{origin,cookie:SESSION_COOKIE+'='+bff+'; '+[...cookies].map(([key,value])=>key+'='+value).join('; ')},body:form});
-    const owner=async()=>{const current=await loadManagedOwner(ownerRequest(),settings,query);assert.equal(current.proof.accountId,userId);assert.equal(current.proof.privileged,false);return current;};
-    const sourceSnapshot=()=>sql`SELECT id,"userId","createdAt","expiresAt" FROM neon_auth.session WHERE "userId"=${userId} ORDER BY id`;
-    const originalSessions=await sourceSnapshot();assert.ok(originalSessions.length>0);
-    const recoveryRequest=new Request(origin+'/auth/worlds/recovery',{headers:{cookie:SESSION_COOKIE+'='+bff}});
-    const recovery=await worldsRoute(recoveryRequest,config,query,false);
-    assert.equal(recovery.status,200);assert.deepEqual(await recovery.json(),{eligible:true});
+    // This user was deliberately created after migrations in an empty QA
+    // branch. Enroll exactly this disposable ID to model a pre-cutover account.
+    await prepareLegacyProjectAccount(userId, query);
+    await sql`UPDATE worlds_project_accounts SET legacy_login_eligible=true WHERE id=${userId} AND legacy_cutover_at IS NULL`;
+    await config.store.putSession(bffKey, {
+      issuer,
+      sub: subject,
+      csrf,
+      name: "QA central fixture",
+      email: "synthetic@sprachwelten.invalid",
+      authenticatedAt: Date.now(),
+      expires: Date.now() + 120_000,
+    });
+    const linkRequest = (action: string, form: URLSearchParams) =>
+      new Request(
+        origin +
+          "/auth/" +
+          (action === "logout" ? "logout" : "worlds/" + action) +
+          "?locale=en&next=%2Fme",
+        {
+          method: "POST",
+          headers: {
+            origin,
+            cookie:
+              SESSION_COOKIE +
+              "=" +
+              bff +
+              "; " +
+              [...cookies].map(([key, value]) => key + "=" + value).join("; "),
+          },
+          body: form,
+        },
+      );
+    const owner = async () => {
+      const current = await loadManagedOwner(ownerRequest(), settings, query);
+      assert.equal(current.proof.accountId, userId);
+      assert.equal(current.proof.privileged, false);
+      return current;
+    };
+    const sourceSnapshot = () =>
+      sql`SELECT id,"userId","createdAt","expiresAt" FROM neon_auth.session WHERE "userId"=${userId} ORDER BY id`;
+    const secondDevice = await newDevice();
+    const originalSessions = await sourceSnapshot();
+    assert.equal(originalSessions.length, 2);
+    const recoveryRequest = new Request(origin + "/auth/worlds/recovery", {
+      headers: { cookie: SESSION_COOKIE + "=" + bff },
+    });
+    const recovery = await worldsRoute(recoveryRequest, config, query, false);
+    assert.equal(recovery.status, 200);
+    assert.deepEqual(await recovery.json(), { eligible: true });
     // Central proof remains synthetic here; native ownership is validated by
     // the actual managed provider before both HTTP controller actions. These
     // are direct local Request objects, not callbacks/cookies sent to the IdP.
-    const staged=await managedLinkRoute(linkRequest('link',new URLSearchParams({csrf})),config,query,owner);
-    assert.equal(staged.status,200);const stagedProof=/name="proof" value="([A-Za-z0-9_-]+)"/.exec(await staged.text())?.[1];assert.ok(stagedProof);
-    const confirmations=await Promise.all([1,2].map(()=>managedLinkRoute(linkRequest('confirm',new URLSearchParams({csrf,proof:stagedProof})),config,query,owner)));
-    assert.deepEqual(confirmations.map(result=>result.status).sort(),[303,409]);
-    assert.equal(confirmations.find(result=>result.status===303)?.headers.get('location'),'/me');
-    assert.equal((await sql`SELECT local_user_id FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`)[0].local_user_id,userId);
-    assert.equal((await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`)[0].n,1);
-    const linkedRecovery=await worldsRoute(recoveryRequest,config,query,false);
-    assert.equal(linkedRecovery.status,409);assert.deepEqual(await linkedRecovery.json(),{eligible:false});
-    assert.deepEqual(await sourceSnapshot(),originalSessions,'Ownership checks must not create, replace or extend native sessions');
-    console.log('PASS: actual HTTP takeover controller validates the existing owner with the official SDK, confirms once concurrently and preserves native IDs/creation/expiry without an extra login. Central BFF is synthetic.');
+    const staged = await managedLinkRoute(
+      linkRequest("link", new URLSearchParams({ csrf })),
+      config,
+      query,
+      owner,
+    );
+    assert.equal(staged.status, 200);
+    const stagedProof = /name="proof" value="([A-Za-z0-9_-]+)"/.exec(
+      await staged.text(),
+    )?.[1];
+    assert.ok(stagedProof);
+    const confirmations = await Promise.all(
+      [1, 2].map(() =>
+        managedLinkRoute(
+          linkRequest(
+            "confirm",
+            new URLSearchParams({ csrf, proof: stagedProof }),
+          ),
+          config,
+          query,
+          owner,
+        ),
+      ),
+    );
+    assert.deepEqual(
+      confirmations.map((result) => result.status).sort(),
+      [303, 409],
+    );
+    assert.equal(
+      confirmations
+        .find((result) => result.status === 303)
+        ?.headers.get("location"),
+      "/me",
+    );
+    assert.equal(
+      (
+        await sql`SELECT local_user_id FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`
+      )[0].local_user_id,
+      userId,
+    );
+    assert.equal(
+      (
+        await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`
+      )[0].n,
+      1,
+    );
+    const linkedRecovery = await worldsRoute(
+      recoveryRequest,
+      config,
+      query,
+      false,
+    );
+    assert.equal(linkedRecovery.status, 409);
+    assert.deepEqual(await linkedRecovery.json(), { eligible: false });
+    assert.deepEqual(
+      await sourceSnapshot(),
+      originalSessions,
+      "Ownership checks must not create, replace or extend native sessions",
+    );
+    const nativeIdentity = (cookie: string) =>
+      managedTransitionIdentity(
+        new Request(origin + "/qa-transition", { headers: { cookie } }),
+        settings,
+        query,
+      );
+    assert.equal((await nativeIdentity(secondDevice)).user?.id, userId);
+    const retained =
+      await sql`SELECT session_hash,expires_at FROM worlds_legacy_sessions WHERE local_user_id=${userId}`;
+    assert.equal(retained.length, originalSessions.length);
+    for (const original of originalSessions) {
+      const expected = await hash(String(original.id)),
+        grant = retained.find((value) => value.session_hash === expected);
+      assert.ok(grant);
+      assert.equal(
+        new Date(String(grant.expires_at)).getTime(),
+        new Date(String(original.expiresAt)).getTime(),
+      );
+    }
+    const rawOwn = [...cookies]
+      .map(([key, value]) => key + "=" + value)
+      .join("; ");
+    assert.equal((await nativeIdentity(rawOwn)).user?.id, userId);
+    // Public native login can still issue its own cookie, but cannot reopen
+    // project access after the verified mapping. No native SQL is modified.
+    const laterDevice = await newDevice();
+    const later = await nativeIdentity(laterDevice);
+    assert.equal(later.user, null);
+    assert.equal(later.error, null);
+    let forwarded = false;
+    const blocked = await nativeTransitionRoute(
+      new Request(origin + "/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { origin, cookie: SESSION_COOKIE + "=" + bff },
+        body: "{}",
+      }),
+      "sign-in/email",
+      config,
+      query,
+      async () => {
+        forwarded = true;
+        return Response.json({});
+      },
+    );
+    assert.equal(blocked.status, 403);
+    assert.equal(forwarded, false);
+    await config.store.putSession(deniedBffKey, {
+      issuer,
+      sub: crypto.randomUUID(),
+      csrf: token(),
+      email: "other-synthetic@sprachwelten.invalid",
+      authenticatedAt: Date.now(),
+      expires: Date.now() + 120_000,
+    });
+    const beforeRejected = await sourceSnapshot();
+    const rejected = await nativeTransitionRoute(
+      new Request(origin + "/api/auth/sign-in/email", {
+        method: "POST",
+        headers: {
+          origin,
+          cookie: SESSION_COOKIE + "=" + deniedBff,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }),
+      "sign-in/email",
+      config,
+      query,
+      (r, override) =>
+        handleAuthProxyRequest({
+          request: r,
+          path: override ?? "sign-in/email",
+          baseUrl: native.href,
+          cookieSecret: settings.cookieSecret,
+          sessionDataTtl: 1,
+          log: resolveNeonAuthLogging({ logLevel: "silent" }),
+        }),
+    );
+    assert.equal(rejected.status, 403);
+    assert.equal(rejected.headers.has("set-cookie"), false);
+    assert.deepEqual(
+      await sourceSnapshot(),
+      beforeRejected,
+      "Rejected native target must remove exactly its newly issued session",
+    );
+    const observed = await nativeTransitionRoute(
+      new Request(origin + "/api/auth/get-session?disableRefresh=false", {
+        headers: {
+          cookie: rawOwn + "; __Secure-neon-auth.local.session_data=stale",
+        },
+      }),
+      "get-session",
+      config,
+      query,
+      (r) =>
+        handleAuthProxyRequest({
+          request: r,
+          path: "get-session",
+          baseUrl: native.href,
+          cookieSecret: settings.cookieSecret,
+          sessionDataTtl: 1,
+          log: resolveNeonAuthLogging({ logLevel: "silent" }),
+        }),
+    );
+    assert.equal(observed.status, 200);
+    await observed.arrayBuffer();
+    const afterRead = await sourceSnapshot();
+    for (const original of originalSessions)
+      assert.deepEqual(
+        afterRead.find((value) => value.id === original.id),
+        original,
+      );
+    const originalHash = await hash(String(originalSessions[0].id));
+    await sql`UPDATE worlds_legacy_sessions SET expires_at=now()-interval '1 second' WHERE local_user_id=${userId} AND session_hash=${originalHash}`;
+    // Model the application deadline on its own grant only; native original
+    // creation/expiry remain untouched. One device expires independently.
+    const firstIsOriginal = (await nativeIdentity(rawOwn)).user === null;
+    assert.equal(
+      (await nativeIdentity(secondDevice)).user === null,
+      !firstIsOriginal,
+    );
+    console.log(
+      "PASS: actual native devices retain fixed transition grants; later password login has no project identity, mapped native API login is denied, SDK proxy does not refresh and per-device application expiry is independent.",
+    );
+    console.log(
+      "PASS: actual HTTP takeover controller validates the existing owner with the official SDK, confirms once concurrently and preserves native IDs/creation/expiry without an extra login. Central BFF is synthetic.",
+    );
     await sql`INSERT INTO vocabulary_notebooks (id, owner_id, name, source_language, target_language)
               VALUES (${notebook}::uuid, ${userId}, 'QA Worlds', 'de', 'en')`;
     const rows = await sql`
@@ -93,36 +387,97 @@ async function verifyWorldsMapping(userId: string) {
       FROM worlds_identity_links link
       JOIN vocabulary_notebooks notebook ON notebook.owner_id=link.local_user_id::text
       WHERE link.issuer=${issuer} AND link.subject=${subject} AND notebook.id=${notebook}::uuid`;
-    assert.deepEqual(rows, [{local_user_id: userId, notebook_id: notebook, is_admin: false}]);
-    assert.equal((await sql`SELECT 1 FROM worlds_identity_links
-      WHERE issuer='https://other-qa.invalid/auth' AND subject=${subject}`).length, 0);
+    assert.deepEqual(rows, [
+      { local_user_id: userId, notebook_id: notebook, is_admin: false },
+    ]);
+    assert.equal(
+      (
+        await sql`SELECT 1 FROM worlds_identity_links
+      WHERE issuer='https://other-qa.invalid/auth' AND subject=${subject}`
+      ).length,
+      0,
+    );
 
-    await assert.rejects(() => insert(issuer, subject, userId), {code: "23505"});
-    await assert.rejects(() => insert(issuer, crypto.randomUUID(), userId), {code: "23505"});
-    await assert.rejects(() => insert(issuer, crypto.randomUUID(), crypto.randomUUID()), {code: "23503"});
+    await assert.rejects(() => insert(issuer, subject, userId), {
+      code: "23505",
+    });
+    await assert.rejects(() => insert(issuer, crypto.randomUUID(), userId), {
+      code: "23505",
+    });
+    await assert.rejects(
+      () => insert(issuer, crypto.randomUUID(), crypto.randomUUID()),
+      { code: "23503" },
+    );
     await sql`INSERT INTO worlds_link_proofs
       (proof_hash, issuer, subject, local_user_id, session_hash, expires_at)
       VALUES (${proof}, ${issuer}, ${subject}, ${userId}::uuid, 'fixture', now()+interval '1 minute')`;
-    await assert.rejects(async () => sql.transaction([
-      sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof}`,
-      insert(issuer, subject, userId),
-    ]), {code: "23505"});
-    assert.equal((await sql`SELECT 1 FROM worlds_link_proofs WHERE proof_hash=${proof}`).length, 1);
-    await verifyWorldsProjectAccess(userId,issuer,subject);
-    const signedOut=await projectLogout(linkRequest('logout',new URLSearchParams({csrf})),config,async()=>{const response=await request('/sign-out',{});return new Response(null,{status:response.status});});
-    assert.equal(signedOut.status,303);assert.equal(await config.store.getSession(bffKey),null);
-    assert.equal((await request('/get-session?disableCookieCache=true')).data?.user??null,null);
-    assert.equal((await sql`SELECT count(*)::int AS n FROM neon_auth.session WHERE "userId"=${userId}`)[0].n,0);
-    console.log('PASS: the local project logout ends the native fixture session and Worlds BFF; mapping, notebooks and contributions retain the historical owner.');
-    console.log("PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.");
+    await assert.rejects(
+      async () =>
+        sql.transaction([
+          sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof}`,
+          insert(issuer, subject, userId),
+        ]),
+      { code: "23505" },
+    );
+    assert.equal(
+      (await sql`SELECT 1 FROM worlds_link_proofs WHERE proof_hash=${proof}`)
+        .length,
+      1,
+    );
+    await verifyWorldsProjectAccess(userId, issuer, subject);
+    const signedOut = await projectLogout(
+      linkRequest("logout", new URLSearchParams({ csrf })),
+      config,
+      async () => {
+        const response = await request("/sign-out", {});
+        return new Response(null, { status: response.status });
+      },
+    );
+    assert.equal(signedOut.status, 303);
+    assert.equal(await config.store.getSession(bffKey), null);
+    assert.equal(
+      (await request("/get-session?disableCookieCache=true")).data?.user ??
+        null,
+      null,
+    );
+    for (const cookie of extraDevices) await endDevice(cookie);
+    extraDevices.length = 0;
+    assert.equal(
+      (
+        await sql`SELECT count(*)::int AS n FROM neon_auth.session WHERE "userId"=${userId}`
+      )[0].n,
+      0,
+    );
+    await config.store.revokeIdentity(issuer, subject);
+    assert.equal(
+      (
+        await sql`SELECT count(*)::int AS n FROM worlds_legacy_sessions WHERE local_user_id=${userId}`
+      )[0].n,
+      0,
+    );
+    console.log(
+      "PASS: the local project logout ends the native fixture session and Worlds BFF; mapping, notebooks and contributions retain the historical owner.",
+    );
+    console.log(
+      "PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.",
+    );
   } finally {
+    const ended = await Promise.allSettled(
+      extraDevices.map((cookie) => endDevice(cookie)),
+    );
     await sql.transaction([
+      sql`DELETE FROM worlds_legacy_sessions WHERE local_user_id=${userId}`,
       sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof} OR (issuer=${issuer} AND subject=${subject})`,
       sql`DELETE FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM worlds_auth_sessions WHERE id=${bffKey}`,
+      sql`DELETE FROM worlds_auth_sessions WHERE id=${deniedBffKey}`,
       sql`DELETE FROM vocabulary_notebooks WHERE id=${notebook}::uuid AND owner_id=${userId}`,
     ]);
+    assert.ok(
+      ended.every((result) => result.status === "fulfilled"),
+      "Disposable native device cleanup failed",
+    );
   }
 }
 

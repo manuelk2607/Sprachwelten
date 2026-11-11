@@ -1,5 +1,6 @@
 import {neon} from '@neondatabase/serverless';
 import {maintainAudio} from './audio-maintenance';
+import {maintainWorldsTransitions} from './transition-maintenance';
 
 export async function maintainDatabase(databaseUrl:string){
   const sql=neon(databaseUrl);
@@ -9,7 +10,8 @@ export async function maintainDatabase(databaseUrl:string){
     sql`DELETE FROM request_limits WHERE key IN (SELECT key FROM request_limits WHERE expires_at<now()-interval '1 day' ORDER BY expires_at LIMIT 1000) RETURNING key`,
     sql`DELETE FROM learning_attempts WHERE id IN (SELECT id FROM learning_attempts WHERE expires_at<now() ORDER BY expires_at LIMIT 1000) RETURNING id`,
   ]);
-  return {expiredRooms:rooms.length,expiredLimits:limits.length,expiredLearningAttempts:attempts.length};
+  const expiredWorldsTransitions=await maintainWorldsTransitions((text,values)=>sql.query(text,values));
+  return {expiredRooms:rooms.length,expiredLimits:limits.length,expiredLearningAttempts:attempts.length,expiredWorldsTransitions};
 }
 
 export async function maintainApplication(databaseUrl:string,bucket:R2Bucket){

@@ -8,6 +8,7 @@ import {createWorldsConfig,worldsRoute} from '../../lib/auth/worlds';
 import {resolveProjectIdentity,projectStatus} from '../../lib/auth/project-identity';
 import {managedLinkRoute} from '../../lib/auth/worlds-managed-link';
 import {projectLogout} from '../../lib/auth/worlds-logout';
+import {transitionUser} from '../../lib/auth/managed-transition';
 import {entryInput} from '../../lib/content';
 
 test('nested account actions actually reach the protected framework handler',async({request})=>{
@@ -26,17 +27,18 @@ for(const recover of [false,true])test((recover?'an expired owner first confirms
   const db=new PGlite();let relay:ReturnType<typeof createServer>|undefined;
   try{
    const id=crypto.randomUUID(),raw=token(),csrf=token(),sub=token(),entryId=crypto.randomUUID(),origin='https://sprach-pilot.test',issuer='https://central.test/auth';
-   await db.exec('CREATE SCHEMA neon_auth;CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text NOT NULL,banned boolean,"banExpires" timestamptz);CREATE TABLE app_admins(user_id uuid PRIMARY KEY);CREATE TABLE content_entries(id uuid PRIMARY KEY,author_id text);');
+   await db.exec('CREATE SCHEMA neon_auth;CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text NOT NULL,banned boolean,"banExpires" timestamptz);CREATE TABLE neon_auth.session(id text PRIMARY KEY,"userId" uuid,"createdAt" timestamptz,"expiresAt" timestamptz);CREATE TABLE app_admins(user_id uuid PRIMARY KEY);CREATE TABLE content_entries(id uuid PRIMARY KEY,author_id text);');
    await db.query('INSERT INTO neon_auth."user"(id,name) VALUES($1,$2)',[id,'Historical author']);
    await db.query('INSERT INTO content_entries VALUES($1,$2)',[entryId,id]);
-   for(const file of ['027_worlds_identity.sql','028_worlds_project_accounts.sql'])await db.exec(await readFile(new URL('../../db/migrations/'+file,import.meta.url),'utf8'));
+   for(const file of ['027_worlds_identity.sql','028_worlds_project_accounts.sql','029_worlds_legacy_sessions.sql'])await db.exec(await readFile(new URL('../../db/migrations/'+file,import.meta.url),'utf8'));
    const query=async(sql:string,params:unknown[])=>(await db.query<Record<string,unknown>>(sql,params)).rows;
    const config=createWorldsConfig({WORLDS_PILOT_ENABLED:'true',WORLDS_PILOT_ORIGIN:origin,WORLDS_PILOT_DATABASE_HOST:'ep-qa.neon.tech',DATABASE_URL:'postgres://fixture:fixture@ep-qa.neon.tech/sprachspiel',NEON_AUTH_BASE_URL:'https://ep-qa.neonauth.eu.neon.tech/sprachspiel/auth',WORLDS_CLIENT_ID:'fixture',WORLDS_ISSUER:issuer,WORLDS_RESOURCE:origin+'/api'},query)!;
    await config.store.putSession(await hash(raw),{issuer,sub,csrf,name:'Central reader',email:'synthetic@fixture.invalid',authenticatedAt:Date.now(),expires:Date.now()+120_000});
-   const state={nativeCookie:!recover,nativeActive:!recover,nativePosts:0,signOuts:0};let nativeCreatedAt=Date.now()-86_400_000;const nativeExpiresAt=Date.now()+86_400_000;
+   const state={nativeCookie:!recover,nativeActive:!recover,nativePosts:0,signOuts:0,nativeSessionId:'native-fixture-session'};let nativeCreatedAt=Date.now()-86_400_000;const nativeExpiresAt=Date.now()+86_400_000;
+   if(!recover)await query('INSERT INTO neon_auth.session VALUES($1,$2,$3,$4)',[state.nativeSessionId,id,new Date(nativeCreatedAt).toISOString(),new Date(nativeExpiresAt).toISOString()]);
    const cookie=()=>SESSION_COOKIE+'='+raw+(state.nativeCookie?'; __Secure-neon-auth.session_token=native-fixture':'');
    const modelRequest=(path:string,method='GET',body?:string)=>new Request(origin+path,{method,headers:{origin,cookie:cookie(),...(body!==undefined?{'content-type':'application/x-www-form-urlencoded'}:{})},...(body!==undefined?{body}:{})});
-   const identity=(request:Request)=>resolveProjectIdentity(request,config,query,async()=>({user:state.nativeActive&&state.nativeCookie?{id,name:'Historical author'}:null,error:null}));
+   const identity=(request:Request)=>resolveProjectIdentity(request,config,query,async()=>({user:state.nativeActive&&state.nativeCookie?await transitionUser({id,name:'Historical author',sessionId:state.nativeSessionId,createdAt:nativeCreatedAt,expiresAt:nativeExpiresAt,validatedAt:Date.now()},query):null,error:null}));
    const owner=async()=>{if(!state.nativeCookie||!state.nativeActive)throw new Error('No current native owner');return {name:'Historical author',proof:{kind:'managed-auth-session' as const,issuer:'https://native.test/auth',accountId:id,sessionId:'native-fixture-session',createdAt:nativeCreatedAt,expiresAt:nativeExpiresAt,validatedAt:Date.now(),privileged:false}};};
    const handle=async(request:Request)=>{
     const path=new URL(request.url).pathname;
@@ -57,6 +59,7 @@ for(const recover of [false,true])test((recover?'an expired owner first confirms
       const body=route.request().postDataJSON();expect(body.email).toBe('native@fixture.invalid');
       if(body.password!=='Synthetic browser password!')return route.fulfill({status:401,json:{code:'INVALID_EMAIL_OR_PASSWORD',message:'Invalid email or password'}});
       state.nativeCookie=true;state.nativeActive=true;nativeCreatedAt=Date.now();
+      await query('INSERT INTO neon_auth.session VALUES($1,$2,$3,$4)',[state.nativeSessionId,id,new Date(nativeCreatedAt).toISOString(),new Date(nativeExpiresAt).toISOString()]);
       return route.fulfill({json:{token:'synthetic-fixture-only',user:{id,name:'Historical author',email:'native@fixture.invalid',emailVerified:false}}});
      }
      return route.fulfill({json:state.nativeActive&&state.nativeCookie?{session:{id:'native-fixture-session',userId:id,expiresAt:'2099-01-01T00:00:00Z'},user:{id,name:'Historical author',email:'native@fixture.invalid',emailVerified:false}}:null});
@@ -116,6 +119,12 @@ for(const recover of [false,true])test((recover?'an expired owner first confirms
    await page.screenshot({path:info.outputPath('managed-link-'+locale+'.png'),fullPage:true});
    await page.getByRole('button',{name:locale==='en'?'Confirm link':'Verbindung bestätigen',exact:true}).click();
    await expect(page).toHaveURL(/\/me$/);await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();await expect(page.locator('html')).toHaveAttribute('lang',locale);await expect(page.locator('html')).toHaveAttribute('data-theme',chosenTheme!);
+   expect((await query('SELECT count(*)::int AS n FROM worlds_legacy_sessions WHERE local_user_id=$1',[id]))[0].n).toBe(1);
+   state.nativeSessionId='later-unretained-session';await page.goto('/me');
+   await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
+   await expect(page.getByRole('link',{name:locale==='en'?'Worlds account':'Worlds-Konto',exact:true})).toHaveCount(0);
+   expect((await identity(modelRequest('/api/me/entries'))).source).toBe('worlds');
+   state.nativeSessionId='native-fixture-session';
    state.nativeCookie=false;await page.goto('/me');await expect(page.getByText(entry.phrase,{exact:true})).toBeVisible();
    state.nativeCookie=true;await page.goto('/me');await expect(page.locator('.header form[action^="/auth/logout"]')).toBeVisible();
    await page.locator('.header form[action^="/auth/logout"] button').click();

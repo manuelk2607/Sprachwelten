@@ -11,11 +11,11 @@ import {resolveProjectIdentity} from '../lib/auth/project-identity';
 
 async function fixture(){
  const db=new PGlite(),id=crypto.randomUUID(),other=crypto.randomUUID(),raw=token(),csrf=token(),sub=token();
- await db.exec('CREATE SCHEMA neon_auth;CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text NOT NULL,banned boolean,"banExpires" timestamptz);CREATE TABLE app_admins(user_id uuid PRIMARY KEY);CREATE TABLE content_entries(id uuid PRIMARY KEY,author_id text);');
+ await db.exec('CREATE SCHEMA neon_auth;CREATE TABLE neon_auth."user"(id uuid PRIMARY KEY,name text NOT NULL,banned boolean,"banExpires" timestamptz);CREATE TABLE neon_auth.session(id text,"userId" uuid,"expiresAt" timestamptz);CREATE TABLE app_admins(user_id uuid PRIMARY KEY);CREATE TABLE content_entries(id uuid PRIMARY KEY,author_id text);');
  const query=async(sql:string,params:unknown[])=>(await db.query<Record<string,unknown>>(sql,params)).rows;
  await query('INSERT INTO neon_auth."user"(id,name) VALUES($1,$2),($3,$4)',[id,'Historical <owner>',other,'Other owner']);
  await query('INSERT INTO content_entries VALUES($1,$2)',[crypto.randomUUID(),id]);
- for(const file of ['027_worlds_identity.sql','028_worlds_project_accounts.sql'])await db.exec(await readFile(new URL('../db/migrations/'+file,import.meta.url),'utf8'));
+ for(const file of ['027_worlds_identity.sql','028_worlds_project_accounts.sql','029_worlds_legacy_sessions.sql'])await db.exec(await readFile(new URL('../db/migrations/'+file,import.meta.url),'utf8'));
  const origin='https://sprach-pilot.test',issuer='https://central.test/auth';
  const config=createWorldsConfig({WORLDS_PILOT_ENABLED:'true',WORLDS_PILOT_ORIGIN:origin,WORLDS_PILOT_DATABASE_HOST:'ep-qa.neon.tech',DATABASE_URL:'postgres://fixture:fixture@ep-qa.neon.tech/sprachspiel',NEON_AUTH_BASE_URL:'https://ep-qa.neonauth.eu.neon.tech/sprachspiel/auth',WORLDS_CLIENT_ID:'fixture',WORLDS_ISSUER:issuer,WORLDS_RESOURCE:origin+'/api'},query)!;
  const identity={issuer,sub,csrf,name:'Central <reader>',email:'private@fixture.invalid',authenticatedAt:Date.now(),expires:Date.now()+120_000};
@@ -26,6 +26,14 @@ async function fixture(){
  const stage=async()=>{const response=await managedLinkRoute(request(),config,query,owner);assert.equal(response.status,200);const html=await response.text(),proof=/name="proof" value="([A-Za-z0-9_-]+)"/.exec(html)?.[1];assert.ok(proof);return {proof,html,response};};
  return {db,id,other,raw,csrf,sub,origin,issuer,config,identity,query,state,owner,request,stage};
 }
+test('a valid native credential outside the frozen legacy roster cannot create a link',async()=>{
+ const f=await fixture();try{
+  await f.query('UPDATE worlds_project_accounts SET legacy_login_eligible=false WHERE id=$1',[f.id]);
+  const response=await managedLinkRoute(f.request(),f.config,f.query,f.owner);assert.equal(response.status,403);
+  assert.equal((await f.query('SELECT count(*)::int AS n FROM worlds_identity_links',[]))[0].n,0);
+  assert.equal((await f.query('SELECT count(*)::int AS n FROM worlds_link_proofs',[]))[0].n,0);
+ }finally{await f.db.close();}
+});
 
 test('the HTTP takeover flow keeps historical ownership, escapes account names, consumes once and returns to the private page',async()=>{
  const f=await fixture();try{

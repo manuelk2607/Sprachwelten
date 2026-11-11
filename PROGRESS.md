@@ -1,4 +1,34 @@
-# Sprachwelten – Fortsetzungsstand, 9. November 2026
+# Sprachwelten – Fortsetzungsstand, 12. November 2026
+
+## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
+
+Im isolierten Worlds-Modus prüft der Server bisherige Sitzungen ohne Cache
+und Refresh. Schema 029 erfasst den bisherigen Kontobestand und nimmt beim
+ersten bestätigten Verknüpfen atomar alle aktiven Geräte mit gehashter
+Sitzungs-ID und unveränderter Ablaufzeit auf. Kein Passwort-/Token-Import und
+keine SQL-Änderung an nativen Auth-Tabellen. Neue native Sitzungen nach der
+Zuordnung sowie nachträglich angelegte native Konten erhalten keinen Zugriff.
+Der normale Browser lädt dort keinen zweiten nativen Sitzungsbeobachter mehr.
+
+Native SDK-Endpunkte erlauben nur den einmaligen Nachweis mit noch unverknüpfter
+zentraler Sitzung sowie eigene Abmeldung/ungecachten Sitzungsabruf. Neuregistrierung
+und native Profilverwaltung sind gesperrt. Auch ein noch unverknüpftes anderes
+zentrales Konto kann keinen bereits verknüpften nativen Zielnutzer erneut öffnen:
+Der Server beendet die neu ausgestellte Sitzung vor der Ablehnung und hält
+ihre Antwort samt Cookies zurück.
+
+Trennen und verifizierter zentraler Widerruf entfernen den nativen Rückfall.
+Die Stilllegungsmarke verhindert neue Nachweise bei Wiederverknüpfung. Der
+Widerruf gilt nur für den betroffenen Nutzer und Aussteller. Begrenzte Wartung
+entfernt abgelaufene Nachweise und unterstützt
+weiterhin Schemas ohne diese Tabellen. Der Migrationsrunner unterstützt jetzt
+Funktionskörper und Literal-/Kommentar-Semikolons innerhalb atomarer Migrationen.
+
+Lokal bestanden 227 Unit-Tests, Typen, Lint, DE/EN-Abdeckung, Dependency-Audit,
+Build und 36 Chromium-/WebKit-Browserfälle bei 320/1280 px. Die echte Native-QA
+prüft anschließend den gepushten Stand.
+`docs/worlds-transition-sessions.md` beschreibt den Abgleich des erfassten
+Kontobestands und die Voraussetzungen für eine produktive Umstellung.
 
 ## Einmalige Bestätigung abgelaufener Bestandsanmeldungen – 09.11.2026
 
@@ -51,9 +81,8 @@ Typen, Lint, Übersetzungen, vollständiger Audit, Build sowie 154 bisherige und
 Weiter offen: reale zentrale Browserabnahme im eigenen Sprachwelten-Piloten,
 kontrollierte Stilllegung neuer lokaler Anmeldungen für verknüpfte Konten,
 unveränderte ursprüngliche Laufzeit bestehender Übergangssitzungen sowie die
-projektübergreifende globale Abmeldung. Den nächsten Übergangsschritt mit
-festen ursprünglichen Sitzungsgrenzen beschreibt `docs/worlds-transition-sessions.md`;
-er ist ausdrücklich noch nicht implementiert oder produktiv freigegeben.
+projektübergreifende globale Abmeldung. Der oben dokumentierte Übergangsschutz
+setzt die ursprünglichen Sitzungsgrenzen im Testzweig durch.
 
 ## HTTP-Übernahme und gemeinsamer lokaler Logout – geprüfter Testzweig
 

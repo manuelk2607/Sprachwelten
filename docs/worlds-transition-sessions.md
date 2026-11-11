@@ -36,14 +36,13 @@ führt eine neue Projektanmeldung über Worlds Hub.
    Wartung entfernt höchstens 500 abgelaufene Nachweise je Lauf, ohne die
    Stilllegungsmarke oder aktive Geräte zu entfernen. Alte Schemas bleiben
    mit der Wartung kompatibel.
-6. Isolierte Abnahme: zwei zuvor aktive Geräte bleiben bis zu ihren jeweils
-   ursprünglichen Ablaufzeiten nutzbar; ein späterer nativer Login wird
-   abgewiesen; weder SDK noch API verlängern den Übergang; Native-Widerruf,
-   lokale Sperren, Ausfall, gültiger zentraler Rückfall und Projektlogout.
-   Historische IDs, Daten und Rollen müssen unverändert bleiben. Native-QA,
-   Browserprüfungen und Rollback vor produktiver Aktivierung. Der Migrationsrunner
-   trennt SQL-Anweisungen unter Beachtung von Funktionskörpern, Literalen und
-   Kommentaren; Schema 029 wird damit weiterhin in einer Transaktion ausgeführt.
+6. Die isolierte Integration **43116714438** bestätigte zwei aktive Geräte mit
+   ihren ursprünglichen Ablaufzeiten, die Ablehnung eines späteren Logins, die
+   Bereinigung der dabei ausgestellten Sitzung und die lokale Abmeldung. Die
+   Tests prüfen lokale Sperren, Ausfälle, den Rückfall auf eine gültige zentrale
+   Sitzung und den Erhalt historischer IDs, Daten und Rollen. Der Migrationsrunner
+   behandelt Funktionskörper, Literale und Kommentare beim Trennen der
+   Anweisungen. Schema 029 läuft in einer Transaktion.
 
 ## Grenze vor produktiver Aktivierung
 
@@ -53,5 +52,11 @@ und gleicht die Bestandsliste vor der Freigabe ab. Neue Nutzer registrieren sich
 über Worlds Hub. Der Ablauf setzt eine verifizierte Sicherung, einen
 erfolgreichen Pilotversuch und eine geprüfte Rücknahme voraus. Bereits früher
 verknüpfte Konten verwenden ihre bestehende Zuordnung zum zentralen Login.
+
+Der produktive Abgleich vom 12.11.2026 zeigt drei Konten mit einem lokalen
+Zugangsdaten-Datensatz. Das Anbieterprofil enthält außerdem Google. Im
+Kontoverzeichnis gibt es aktuell keinen damit verknüpften Datensatz.
+Vor der Bestandsaufnahme prüft die Umschaltung beide Registrierungspfade
+und hält die bisherige Konfiguration für den Rückweg fest.
 
 Die reale Zustellung globaler Widerrufe an alle Projekte steht noch aus.

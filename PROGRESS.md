@@ -25,8 +25,16 @@ weiterhin Schemas ohne diese Tabellen. Der Migrationsrunner unterstützt jetzt
 Funktionskörper und Literal-/Kommentar-Semikolons innerhalb atomarer Migrationen.
 
 Lokal bestanden 227 Unit-Tests, Typen, Lint, DE/EN-Abdeckung, Dependency-Audit,
-Build und 36 Chromium-/WebKit-Browserfälle bei 320/1280 px. Die echte Native-QA
-prüft anschließend den gepushten Stand.
+Build und 36 Chromium-/WebKit-Browserfälle bei 320/1280 px. Code `c5dc2d4`
+ist gepusht. Isolierte Integration **43116714438** bestand einschließlich
+Migration 029, zweier realer bisheriger Gerätesitzungen mit exakt übernommenen
+Ablaufzeiten, Ablehnung eines späteren Logins, Bereinigung der frisch
+ausgestellten Sitzung beim verknüpften Ziel, unabhängiger Gerätefrist und
+echtem HTTP-Test des bisherigen Anmeldediensts. Eigene Inhalte, Zuordnung und
+Rollen wurden mit der historischen Konto-ID geprüft. Der zentrale Nachweis in
+dieser Integration ist synthetisch. Die vollständige CI **43116706384** bestand
+für denselben Commit mit 227 Unit-Tests, 154 bisherigen und 36
+Worlds-Browserfällen, Typen, Lint, Übersetzungsabdeckung, Audit und Build.
 `docs/worlds-transition-sessions.md` beschreibt den Abgleich des erfassten
 Kontobestands und die Voraussetzungen für eine produktive Umstellung.
 

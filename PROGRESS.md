@@ -19,11 +19,20 @@ und 190 Browserfällen.
 Der öffentliche PKCE-Testclient wurde in der isolierten zentralen
 Worlds-Identität mit expliziter Einwilligung registriert. Der manuelle
 GitHub-Release baut eine eigene QA-Datenbank mit 24 Stunden Laufzeit und
-prüft die veröffentlichte Testadresse. Die Freigabe für den einzelnen
-Cloudflare-Worker liegt vor. Der Hub akzeptiert die tatsächliche anonyme
-Autorisierungsanfrage für den Testclient (Hub-Release **43120400722**).
-Cloudflare wartet auf die Apple-Anmeldung. Veröffentlichung, Browserabnahme
-und Rücknahme stehen in `docs/worlds-pilot-worker.md`.
+prüft die veröffentlichte Testadresse. Der nur für diesen Worker gültige
+Cloudflare-Editorzugang liegt als GitHub-QA-Secret vor und läuft am
+12. Dezember 2026 ab.
+
+Deployment **43123199731** erfolgreich. Worker-Version
+`e5ab43fa-93f3-4f47-9680-46d3db9f93a0`, separate Neon-QA-Datenbank
+`br-long-block-ba91cz8e` (bis 13. November 2026, 00:53 MEZ).
+Bestanden sind Migration 029, echte Native-Auth- und App-HTTP-Integration,
+Freigabe der öffentlichen Testadresse ausschließlich im Testzweig und
+Live-Checks für DE/EN, Indexierungsschutz und anonyme Sitzungsabfrage.
+Beim Klick auf „Anmelden“ hat der Hub die vorhandene zentrale Anmeldung
+erkannt und direkt den Einwilligungsdialog „Sprachwelten Test“ angezeigt.
+Rückweg nach der persönlichen Freigabe und Deployment-Rücknahme stehen aus.
+Details in `docs/worlds-pilot-worker.md`.
 
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 

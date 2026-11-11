@@ -14,10 +14,12 @@ Worker bestand DE/EN, statische Datei, robots.txt, fehlende Sitemap, erlaubte
 HTTP-Methoden der Anmelde-Routen und die Sperre bei ungültiger Konfiguration.
 Die Prüfung ohne echte Datenbank führt den OAuth-Callback noch nicht aus.
 
-Der Worker ist noch nicht veröffentlicht. Nächster Schritt ist der getrennte
-Cloudflare-Deployment-Zugang, danach die eigene QA-Datenbank und die exakte
-PKCE-Registrierung. Veröffentlichung, Browserabnahme und Rücknahme stehen in
-`docs/worlds-pilot-worker.md`.
+Der öffentliche PKCE-Testclient wurde in der isolierten zentralen
+Worlds-Identität mit expliziter Einwilligung registriert. Der manuelle
+GitHub-Release baut eine eigene QA-Datenbank mit 24 Stunden Laufzeit und
+prüft die veröffentlichte Testadresse. Die Freigabe für den einzelnen
+Cloudflare-Worker liegt vor. Veröffentlichung, Browserabnahme und Rücknahme
+stehen in `docs/worlds-pilot-worker.md`.
 
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 

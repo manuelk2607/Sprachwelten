@@ -19,9 +19,14 @@ fehlender gültiger Konfiguration.
 
 ## Testadresse veröffentlichen
 
+In Cloudflare den Testworker einmalig anlegen. Danach lässt sich der
+Deployment-Zugang mit `Individual Workers Editor` auf diesen Worker begrenzen.
+[Cloudflare Workers-Berechtigungen](https://developers.cloudflare.com/workers/authorization/workers/)
+
 1. Einen befristeten Branch aus dem leeren Sprachwelten-QA-Template verwenden.
    Die Migrationen einschließlich 029 mit dem vorhandenen Migrationsrunner
-   ausführen. Produktive Konten und Inhalte bleiben in der Produktion.
+   ausführen. Die öffentliche Testadresse nur auf diesem Zweig als vertrauenswürdige
+   Adresse für die bisherige Konto-Bestätigung hinzufügen.
 2. In der zentralen Worlds-Testinstanz einen öffentlichen PKCE-Client mit
    Einwilligung und genau einem Callback registrieren.
    - Callback `https://sprachwelten-worlds-pilot.maki26.workers.dev/auth/callback`
@@ -37,6 +42,15 @@ fehlender gültiger Konfiguration.
    Der Befehl prüft das Datenbankziel, die zugehörige Auth-Adresse und Migration
    029 vor dem Upload. Er übergibt Datenbank und Auth als Worker-Secrets über
    eine temporäre Datei mit eingeschränktem Zugriff und räumt sie danach auf.
+
+Alternativ in GitHub `Isolated integration` manuell mit
+`publish_worlds_pilot=true` starten. In der vorhandenen Umgebung `qa` werden
+`WORLDS_PILOT_CLIENT_ID` und `WORLDS_PILOT_CLOUDFLARE_ACCOUNT_ID` als Variablen
+und `WORLDS_PILOT_CLOUDFLARE_TOKEN` als Secret benötigt. Jeder ausdrücklich
+gestartete Pilot-Release erstellt eine neue QA-Datenbank für 24 Stunden, prüft
+sie mit der vorhandenen Integration, erlaubt die Testadresse im neuen
+Auth-Zweig, veröffentlicht und prüft die Testadresse.
+Normale Läufe behalten den einstündigen QA-Branch und veröffentlichen nichts.
 
 Der Worker verwendet ausschließlich die gebauten Dateien und die Testbindungen.
 Vorschau-URLs, Cron, Produktionsspeicher und KI-Bindings sind deaktiviert.

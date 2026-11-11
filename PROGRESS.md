@@ -13,13 +13,17 @@ Build und Wrangler-Probelauf bestanden (gzip 883 KiB). Der lokale gebaute
 Worker bestand DE/EN, statische Datei, robots.txt, fehlende Sitemap, erlaubte
 HTTP-Methoden der Anmelde-Routen und die Sperre bei ungültiger Konfiguration.
 Die Prüfung ohne echte Datenbank führt den OAuth-Callback noch nicht aus.
+GitHub **43119641505** bestand vollständig mit Paketprüfung, 227 Unit-Tests
+und 190 Browserfällen.
 
 Der öffentliche PKCE-Testclient wurde in der isolierten zentralen
 Worlds-Identität mit expliziter Einwilligung registriert. Der manuelle
 GitHub-Release baut eine eigene QA-Datenbank mit 24 Stunden Laufzeit und
 prüft die veröffentlichte Testadresse. Die Freigabe für den einzelnen
-Cloudflare-Worker liegt vor. Veröffentlichung, Browserabnahme und Rücknahme
-stehen in `docs/worlds-pilot-worker.md`.
+Cloudflare-Worker liegt vor. Der Hub akzeptiert die tatsächliche anonyme
+Autorisierungsanfrage für den Testclient (Hub-Release **43120400722**).
+Cloudflare wartet auf die Apple-Anmeldung. Veröffentlichung, Browserabnahme
+und Rücknahme stehen in `docs/worlds-pilot-worker.md`.
 
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 

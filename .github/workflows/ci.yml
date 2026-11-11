@@ -18,6 +18,10 @@ jobs:
       - run: npm run build
         env:
           SPRACHWELTEN_OFFLINE_PREVIEW: '1'
+      - name: Package and smoke-test the isolated Worlds Worker
+        run: |
+          npm run deploy:worlds-pilot -- --dry-run > "$RUNNER_TEMP/worlds-pilot-package.log" 2>&1 || { tail -60 "$RUNNER_TEMP/worlds-pilot-package.log"; exit 1; }
+          node scripts/test-worlds-pilot-worker.mts
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - run: npm run test:worlds-browser

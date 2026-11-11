@@ -1,5 +1,24 @@
 # Sprachwelten – Fortsetzungsstand, 12. November 2026
 
+## Separater Worlds-Testworker vorbereitet
+
+Das fertige Paket für `sprachwelten-worlds-pilot.maki26.workers.dev` ist lokal
+geprüft. Der eigene Release-Befehl verwendet ausschließlich Testbindungen
+und prüft die passende Neon-Auth-Adresse und Migration 029 vor dem Upload.
+Keine Produktionsspeicher, KI-Bindings oder Cronjobs. Worker und Assets liefern
+`noindex, nofollow` und `private, no-store`; ungültige Konfiguration sperrt
+die Anwendung mit 503.
+
+Build und Wrangler-Probelauf bestanden (gzip 883 KiB). Der lokale gebaute
+Worker bestand DE/EN, statische Datei, robots.txt, fehlende Sitemap, erlaubte
+HTTP-Methoden der Anmelde-Routen und die Sperre bei ungültiger Konfiguration.
+Die Prüfung ohne echte Datenbank führt den OAuth-Callback noch nicht aus.
+
+Der Worker ist noch nicht veröffentlicht. Nächster Schritt ist der getrennte
+Cloudflare-Deployment-Zugang, danach die eigene QA-Datenbank und die exakte
+PKCE-Registrierung. Veröffentlichung, Browserabnahme und Rücknahme stehen in
+`docs/worlds-pilot-worker.md`.
+
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 
 Im isolierten Worlds-Modus prüft der Server bisherige Sitzungen ohne Cache

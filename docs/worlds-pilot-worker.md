@@ -24,7 +24,7 @@ Deployment-Zugang mit `Individual Workers Editor` auf diesen Worker begrenzen.
 [Cloudflare Workers-Berechtigungen](https://developers.cloudflare.com/workers/authorization/workers/)
 
 1. Einen befristeten Branch aus dem leeren Sprachwelten-QA-Template verwenden.
-   Die Migrationen einschließlich 029 und 030 mit dem vorhandenen Migrationsrunner
+   Die Migrationen einschließlich 029 bis 031 mit dem vorhandenen Migrationsrunner
    ausführen. Die öffentliche Testadresse nur auf diesem Zweig als vertrauenswürdige
    Adresse für die bisherige Konto-Bestätigung hinzufügen.
 2. In der zentralen Worlds-Testinstanz einen öffentlichen PKCE-Client mit
@@ -42,7 +42,7 @@ Deployment-Zugang mit `Individual Workers Editor` auf diesen Worker begrenzen.
      mit dem öffentlichen Ed25519-Schlüssel (`kid`, `kty`, `crv`, `x`)
 4. Das geprüfte Paket mit `npm run deploy:worlds-pilot -- --deploy` veröffentlichen.
    Der Befehl prüft das Datenbankziel, die zugehörige Auth-Adresse und Migration
-   029 und 030 vor dem Upload. Er übergibt Datenbank und Auth als Worker-Secrets über
+   029 bis 031 vor dem Upload. Er übergibt Datenbank und Auth als Worker-Secrets über
    eine temporäre Datei mit eingeschränktem Zugriff und räumt sie danach auf.
 
 Alternativ in GitHub `Isolated integration` manuell mit

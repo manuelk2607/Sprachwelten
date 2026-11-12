@@ -54,7 +54,9 @@ async function fixture(apply = true, sessionEventJwk?: string) {
     "027_worlds_identity.sql",
     "028_worlds_project_accounts.sql",
     ...(apply ? ["029_worlds_legacy_sessions.sql"] : []),
-    ...(sessionEventJwk ? ["030_worlds_session_revocations.sql"] : []),
+    ...(sessionEventJwk
+      ? ["030_worlds_session_revocations.sql", "031_worlds_native_revocation_precision.sql"]
+      : []),
   ])
     await db.exec(
       await readFile(
@@ -162,7 +164,12 @@ test("a signed Hub event ends existing Worlds and retained native sessions while
   const f = await fixture(true, jwk);
   try {
     const revokedThrough = Math.floor(f.now / 1000) * 1000;
+    const sameSecondNative = { ...f.dto(), createdAt: revokedThrough + 999 };
     const recentNative = new Date(revokedThrough + 1000);
+    await f.query('UPDATE neon_auth.session SET "createdAt"=$1 WHERE id=$2', [
+      new Date(sameSecondNative.createdAt).toISOString(),
+      "first",
+    ]);
     await f.query('UPDATE neon_auth.session SET "createdAt"=$1 WHERE id=$2', [
       recentNative.toISOString(),
       "second",
@@ -192,7 +199,7 @@ test("a signed Hub event ends existing Worlds and retained native sessions while
       sub: "control",
       authenticatedAt: revokedThrough,
     });
-    assert.ok(await transitionUser(f.dto(), f.query, issuer));
+    assert.ok(await transitionUser(sameSecondNative, f.query, issuer));
 
     const audience = origin + sessionRevocationPath;
     const signed = await signSessionRevocation(
@@ -225,8 +232,13 @@ test("a signed Hub event ends existing Worlds and retained native sessions while
       );
     }
     assert.equal(await store.getSession("existing-bff"), null);
-    assert.equal(await transitionUser(f.dto(), f.query, issuer), null);
-    assert.equal(await transitionUser(f.dto(), f.query), null);
+    assert.equal(await transitionUser(sameSecondNative, f.query), null);
+    // Even a grant inserted concurrently with the event is fenced on read.
+    await f.query(
+      "INSERT INTO worlds_legacy_sessions VALUES($1,$2,now()+interval '1 hour')",
+      [f.id, await hash("first")],
+    );
+    assert.equal(await transitionUser(sameSecondNative, f.query, issuer), null);
     assert.ok(await store.getSession("newer-bff"));
     assert.ok(await store.getSession("control-bff"));
     assert.ok(

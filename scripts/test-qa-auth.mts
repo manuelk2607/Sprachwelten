@@ -157,7 +157,7 @@ async function verifyWorldsMapping(userId: string) {
       csrf,
       name: "QA central fixture",
       email: "synthetic@sprachwelten.invalid",
-      authenticatedAt: Date.now(),
+      authenticatedAt: Math.floor(Date.now() / 1000) * 1000,
       expires: Date.now() + 120_000,
     });
     const linkRequest = (action: string, form: URLSearchParams) =>
@@ -448,7 +448,10 @@ async function verifyWorldsMapping(userId: string) {
     const eventStore = new TransitionAuthStore(query, true);
     const originalBff = await config.store.getSession(bffKey);
     assert.ok(originalBff);
-    const revokedThrough = Math.floor(Date.now() / 1000) * 1000;
+    const latestOriginalSession = Math.max(
+      ...originalSessions.map((row) => new Date(String(row.createdAt)).getTime()),
+    );
+    const revokedThrough = Math.floor(latestOriginalSession / 1000) * 1000;
     assert.ok(originalBff.authenticatedAt! <= revokedThrough);
     const audience = origin + sessionRevocationPath;
     const signed = await signSessionRevocation(
@@ -487,7 +490,7 @@ async function verifyWorldsMapping(userId: string) {
     });
     assert.ok(await eventStore.getSession(bffKey));
     console.log(
-      "PASS: signed Hub event committed against actual QA Postgres, retired old project sessions on both devices, preserved provider rows and accepted a newer central login.",
+      "PASS: signed Hub event committed against actual QA Postgres, retired both prior devices including the revocation second, preserved provider rows and accepted a newer central login.",
     );
 
     const signedOut = await projectLogout(

@@ -50,8 +50,17 @@ signierter Worlds-Hub-Ereignisse. Der Zeitstempel schützt neue Sitzungen
 vor verspäteter Zustellung und verhindert das Wiederaufleben älterer
 Anmeldungen. Betroffene bisherige Übergangssitzungen verlieren den
 Projektzugriff. Die Native-Auth-Daten und die Kontoverknüpfung bleiben
-erhalten. Empfangen wird erst mit gepinntem Hub-Schlüssel in QA. Die
-öffentliche Testversion verwendet weiterhin den bisherigen Stand.
+erhalten. Empfangen wird erst mit gepinntem Hub-Schlüssel in QA.
+GitHub **43130948382** veröffentlichte den Empfänger mit einem eigenen
+öffentlichen Testschlüssel auf dem befristeten QA-Zweig `br-divine-wave-basqm53c`.
+Der veröffentlichte Produktionsworker war an diesem Release nicht beteiligt.
+
+Migration 031 und der serverseitige Sitzungscheck beziehen bei nativen
+Sitzungen die gesamte Widerrufssekunde ein. Der Regressionstest prüft
+eine native Sitzung mit Millisekunden, einen nach dem Commit sichtbaren
+Übergangsnachweis und eine neuere Sitzung. Typprüfung, Lint, 228 Tests,
+Build, Worker-Trockenlauf und lokales Worker-Paket bestanden.
+
 Lokal bestanden 228 Tests, Build, Typen, Lint, Übersetzungen, Audit und
 Worker-Prüfung der abgesicherten Route. GitHub **43127214009** bestätigte
 Migration 030 und doppelte Zustellung eines signierten Ereignisses an

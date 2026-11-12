@@ -51,11 +51,11 @@ if (deploy) {
     isolatedAuthTarget(env);
     const sql = neon(env.DATABASE_URL!);
     const migrations =
-      await sql`SELECT name FROM schema_migrations WHERE name IN ('029_worlds_legacy_sessions.sql','030_worlds_session_revocations.sql')`;
-    if (migrations.length !== 2) throw new Error();
+      await sql`SELECT name FROM schema_migrations WHERE name IN ('029_worlds_legacy_sessions.sql','030_worlds_session_revocations.sql','031_worlds_native_revocation_precision.sql')`;
+    if (migrations.length !== 3) throw new Error();
   } catch {
     throw new Error(
-      "Deployment requires the matching isolated Neon database and Auth endpoint with migrations 029 and 030 applied.",
+      "Deployment requires the matching isolated Neon database and Auth endpoint with migrations 029 through 031 applied.",
     );
   }
 }

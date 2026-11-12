@@ -27,7 +27,10 @@ export async function transitionUser(
     [
       current.id,
       await hash(current.sessionId),
-      ...(revocationIssuer ? [revocationIssuer, current.createdAt] : []),
+      // CAEP timestamps include the entire revocation second.
+      ...(revocationIssuer
+        ? [revocationIssuer, Math.floor(current.createdAt / 1000) * 1000]
+        : []),
     ],
   );
   if (!row || row.eligible === false) return null;

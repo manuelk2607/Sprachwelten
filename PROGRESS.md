@@ -52,6 +52,11 @@ Anmeldungen. Betroffene bisherige Übergangssitzungen verlieren den
 Projektzugriff. Die Native-Auth-Daten und die Kontoverknüpfung bleiben
 erhalten. Empfangen wird erst mit gepinntem Hub-Schlüssel in QA. Die
 öffentliche Testversion verwendet weiterhin den bisherigen Stand.
+Lokal bestanden 228 Tests, Build, Typen, Lint, Übersetzungen, Audit und
+Worker-Prüfung der abgesicherten Route. GitHub **43127214009** bestätigte
+Migration 030 und doppelte Zustellung eines signierten Ereignisses an
+echtes QA-Postgres. Die alten Projektsitzungen beider Geräte endeten.
+Providerzeilen blieben erhalten und eine neuere zentrale Sitzung war gültig.
 
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 

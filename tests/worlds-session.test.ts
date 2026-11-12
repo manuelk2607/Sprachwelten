@@ -6,6 +6,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { SESSION_COOKIE, token } from "@worlds-hub/auth";
 import { hash } from "@worlds-hub/auth/store";
 import { createWorldsConfig, mappedLearningUser, worldsRoute } from "../lib/auth/worlds";
+import { worldsProductionOrigin, worldsProductionVariables } from "../lib/worlds-production";
 
 const origin = "https://sprach-pilot.test";
 const issuer = "https://issuer.test/auth";
@@ -27,6 +28,23 @@ test("Worlds login requires an isolated Sprachwelten database and its own manage
   assert.equal(createWorldsConfig({...env, DATABASE_URL: "postgres://wrong.neon.tech/sprachspiel"}, query), undefined);
   assert.equal(createWorldsConfig({...env, NEON_AUTH_BASE_URL: "https://ep-other.neonauth.eu.neon.tech/sprachspiel/auth"}, query), undefined);
   assert.equal(createWorldsConfig(env, query)?.origin, origin);
+});
+
+test("production login requires the registered client, exact live database and separate native Auth endpoint", () => {
+  const query = async () => [];
+  const production = {
+    ...worldsProductionVariables,
+    DATABASE_URL: "postgres://ep-ancient-night-b9a3flsm-pooler.c-7.eu-central-1.aws.neon.tech/sprachspiel",
+    NEON_AUTH_BASE_URL: "https://ep-ancient-night-b9a3flsm.neonauth.c-7.eu-central-1.aws.neon.tech/sprachspiel/auth",
+  };
+  assert.equal(createWorldsConfig(production, query)?.origin, worldsProductionOrigin);
+  for (const mismatch of [
+    { WORLDS_PRODUCTION_ENABLED: "false" },
+    { WORLDS_CLIENT_ID: env.WORLDS_CLIENT_ID },
+    { DATABASE_URL: env.DATABASE_URL },
+    { NEON_AUTH_BASE_URL: env.NEON_AUTH_BASE_URL },
+    { WORLDS_PILOT_ENABLED: "true" },
+  ]) assert.equal(createWorldsConfig({ ...production, ...mismatch }, query), undefined);
 });
 
 test("Worlds resolves only an explicitly mapped local learner and revokes access on local ban or logout", async () => {

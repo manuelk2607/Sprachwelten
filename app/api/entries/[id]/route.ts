@@ -1,3 +1,4 @@
+import {isSongContribution,musicMovedMessage} from '@/lib/music-transfer';
 import {publicEntry,publicExplanation} from '@/lib/content-public';
 import {projectIdentity} from '@/lib/auth/learning-session';
 import {ownsEntry} from '@/db/community-repository';
@@ -11,6 +12,7 @@ export const GET = (request: Request, ctx: Context) => safe(async () => {
   const id=z.string().uuid().parse((await ctx.params).id); const entry=await getEntry(id);
   if(!entry) throw new GameError('Dieser Beitrag wurde nicht gefunden.',404);
   const {user,error}=await projectIdentity(request);if(error)throw error;const canEdit=!!user&&await ownsEntry(id,user.id);
+  if(isSongContribution(entry)&&!canEdit)throw new GameError(musicMovedMessage,410);
   return respond({canEdit,canSuggest:!!user&&!canEdit,entry:publicEntry(entry), explanations:(await listExplanations(id)).map(publicExplanation)});
 });
 export const POST = (request: Request, ctx: Context) => safe(async () => {

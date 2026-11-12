@@ -349,7 +349,7 @@ export function ChallengeEditor({
                 }
               >
                 <option value="person">{t("Personenzitat")}</option>
-                <option value="song">{t("Liedstelle")}</option>
+                {value.category === "song" && <option value="song">{t("Liedstelle")}</option>}
               </Select>
             </label>
             <label>

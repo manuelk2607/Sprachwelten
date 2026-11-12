@@ -42,7 +42,7 @@ export function RoomForm({
   const [gameLanguages,setGameLanguages]=useKeyedState<string[]|undefined>(mode,undefined);
   const [meaningCategory,setMeaningCategory]=useState('all');
   const [pronunciationCategory,setPronunciationCategory]=useState('both');
-  const [attributionCategory,setAttributionCategory]=useState('both');
+  const [attributionCategory,setAttributionCategory]=useState('person');
   const [difficulty,setDifficulty]=useKeyedState<DifficultyLevel|undefined>(JSON.stringify([mode,gameLanguages,meaningCategory,pronunciationCategory,attributionCategory]),undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -191,10 +191,9 @@ export function RoomForm({
           <label>
             {t("Kategorie")}
             <Select name="attributionCategory" value={attributionCategory} onValueChange={setAttributionCategory}>
-              <option value="both">{t("Beide Kategorien")}</option>
               <option value="person">{t("Personenzitat")}</option>
-              <option value="song">{t("Liedstelle")}</option>
             </Select>
+            <a href="https://music-worlds.maki26.workers.dev/" target="_blank" rel="noreferrer">{t("Musikspiele jetzt in Music-Worlds ↗")}</a>
           </label>
         )}
         <label>

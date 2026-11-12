@@ -1,3 +1,4 @@
+import {musicMovedMessage} from '@/lib/music-transfer';
 import { withRoomAudio } from "@/lib/room-audio";
 import { roomAction, roomCode } from "@/lib/content";
 import { body, playerToken, respond, safe } from "@/lib/http";
@@ -44,6 +45,7 @@ export const POST = (request: Request, ctx: Context) =>
     const code = roomCode.parse((await ctx.params).code);
     const token = await playerToken(request);
     const action = await body(request, roomAction);
+    if(action.action==='configure'&&action.attributionCategory==='song')throw new GameError(musicMovedMessage,410);
     if (action.action === "heartbeat") {
       const room = await heartbeatRoom(code, token);
       return withRoomAudio(
@@ -85,6 +87,7 @@ export const POST = (request: Request, ctx: Context) =>
               : {}),
           }
         : {}),
+      ...((action.action==='configure'?(action.mode??game.mode):game.mode)==='who-said-it'?{attributionCategory:'person' as const}:{}),
     });
     const refreshPool =
       action.action === "start" ||
@@ -130,7 +133,9 @@ export const POST = (request: Request, ctx: Context) =>
             );
           game.availableRounds = Math.floor(unseenPrompts(requested, prompts).length/(requested.mode==="taboo"?2:1));
         }
+        if(['start','restart','configure'].includes(action.action)&&game.mode==='who-said-it')game.attributionCategory='person';
         act(game, id, action, prompts);
+        if(action.action==='configure'&&game.mode==='who-said-it')game.attributionCategory='person';
         if (action.action === "configure" && refreshPool)
           updateAvailability(game, prompts);
       },

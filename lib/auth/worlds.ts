@@ -8,6 +8,7 @@ import {GameError} from '../game';
 import {createWorldsProjectAccount,mappedProjectAccount} from './project-accounts';
 import {translate,type Locale} from '../translations';
 import {authDocument,authError,escapeHtml,readWorldsForm} from './worlds-document';
+import {isWorldsProductionTarget,worldsProductionOrigin} from '../worlds-production';
 
 export type LearningUser = { id: string; name: string };
 export const worldsPaths = ["/auth/login", "/auth/start", "/auth/callback", "/auth/logout", "/auth/backchannel-logout",
@@ -16,21 +17,23 @@ export const hasManagedSessionCookie = (request: Request) => (request.headers.ge
   .some(value => value.trim().startsWith("__Secure-neon-auth.session_token="));
 
 export function createWorldsConfig(env: Record<string, string | undefined>, query: PgQuery): AuthConfig | undefined {
-  if (env.WORLDS_PILOT_ENABLED !== "true" || !env.WORLDS_CLIENT_ID || !env.WORLDS_ISSUER || !env.WORLDS_RESOURCE) return;
+  const production = isWorldsProductionTarget(env);
+  if (env.WORLDS_PRODUCTION_ENABLED === "true" && !production) return;
+  if ((!production && env.WORLDS_PILOT_ENABLED !== "true") || !env.WORLDS_CLIENT_ID || !env.WORLDS_ISSUER || !env.WORLDS_RESOURCE) return;
   try {
-    const origin = new URL(env.WORLDS_PILOT_ORIGIN ?? "");
+    const origin = new URL(production ? worldsProductionOrigin : env.WORLDS_PILOT_ORIGIN ?? "");
     const db = new URL(env.DATABASE_URL ?? "");
     const localAuth = new URL(env.NEON_AUTH_BASE_URL ?? "");
     const issuer = new URL(env.WORLDS_ISSUER);
     const endpoint = db.hostname.split(".")[0].replace(/-pooler$/, "");
-    if (origin.protocol !== "https:" || origin.origin !== env.WORLDS_PILOT_ORIGIN ||
+    if (!production && (origin.protocol !== "https:" || origin.origin !== env.WORLDS_PILOT_ORIGIN ||
         origin.hostname === "sprachwelten.maki26.workers.dev" ||
         !["postgres:", "postgresql:"].includes(db.protocol) ||
         db.hostname !== env.WORLDS_PILOT_DATABASE_HOST ||
         db.hostname.startsWith("ep-ancient-night-b9a3flsm") ||
         localAuth.protocol !== "https:" || !localAuth.hostname.startsWith(endpoint + ".neonauth.") ||
         !localAuth.hostname.endsWith(".neon.tech") || localAuth.pathname !== db.pathname + "/auth" ||
-        issuer.protocol !== "https:" || issuer.username || issuer.password || issuer.search || issuer.hash) return;
+        issuer.protocol !== "https:" || issuer.username || issuer.password || issuer.search || issuer.hash)) return;
     return {
       origin: origin.origin, issuer: issuer.href, resource: env.WORLDS_RESOURCE,
       clientId: env.WORLDS_CLIENT_ID, algorithm: "EdDSA", reauthEnabled:true, store: new TransitionAuthStore(query, !!worldsSessionEventKey(env)),

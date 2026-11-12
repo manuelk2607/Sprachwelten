@@ -1,5 +1,26 @@
 # Sprachwelten – Fortsetzungsstand, 12. November 2026
 
+## Produktiver Worlds-Release vorbereitet
+
+Der SSO-Zweig enthält jetzt den bereits produktiven Music-Worlds-Cutover
+aus `main`. Alte Songbeiträge sind weiterhin für ihre Eigentümer
+bearbeitbar. Die Zugriffskontrolle verwendet die bisherige Projektidentität.
+
+Der Schalter `npm run deploy:cloudflare -- --worlds-production` bindet
+die exakte produktive Sprachwelten-Datenbank, ihre bisherige Neon-Auth-
+Instanz und den beim Hub registrierten Sprachwelten-Client. Der Release
+setzt die bestehenden Worlds-Migrationen voraus. Aktive Bestandskonten
+nutzen weiterhin den vorgesehenen Übergang und die bestätigte Übernahme
+über den Hub. R2, AI, Rate-Limits und Cron sind im Produktionspaket enthalten.
+
+Lesende Prüfung am 12.11.2026 um 11:31:29 UTC, WAL-Position
+`0/4AA0768`: drei bisherige Konten, zwei aktive native Sitzungen,
+515 Beiträge, keine Vokabelhefte und keine Worlds-Tabellen. Typprüfung,
+Lint, Übersetzungsprüfung, Unit-Tests, Build und Produktionsprobelauf
+bestanden. Das Produktionspaket benötigt einen für den Worker
+`sprachwelten` freigegebenen Cloudflare-Zugang. Vor dem Datenbanklauf
+den Wiederherstellungspunkt und die aktive Worker-Version aktualisieren.
+
 ## Nachweise über Kontoübernahmen
 
 Migration 032 erfasst bestätigte Zuordnungen vorhandener Profile und ihre
@@ -673,3 +694,6 @@ Einstufungen erfassen. Keine erneute Grundlagenanalyse oder Kern-Neuimplementier
 
 Keine bestätigte P0-Anwendungsstörung. Neue Auditbefunde sind behoben, vollständiger Audit ohne Ausnahme bestanden.
 Weitere Skalierungsumbauten nur bei gemessenem Engpass. Sprachraum bleibt außerhalb.
+
+## Music-Worlds cutover — 04.11.2026
+Music-Worlds als getrennte Plattform produktiv eingerichtet und echt geprüft. Alle acht Source-Songrows read-only archiviert, SHA-256/QA-Restore sowie erneuter unveränderter Rowvergleich bestätigt. Ziel erhält alle Original-IDs: vier historische englische Textfragen mit individueller Gemeinfreiheitsprüfung, vier französische privat in Rechteprüfung; keine Audioübernahme. Neue Source-Auswahl/Beiträge/Pools/Sammlung wechseln zu Personenzitaten, gespeicherte Schema-/Engine- und Altbearbeitungskompatibilität bleibt erhalten. Keine Source-Rows gelöscht. Minimatch 11.0.1 beseitigt eine bestehende Auditmeldung. Nach korrigierter abschließender Diffprüfung: 196 Unit-Tests, Typprüfung, Lint, Übersetzungen, vollständiger Audit und Produktions-Build erfolgreich. Cutover-Commit a31f1177b19e98fef3763feff062bc2979c19edd wurde auf main gepusht und unter https://sprachwelten.maki26.workers.dev/ bereitgestellt (Cloudflare-Version 9e742f1a-b875-455e-9852-de77f1a0320a). Live geprüft: Homepage, alte öffentliche Songfrage 410, neue Songräume und Songbeiträge 410, Liedtextsuche leer, bisherige Mischanfrage startet Personenrunde, Zungenbrecher-Mischauswahl weiter funktionsfähig. Alle acht Source-Songrows nach Veröffentlichung nochmals exakt mit dem Archiv verglichen: unverändert. Music-Worlds ist unter der verbindlichen eigenen Adresse produktiv; der separate Test-/Deployworkflow wurde erfolgreich ausgeführt. Details docs/music-worlds-transfer.md. Keine weiteren Source-Laufzeitänderungen erforderlich.

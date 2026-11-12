@@ -64,8 +64,11 @@ export async function verifyWorldsProjectAccess(userId:string,issuer:string,subj
   const [mapped]=await sql`SELECT local_user_id FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${newSub}`;
   newProfileId=String(mapped.local_user_id);assert.notEqual(newProfileId,userId);
   assert.equal((await createProfile()).status,303);
-  const [counts]=await sql`SELECT (SELECT count(*) FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${newSub})::int AS audit,(SELECT count(*) FROM worlds_project_accounts WHERE id=${newProfileId}::uuid AND kind='worlds' AND legacy_user_id IS NULL)::int AS profiles`;
-  assert.deepEqual(counts,{audit:1,profiles:1});assert.equal((await snapshot())[0].native_accounts,before[0].native_accounts);
+  const [counts]=await sql`SELECT
+    (SELECT count(*) FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${newSub})::int AS audit,
+    (SELECT count(*) FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${newSub} AND receipt_eligible)::int AS receipts,
+    (SELECT count(*) FROM worlds_project_accounts WHERE id=${newProfileId}::uuid AND kind='worlds' AND legacy_user_id IS NULL)::int AS profiles`;
+  assert.deepEqual(counts,{audit:1,receipts:0,profiles:1});assert.equal((await snapshot())[0].native_accounts,before[0].native_accounts);
   assert.equal((await account(newRequest('/api/me/entries'))).id,newProfileId);
   const registry=await adminUsers('',0,true);
   assert.equal(registry.users.filter(row=>row.id===newProfileId&&row.authSource==='worlds'&&row.email===''&&!row.isAdmin).length,1);

@@ -1,5 +1,15 @@
 # Sprachwelten – Fortsetzungsstand, 12. November 2026
 
+## Nachweise über Kontoübernahmen
+
+Migration 032 erfasst bestätigte Zuordnungen vorhandener Profile und ihre
+Rücknahme. Der befristete QA-Versand verwendet den gemeinsamen signierten
+Nachweis aus `@worlds-hub/auth` 0.1.6. Neue Profile erzeugen keinen
+Migrationsnachweis. Bei einer Rücknahme enden betroffene Worlds-Sitzungen.
+Native Anmeldung und Lerndaten wurden im lokalen PostgreSQL-Test erhalten.
+229 Tests, Typprüfung, Lint und Build bestanden. Die veröffentlichte
+Testdatenbank bleibt für den laufenden Abmeldetest auf dem bisherigen Stand.
+
 ## Separater Worlds-Testworker vorbereitet
 
 Das fertige Paket für `sprachwelten-worlds-pilot.maki26.workers.dev` ist lokal

@@ -24,6 +24,8 @@ import {
   signSessionRevocation,
 } from "@worlds-hub/auth/session-revocation";
 import { receiveWorldsSessionEvent } from "../lib/auth/session-events";
+import { createWorldsProjectAccount } from "../lib/auth/project-accounts";
+import { reportWorldsMigrations } from "../lib/auth/worlds-migration-receipts";
 
 const origin = "https://sprach-pilot.test",
   issuer = "https://central.test/auth";
@@ -152,6 +154,101 @@ async function fixture(apply = true, sessionEventJwk?: string) {
     response,
   };
 }
+
+test("confirmed legacy migrations report from the audit, retry safely and report rollback with the same reference", async (t) => {
+  const f = await fixture();
+  try {
+    const audit = (subject: string, account: string) => f.query(
+      "INSERT INTO worlds_link_audit(issuer,subject,local_user_id,event) VALUES($1,$2,$3,'linked')",
+      [issuer, subject, account],
+    );
+    const linked = "existing-legacy-link";
+    await f.query(
+      "INSERT INTO worlds_identity_links(issuer,subject,local_user_id) VALUES($1,$2,$3)",
+      [issuer, linked, f.other],
+    );
+    await audit(linked, f.other);
+    await audit("removed-before-migration", f.id);
+    await createWorldsProjectAccount({ issuer, sub: "new-profile-before", name: "New profile" }, f.query);
+    await f.db.exec(await readFile(new URL("../db/migrations/032_worlds_migration_receipts.sql", import.meta.url), "utf8"));
+    assert.deepEqual(
+      await f.query("SELECT subject FROM worlds_link_audit WHERE receipt_eligible", []),
+      [{ subject: linked }],
+    );
+
+    const { privateKey } = await crypto.subtle.generateKey("Ed25519", true, ["sign", "verify"]);
+    const env = {
+      WORLDS_RECEIPT_URL: "https://hub-qa.invalid/api/migrations/receipts/sprachwelten",
+      WORLDS_RECEIPT_KID: "fixture",
+      WORLDS_RECEIPT_KEY: JSON.stringify(await crypto.subtle.exportKey("jwk", privateKey)),
+    };
+    const sent: { sub: string; account_ref: string; revision: number; state: string }[] = [];
+    let refuseOnce = true;
+    t.mock.method(globalThis, "fetch", async (input: string | Request | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.origin === new URL(settings.issuer).origin) return Response.json(f.response());
+      assert.equal(url.href, env.WORLDS_RECEIPT_URL);
+      const payload = JSON.parse(Buffer.from(String(init?.body).split(".")[1], "base64url").toString()) as typeof sent[number];
+      sent.push(payload);
+      if (payload.sub === linked) return Response.json({ error: "RECEIPT_CONFLICT" }, { status: 409 });
+      if (refuseOnce) {
+        refuseOnce = false;
+        return Response.json({ error: "TEMPORARY" }, { status: 503 });
+      }
+      return Response.json({ result: "stored" });
+    });
+
+    const owner = await loadManagedOwner(f.request("/auth/worlds/link", undefined, "POST"), settings, f.query);
+    const central = { issuer, subject: f.sub, sessionId: "central-fixture", authenticatedAt: f.now };
+    const store = new PostgresLinkStore(f.query);
+    const proof = await prepareManagedSessionLink(central, owner.proof, store);
+    await confirmManagedSessionLink(proof, central, owner.proof, store);
+    await createWorldsProjectAccount({ issuer, sub: "new-profile-after", name: "New profile" }, f.query);
+    await f.query("DELETE FROM worlds_identity_links WHERE issuer=$1 AND subject=$2", [issuer, "new-profile-after"]);
+
+    await assert.rejects(reportWorldsMigrations(f.query, issuer, {
+      ...env,
+      WORLDS_RECEIPT_URL: "https://worlds-hub.maki26.workers.dev/api/migrations/receipts/sprachwelten",
+    }), /isolated Hub/);
+    assert.equal(sent.length, 0);
+    await assert.rejects(reportWorldsMigrations(f.query, issuer, env), /refused delivery/);
+    assert.deepEqual(
+      await f.query("SELECT subject FROM worlds_link_audit WHERE receipt_conflict_at IS NOT NULL", []),
+      [{ subject: linked }],
+    );
+    assert.deepEqual(await reportWorldsMigrations(f.query, issuer, env), { acknowledged: 1, conflict: 0 });
+    assert.deepEqual(sent.map(receipt => receipt.sub), [linked, f.sub, f.sub]);
+    assert.equal(sent[1].revision, sent[2].revision);
+    assert.equal(sent[2].state, "confirmed");
+    assert.match(sent[2].account_ref, /^[a-f0-9]{64}$/);
+
+    const before = await f.snapshot();
+    const remove = () => f.query(
+      "DELETE FROM worlds_identity_links WHERE issuer=$1 AND subject=$2 AND local_user_id=$3",
+      [issuer, f.sub, f.id],
+    );
+    await f.db.exec("BEGIN");
+    await remove();
+    await f.db.exec("ROLLBACK");
+    const key = await hash(f.raw);
+    assert.ok(await f.config.store.getSession(key));
+    assert.deepEqual(await reportWorldsMigrations(f.query, issuer, env), { acknowledged: 0, conflict: 0 });
+
+    await remove();
+    assert.equal(await f.config.store.getSession(key), null);
+    assert.deepEqual(await reportWorldsMigrations(f.query, issuer, env), { acknowledged: 1, conflict: 0 });
+    assert.equal(sent[3].state, "revoked");
+    assert.ok(sent[3].revision > sent[2].revision);
+    assert.equal(sent[3].account_ref, sent[2].account_ref);
+    assert.deepEqual(await f.snapshot(), before);
+    assert.deepEqual(
+      await f.query("SELECT id FROM worlds_project_accounts WHERE id=$1", [f.id]),
+      [{ id: f.id }],
+    );
+  } finally {
+    await f.db.close();
+  }
+});
 
 test("a signed Hub event ends existing Worlds and retained native sessions while preserving later logins and other accounts", async () => {
   const keys = await crypto.subtle.generateKey("Ed25519", true, [

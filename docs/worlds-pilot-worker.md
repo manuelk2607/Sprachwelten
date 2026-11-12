@@ -62,6 +62,23 @@ Alle Antworten tragen `noindex, nofollow` und `private, no-store`. Die
 robots.txt sperrt alle Pfade und die Sitemap liefert 404. Ungültige Bindings
 führen zu 503. Die öffentliche Produktionskonfiguration wird separat gebaut.
 
+## Signierte Migrationsnachweise
+
+Migration 032 markiert bestätigte Übernahmen bestehender Sprachwelten-Profile
+und die zugehörigen Rücknahmen in der bestehenden Audit-Tabelle. Neu angelegte
+Worlds-Profile zählen nicht als Übernahme. Bei der Rücknahme endet die
+Worlds-Sitzung des betroffenen Profils. Native Anmeldung und Lerndaten
+bleiben beim bisherigen Profil.
+
+`npm run worlds:report-migrations` liefert offene Nachweise in kleinen
+Gruppen. Der Befehl verwendet die bestehende isolierte QA-Konfiguration
+(`QA_DATABASE_APPROVED`, `DATABASE_URL`, `TEST_DATABASE_HOST`,
+`TEST_NEON_BRANCH`, `NEON_AUTH_BASE_URL`), die Empfängeradresse
+`WORLDS_RECEIPT_URL` sowie `WORLDS_RECEIPT_KID` und `WORLDS_RECEIPT_KEY`.
+Schlüssel ausschließlich über Secrets bereitstellen. Der öffentliche Worlds
+Hub wird als Ziel abgewiesen. Konflikte bleiben in der Audit-Tabelle und
+werden zur manuellen Prüfung markiert.
+
 ## Abnahme und Rücknahme
 
 - Erst DE/EN-Lernseiten, statische Assets, `/robots.txt`, Sitemap, anonymen

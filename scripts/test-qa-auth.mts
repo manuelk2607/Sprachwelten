@@ -242,7 +242,8 @@ async function verifyWorldsMapping(userId: string) {
     );
     assert.equal(
       (
-        await sql`SELECT count(*)::int AS n FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`
+        await sql`SELECT count(*)::int AS n FROM worlds_link_audit
+          WHERE issuer=${issuer} AND subject=${subject} AND receipt_eligible`
       )[0].n,
       1,
     );
@@ -529,6 +530,30 @@ async function verifyWorldsMapping(userId: string) {
     console.log(
       "PASS: Worlds mapping preserves managed UUID and notebook ownership, isolates issuers, grants no role and rolls back conflicting writes.",
     );
+    await eventStore.putSession(bffKey, {
+      ...originalBff,
+      authenticatedAt: revokedThrough + 1000,
+    });
+    const beforeUnlink = await sourceSnapshot();
+    const removed = await sql`DELETE FROM worlds_identity_links
+      WHERE issuer=${issuer} AND subject=${subject} AND local_user_id=${userId}::uuid
+      RETURNING local_user_id`;
+    assert.deepEqual(removed, [{ local_user_id: userId }]);
+    assert.equal(await eventStore.getSession(bffKey), null);
+    assert.deepEqual(
+      await sql`SELECT event,receipt_eligible FROM worlds_link_audit
+        WHERE issuer=${issuer} AND subject=${subject} ORDER BY id`,
+      [
+        { event: "linked", receipt_eligible: true },
+        { event: "unlinked", receipt_eligible: true },
+      ],
+    );
+    assert.deepEqual(await sourceSnapshot(), beforeUnlink);
+    assert.deepEqual(
+      await sql`SELECT owner_id FROM vocabulary_notebooks WHERE id=${notebook}::uuid`,
+      [{ owner_id: userId }],
+    );
+    console.log("PASS: actual QA Postgres records legacy link and unlink receipts, ends the project session and preserves the native account and notebook ownership.");
   } finally {
     const ended = await Promise.allSettled(
       extraDevices.map((cookie) => endDevice(cookie)),

@@ -1,6 +1,7 @@
 import { backchannelLogout, callback, logout, sameOrigin, session, startLogin, startLoginLink, type AuthConfig } from "@worlds-hub/auth";
 import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 import {TransitionAuthStore} from './transition-store';
+import {worldsSessionEventKey} from './session-events';
 
 import {worldsReturnPaths,worldsProjectReturn,worldsManagedLinkPaths,worldsRecoveryHref} from './worlds-link';
 import {GameError} from '../game';
@@ -32,7 +33,7 @@ export function createWorldsConfig(env: Record<string, string | undefined>, quer
         issuer.protocol !== "https:" || issuer.username || issuer.password || issuer.search || issuer.hash) return;
     return {
       origin: origin.origin, issuer: issuer.href, resource: env.WORLDS_RESOURCE,
-      clientId: env.WORLDS_CLIENT_ID, algorithm: "EdDSA", reauthEnabled:true, store: new TransitionAuthStore(query),
+      clientId: env.WORLDS_CLIENT_ID, algorithm: "EdDSA", reauthEnabled:true, store: new TransitionAuthStore(query, !!worldsSessionEventKey(env)),
       returnPaths: worldsReturnPaths, signedOutPaths: {de: "/lernen", en: "/en/learn"},
     };
   } catch { return; }

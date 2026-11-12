@@ -31,11 +31,17 @@ const worker = await unstable_startWorker({
   },
 });
 
-async function check(path: string, status: number, method = "GET") {
+async function check(
+  path: string,
+  status: number,
+  method = "GET",
+  init: { headers?: Record<string, string>; body?: string } = {},
+) {
   const response = await worker.fetch(worldsPilotOrigin + path, {
     method,
     redirect: "manual",
     signal: AbortSignal.timeout(10_000),
+    ...init,
   });
   assert.equal(response.status, status, path);
   assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow", path);
@@ -66,6 +72,28 @@ try {
   // Method checks run before the database-backed authentication rate limit.
   await check("/auth/status", 405, "POST");
   await check("/auth/worlds/profile", 405);
+  const eventPath = "/auth/events/session-revoked";
+  await check(eventPath, 404, "POST");
+  const key = await crypto.subtle.generateKey("Ed25519", true, [
+    "sign",
+    "verify",
+  ]);
+  const { kty, crv, x } = await crypto.subtle.exportKey("jwk", key.publicKey);
+  await worker.patchConfig({
+    bindings: {
+      ...worker.config.bindings,
+      WORLDS_HUB_SESSION_EVENT_JWK: {
+        type: "plain_text",
+        value: JSON.stringify({ kid: "fixture", kty, crv, x }),
+      },
+    },
+  });
+  await worker.ready;
+  await check(eventPath, 405);
+  await check(eventPath, 400, "POST", {
+    headers: { "content-type": "application/secevent+jwt" },
+    body: "invalid-test-signature",
+  });
   await worker.patchConfig({
     bindings: {
       ...worker.config.bindings,
@@ -79,7 +107,7 @@ try {
   );
   await check("/auth/status", 503);
   console.log(
-    "Pilot Worker passed DE/EN, auth method, asset and fail-closed checks.",
+    "Pilot Worker passed DE/EN, auth methods, signed event routing, assets and fail-closed checks.",
   );
 } finally {
   await worker.dispose();

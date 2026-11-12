@@ -1,7 +1,14 @@
 import { loadManagedOwner } from "../lib/auth/managed-owner.ts";
 import { SESSION_COOKIE, token } from "@worlds-hub/auth";
 import { hash } from "@worlds-hub/auth/store";
+import {
+  sessionEventContentType,
+  sessionRevocationPath,
+  signSessionRevocation,
+} from "@worlds-hub/auth/session-revocation";
 import { createWorldsConfig, worldsRoute } from "../lib/auth/worlds.ts";
+import { receiveWorldsSessionEvent } from "../lib/auth/session-events.ts";
+import { TransitionAuthStore } from "../lib/auth/transition-store.ts";
 import { managedLinkRoute } from "../lib/auth/worlds-managed-link.ts";
 import { projectLogout } from "../lib/auth/worlds-logout.ts";
 import { managedTransitionIdentity } from "../lib/auth/managed-transition.ts";
@@ -425,6 +432,64 @@ async function verifyWorldsMapping(userId: string) {
       1,
     );
     await verifyWorldsProjectAccess(userId, issuer, subject);
+
+    const signing = await crypto.subtle.generateKey("Ed25519", true, [
+      "sign",
+      "verify",
+    ]);
+    const { kty, crv, x } = await crypto.subtle.exportKey(
+      "jwk",
+      signing.publicKey,
+    );
+    const kid = "disposable-qa";
+    const env = {
+      WORLDS_HUB_SESSION_EVENT_JWK: JSON.stringify({ kid, kty, crv, x }),
+    };
+    const eventStore = new TransitionAuthStore(query, true);
+    const originalBff = await config.store.getSession(bffKey);
+    assert.ok(originalBff);
+    const revokedThrough = Math.floor(Date.now() / 1000) * 1000;
+    assert.ok(originalBff.authenticatedAt! <= revokedThrough);
+    const audience = origin + sessionRevocationPath;
+    const signed = await signSessionRevocation(
+      {
+        eventId: crypto.randomUUID(),
+        identityIssuer: issuer,
+        subject,
+        revokedThrough,
+      },
+      "https://worlds-hub.maki26.workers.dev",
+      audience,
+      { kid, privateKey: signing.privateKey },
+    );
+    const beforeEvent = await sourceSnapshot();
+    const eventRequest = () =>
+      new Request(audience, {
+        method: "POST",
+        headers: { "content-type": sessionEventContentType },
+        body: signed,
+      });
+    for (const attempt of [1, 2]) {
+      const delivered = await receiveWorldsSessionEvent(
+        eventRequest(),
+        { ...config, store: eventStore },
+        env,
+      );
+      assert.equal(delivered.status, 202, `signed delivery ${attempt}`);
+    }
+    assert.equal(await eventStore.getSession(bffKey), null);
+    assert.equal((await nativeIdentity(rawOwn)).user, null);
+    assert.equal((await nativeIdentity(secondDevice)).user, null);
+    assert.deepEqual(await sourceSnapshot(), beforeEvent);
+    await eventStore.putSession(bffKey, {
+      ...originalBff,
+      authenticatedAt: revokedThrough + 1000,
+    });
+    assert.ok(await eventStore.getSession(bffKey));
+    console.log(
+      "PASS: signed Hub event committed against actual QA Postgres, retired old project sessions on both devices, preserved provider rows and accepted a newer central login.",
+    );
+
     const signedOut = await projectLogout(
       linkRequest("logout", new URLSearchParams({ csrf })),
       config,
@@ -469,6 +534,7 @@ async function verifyWorldsMapping(userId: string) {
       sql`DELETE FROM worlds_legacy_sessions WHERE local_user_id=${userId}`,
       sql`DELETE FROM worlds_link_proofs WHERE proof_hash=${proof} OR (issuer=${issuer} AND subject=${subject})`,
       sql`DELETE FROM worlds_identity_links WHERE issuer=${issuer} AND subject=${subject}`,
+      sql`DELETE FROM worlds_session_revocations WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM worlds_link_audit WHERE issuer=${issuer} AND subject=${subject}`,
       sql`DELETE FROM worlds_auth_sessions WHERE id=${bffKey}`,
       sql`DELETE FROM worlds_auth_sessions WHERE id=${deniedBffKey}`,

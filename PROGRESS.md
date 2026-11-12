@@ -31,8 +31,27 @@ Freigabe der öffentlichen Testadresse ausschließlich im Testzweig und
 Live-Checks für DE/EN, Indexierungsschutz und anonyme Sitzungsabfrage.
 Beim Klick auf „Anmelden“ hat der Hub die vorhandene zentrale Anmeldung
 erkannt und direkt den Einwilligungsdialog „Sprachwelten Test“ angezeigt.
-Rückweg nach der persönlichen Freigabe und Deployment-Rücknahme stehen aus.
-Details in `docs/worlds-pilot-worker.md`.
+Am 12.11. meldete Neon HTTP 402: Das genehmigte QA-Projektlimit von 7.200
+Aktivsekunden war ausgeschöpft. Mit Nutzerfreigabe auf 14.400 Sekunden
+erhöht; 1.800 Compute-Sekunden, 200 MiB und 0,25 CU blieben erhalten.
+Die Datenbank und Live-Sitzungsabfrage bestanden danach erneut.
+
+Cloudflare-Rückrolltest erfolgreich: öffentliche Testroute geschlossen
+(`/lernen` HTTP 404), Version `e5ab43fa` auf `f9aa6fbb` zurückgerollt,
+`e5ab43fa` wieder bei 100 Prozent aktiviert, Testroute geöffnet.
+DE/EN, Indexschutz und anonyme Sitzungsabfrage danach erneut bestanden.
+Die persönliche Freigabe ist abgelaufen. Der Rückweg nach einer neuen
+Freigabe sowie die produktive Kontoübernahme stehen aus.
+
+## Zentraler Widerruf von Projektsitzungen
+
+Migration 030 und Auth-Paket 0.1.5 ergänzen den abgesicherten Empfang
+signierter Worlds-Hub-Ereignisse. Der Zeitstempel schützt neue Sitzungen
+vor verspäteter Zustellung und verhindert das Wiederaufleben älterer
+Anmeldungen. Betroffene bisherige Übergangssitzungen verlieren den
+Projektzugriff. Die Native-Auth-Daten und die Kontoverknüpfung bleiben
+erhalten. Empfangen wird erst mit gepinntem Hub-Schlüssel in QA. Die
+öffentliche Testversion verwendet weiterhin den bisherigen Stand.
 
 ## Feste Übergangssitzungen und Stilllegung neuer lokaler Anmeldungen
 

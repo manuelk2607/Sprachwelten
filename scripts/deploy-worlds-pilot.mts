@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { neon } from "@neondatabase/serverless";
+import { sessionEventPublicKey } from "@worlds-hub/auth/session-revocation";
 import { isolatedAuthTarget } from "../lib/qa-target.ts";
 import {
   worldsPilotIssuer,
@@ -18,6 +19,7 @@ if (extraArgs.length || (mode !== "--dry-run" && mode !== "--deploy"))
 
 const deploy = mode === "--deploy";
 const env = process.env;
+const sessionEventJwk = deploy ? env.WORLDS_HUB_SESSION_EVENT_JWK : undefined;
 const secretNames = [
   "DATABASE_URL",
   "NEON_AUTH_BASE_URL",
@@ -35,6 +37,10 @@ if (deploy) {
     );
   if (!/^[A-Za-z0-9_-]{16,128}$/.test(env.WORLDS_PILOT_CLIENT_ID ?? ""))
     throw new Error("The registered Sprachwelten pilot client ID is required.");
+  if (sessionEventJwk && !sessionEventPublicKey(sessionEventJwk))
+    throw new Error(
+      "The optional Hub session event key must be a public Ed25519 JWK.",
+    );
   if (
     secretNames.some((name) => !env[name]?.trim()) ||
     (env.NEON_AUTH_COOKIE_SECRET?.length ?? 0) < 32
@@ -45,11 +51,11 @@ if (deploy) {
     isolatedAuthTarget(env);
     const sql = neon(env.DATABASE_URL!);
     const migrations =
-      await sql`SELECT name FROM schema_migrations WHERE name = '029_worlds_legacy_sessions.sql'`;
-    if (migrations.length !== 1) throw new Error();
+      await sql`SELECT name FROM schema_migrations WHERE name IN ('029_worlds_legacy_sessions.sql','030_worlds_session_revocations.sql')`;
+    if (migrations.length !== 2) throw new Error();
   } catch {
     throw new Error(
-      "Deployment requires the matching isolated Neon database and Auth endpoint with migration 029 applied.",
+      "Deployment requires the matching isolated Neon database and Auth endpoint with migrations 029 and 030 applied.",
     );
   }
 }
@@ -84,6 +90,9 @@ const config = {
       : "dry-run-only-client",
     WORLDS_ISSUER: worldsPilotIssuer,
     WORLDS_RESOURCE: worldsPilotResource,
+    ...(sessionEventJwk
+      ? { WORLDS_HUB_SESSION_EVENT_JWK: sessionEventJwk }
+      : {}),
   },
 };
 writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");

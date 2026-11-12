@@ -18,6 +18,12 @@ import { nativeTransitionRoute } from "../lib/auth/native-transition-route";
 import { createWorldsConfig } from "../lib/auth/worlds";
 import { resolveProjectIdentity } from "../lib/auth/project-identity";
 import { maintainWorldsTransitions } from "../db/transition-maintenance";
+import {
+  sessionEventContentType,
+  sessionRevocationPath,
+  signSessionRevocation,
+} from "@worlds-hub/auth/session-revocation";
+import { receiveWorldsSessionEvent } from "../lib/auth/session-events";
 
 const origin = "https://sprach-pilot.test",
   issuer = "https://central.test/auth";
@@ -26,7 +32,7 @@ const settings = {
   issuer: "https://ep-qa.neonauth.eu.neon.tech/sprachspiel/auth",
   cookieSecret: "synthetic-configuration-only-at-least-32-characters",
 };
-async function fixture(apply = true) {
+async function fixture(apply = true, sessionEventJwk?: string) {
   const db = new PGlite(),
     id = crypto.randomUUID(),
     other = crypto.randomUUID(),
@@ -48,6 +54,7 @@ async function fixture(apply = true) {
     "027_worlds_identity.sql",
     "028_worlds_project_accounts.sql",
     ...(apply ? ["029_worlds_legacy_sessions.sql"] : []),
+    ...(sessionEventJwk ? ["030_worlds_session_revocations.sql"] : []),
   ])
     await db.exec(
       await readFile(
@@ -77,6 +84,7 @@ async function fixture(apply = true) {
       WORLDS_CLIENT_ID: "fixture",
       WORLDS_ISSUER: issuer,
       WORLDS_RESOURCE: origin + "/api",
+      WORLDS_HUB_SESSION_EVENT_JWK: sessionEventJwk,
     },
     query,
   )!;
@@ -142,6 +150,102 @@ async function fixture(apply = true) {
     response,
   };
 }
+
+test("a signed Hub event ends existing Worlds and retained native sessions while preserving later logins and other accounts", async () => {
+  const keys = await crypto.subtle.generateKey("Ed25519", true, [
+    "sign",
+    "verify",
+  ]);
+  const { kty, crv, x } = await crypto.subtle.exportKey("jwk", keys.publicKey);
+  const kid = "worlds-hub-event-fixture";
+  const jwk = JSON.stringify({ kid, kty, crv, x });
+  const f = await fixture(true, jwk);
+  try {
+    const revokedThrough = Math.floor(f.now / 1000) * 1000;
+    const recentNative = new Date(revokedThrough + 1000);
+    await f.query('UPDATE neon_auth.session SET "createdAt"=$1 WHERE id=$2', [
+      recentNative.toISOString(),
+      "second",
+    ]);
+    const before = await f.snapshot();
+    await f.query(
+      "INSERT INTO worlds_identity_links(issuer,subject,local_user_id) VALUES($1,$2,$3)",
+      [issuer, f.sub, f.id],
+    );
+    const store = f.config.store;
+    const value = {
+      issuer,
+      sub: f.sub,
+      csrf: token(),
+      expires: f.now + 60_000,
+    };
+    await store.putSession("existing-bff", {
+      ...value,
+      authenticatedAt: revokedThrough,
+    });
+    await store.putSession("newer-bff", {
+      ...value,
+      authenticatedAt: revokedThrough + 1000,
+    });
+    await store.putSession("control-bff", {
+      ...value,
+      sub: "control",
+      authenticatedAt: revokedThrough,
+    });
+    assert.ok(await transitionUser(f.dto(), f.query, issuer));
+
+    const audience = origin + sessionRevocationPath;
+    const signed = await signSessionRevocation(
+      {
+        eventId: "sprachwelten-worlds-fixture",
+        identityIssuer: issuer,
+        subject: f.sub,
+        revokedThrough,
+      },
+      "https://worlds-hub.maki26.workers.dev",
+      audience,
+      { kid, privateKey: keys.privateKey },
+    );
+    const request = () =>
+      new Request(audience, {
+        method: "POST",
+        headers: { "content-type": sessionEventContentType },
+        body: signed,
+      });
+    assert.equal(
+      (await receiveWorldsSessionEvent(request(), f.config, {})).status,
+      404,
+    );
+    const env = { WORLDS_HUB_SESSION_EVENT_JWK: jwk };
+    for (const attempt of [1, 2]) {
+      assert.equal(
+        (await receiveWorldsSessionEvent(request(), f.config, env)).status,
+        202,
+        `delivery ${attempt}`,
+      );
+    }
+    assert.equal(await store.getSession("existing-bff"), null);
+    assert.equal(await transitionUser(f.dto(), f.query, issuer), null);
+    assert.equal(await transitionUser(f.dto(), f.query), null);
+    assert.ok(await store.getSession("newer-bff"));
+    assert.ok(await store.getSession("control-bff"));
+    assert.ok(
+      await transitionUser(
+        { ...f.dto("second"), createdAt: recentNative.getTime() },
+        f.query,
+        issuer,
+      ),
+    );
+    assert.deepEqual(await f.snapshot(), before);
+    assert.equal(
+      (await f.query("SELECT local_user_id FROM worlds_identity_links", []))[0]
+        ?.local_user_id,
+      f.id,
+    );
+  } finally {
+    await f.db.close();
+  }
+});
 
 test("first verified link atomically snapshots all existing devices, preserves fixed expiry and never enrolls later logins or relinks", async (t) => {
   const f = await fixture();

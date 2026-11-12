@@ -92,6 +92,7 @@ jobs:
           DATABASE_URL: ${{ steps.branch.outputs.db_url }}
           NEON_AUTH_BASE_URL: ${{ steps.branch.outputs.auth_url }}
           WORLDS_PILOT_CLIENT_ID: ${{ vars.WORLDS_PILOT_CLIENT_ID }}
+          WORLDS_HUB_SESSION_EVENT_JWK: ${{ vars.WORLDS_HUB_SESSION_EVENT_JWK }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.WORLDS_PILOT_CLOUDFLARE_ACCOUNT_ID }}
           WORLDS_PILOT_CLOUDFLARE_TOKEN: ${{ secrets.WORLDS_PILOT_CLOUDFLARE_TOKEN }}
         run: |

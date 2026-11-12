@@ -24,7 +24,7 @@ Deployment-Zugang mit `Individual Workers Editor` auf diesen Worker begrenzen.
 [Cloudflare Workers-Berechtigungen](https://developers.cloudflare.com/workers/authorization/workers/)
 
 1. Einen befristeten Branch aus dem leeren Sprachwelten-QA-Template verwenden.
-   Die Migrationen einschließlich 029 mit dem vorhandenen Migrationsrunner
+   Die Migrationen einschließlich 029 und 030 mit dem vorhandenen Migrationsrunner
    ausführen. Die öffentliche Testadresse nur auf diesem Zweig als vertrauenswürdige
    Adresse für die bisherige Konto-Bestätigung hinzufügen.
 2. In der zentralen Worlds-Testinstanz einen öffentlichen PKCE-Client mit
@@ -38,9 +38,11 @@ Deployment-Zugang mit `Individual Workers Editor` auf diesen Worker begrenzen.
      `NEON_AUTH_COOKIE_SECRET` mit mindestens 32 Zeichen
    - `WORLDS_PILOT_CLIENT_ID`, `CLOUDFLARE_ACCOUNT_ID` und
      `WORLDS_PILOT_CLOUDFLARE_TOKEN` aus einem gesonderten Secret
+   - Für signierte Hub-Abmeldungen optional `WORLDS_HUB_SESSION_EVENT_JWK`
+     mit dem öffentlichen Ed25519-Schlüssel (`kid`, `kty`, `crv`, `x`)
 4. Das geprüfte Paket mit `npm run deploy:worlds-pilot -- --deploy` veröffentlichen.
    Der Befehl prüft das Datenbankziel, die zugehörige Auth-Adresse und Migration
-   029 vor dem Upload. Er übergibt Datenbank und Auth als Worker-Secrets über
+   029 und 030 vor dem Upload. Er übergibt Datenbank und Auth als Worker-Secrets über
    eine temporäre Datei mit eingeschränktem Zugriff und räumt sie danach auf.
 
 Alternativ in GitHub `Isolated integration` manuell mit
@@ -51,6 +53,8 @@ gestartete Pilot-Release erstellt eine neue QA-Datenbank für 24 Stunden, prüft
 sie mit der vorhandenen Integration, erlaubt die Testadresse im neuen
 Auth-Zweig, veröffentlicht und prüft die Testadresse.
 Normale Läufe behalten den einstündigen QA-Branch und veröffentlichen nichts.
+Die optionale öffentliche Variable `WORLDS_HUB_SESSION_EVENT_JWK` aktiviert
+`POST /auth/events/session-revoked` erst mit gültiger Konfiguration.
 
 Der Worker verwendet ausschließlich die gebauten Dateien und die Testbindungen.
 Vorschau-URLs, Cron, Produktionsspeicher und KI-Bindings sind deaktiviert.

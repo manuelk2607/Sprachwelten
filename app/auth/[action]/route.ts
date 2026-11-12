@@ -10,10 +10,14 @@ import {authError} from '@/lib/auth/worlds-document';
 import {projectLogout} from '@/lib/auth/worlds-logout';
 import {getAuth} from '@/lib/auth/server';
 import {session as worldsSession} from '@worlds-hub/auth';
+import {sessionRevocationPath} from '@worlds-hub/auth/session-revocation';
+import {receiveWorldsSessionEvent} from '@/lib/auth/session-events';
 
 async function handle(request: Request) {
   const config = worldsConfig();
   const url = new URL(request.url);
+  if(config && url.pathname===sessionRevocationPath)
+    return receiveWorldsSessionEvent(request,config,process.env);
   let response: Response;
   if (!config || url.origin !== config.origin || !worldsPaths.includes(url.pathname)) response = new Response(null, {status: 404});
   else if((url.pathname==='/auth/worlds/profile'||worldsManagedLinkPaths.includes(url.pathname))&&request.method!=='POST')response=new Response(null,{status:405});

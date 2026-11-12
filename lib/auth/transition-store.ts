@@ -3,8 +3,8 @@ import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 
 /** Verified central revocation must also end the temporary native fallback. */
 export class TransitionAuthStore extends PostgresAuthStore {
-  constructor(private transitionQuery: PgQuery) {
-    super(transitionQuery);
+  constructor(private transitionQuery: PgQuery, sessionEventsEnabled = false) {
+    super(transitionQuery, sessionEventsEnabled);
   }
   override async revokeIdentity(issuer: string, sub?: string, sid?: string) {
     if (!sub && !sid) throw new Error("Missing identity");

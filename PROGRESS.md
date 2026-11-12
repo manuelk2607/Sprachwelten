@@ -61,6 +61,19 @@ eine native Sitzung mit Millisekunden, einen nach dem Commit sichtbaren
 Übergangsnachweis und eine neuere Sitzung. Typprüfung, Lint, 228 Tests,
 Build, Worker-Trockenlauf und lokales Worker-Paket bestanden.
 
+Vollständige CI **43131645816** und QA-Release **43131710625** für
+`a6978c2` bestanden. Aktiver Testworker
+`b5d5df5b-8b10-4885-9453-8745907781c6` mit QA-Zweig
+`br-quiet-flower-ba6xcxlr` bis 13.11.2026, 01:03:30 UTC.
+Nach Verbrauch von 14.616 Aktivsekunden hat der Nutzer die Erhöhung
+des kostenlosen Projektlimits auf 21.600 Sekunden freigegeben.
+Chromium DE und WebKit EN erreichten den echten Hub mit PKCE und
+hostgebundenem Cookie. Der Nutzer bestätigte die Rückkehr. Eine
+aktive Worlds-Sitzung wurde aggregiert verifiziert. Das zugehörige
+Sprachwelten-Profil steht aus. Eine separate Live-Probe bestätigte,
+dass der signierte Widerruf einer künstlichen Sitzung den Zugriff auf
+private Vokabelhefte beendet und ein Kontrollkonto nutzbar bleibt.
+
 Lokal bestanden 228 Tests, Build, Typen, Lint, Übersetzungen, Audit und
 Worker-Prüfung der abgesicherten Route. GitHub **43127214009** bestätigte
 Migration 030 und doppelte Zustellung eines signierten Ereignisses an

@@ -7,8 +7,14 @@ Rücknahme. Der befristete QA-Versand verwendet den gemeinsamen signierten
 Nachweis aus `@worlds-hub/auth` 0.1.6. Neue Profile erzeugen keinen
 Migrationsnachweis. Bei einer Rücknahme enden betroffene Worlds-Sitzungen.
 Native Anmeldung und Lerndaten wurden im lokalen PostgreSQL-Test erhalten.
-229 Tests, Typprüfung, Lint und Build bestanden. Die veröffentlichte
-Testdatenbank bleibt für den laufenden Abmeldetest auf dem bisherigen Stand.
+229 Tests, Typprüfung, Lint und Build bestanden. GitHub **43197869483**
+bestand einschließlich Chromium und WebKit. **43197868358** prüfte
+Übernahme und Rücknahme mit echtem QA-PostgreSQL und Managed Auth.
+Die veröffentlichte Testdatenbank erhielt diese Migration noch nicht.
+
+Der öffentliche Testworker bestätigte beim Wiederholungsversuch den
+ursprünglichen Hub-Widerruf vom 12.11. um 11:02:39 MEZ. Für das
+betroffene Testkonto blieben keine alten Worlds-Sitzungen.
 
 ## Separater Worlds-Testworker vorbereitet
 

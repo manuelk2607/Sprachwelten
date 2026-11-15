@@ -1,13 +1,25 @@
-# Sprachwelten – Fortsetzungsstand, 12. November 2026
+# Sprachwelten – Fortsetzungsstand, 15. November 2026
 
-## Produktiver Worlds-Release vorbereitet
+## Produktiver Worlds-Release veröffentlicht
 
-CI **43697592504** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,
-Unit-Tests, Build und das isolierte Worker-Paket. Die einzige Abweichung war
-ein veralteter Browserfall, der weiterhin neue Songbeiträge in Sprachwelten
-erwartete. Er prüft nun die bereits eingeführte Personenzitat-Regel und
-bestand gezielt in Desktop- und Mobilansicht. Der vollständige CI-Lauf wird
-mit dieser Korrektur wiederholt.
+CI **43698437448** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,
+Unit-Tests, Build, das isolierte Worker-Paket, 154 reguläre und 36
+Worlds-Browserfälle. Der veraltete Browserfall für neue Songbeiträge prüft
+nun die bereits eingeführte Personenzitat-Regel in Desktop- und Mobilansicht.
+
+Unmittelbarer Wiederherstellungspunkt vor Migration: 15.11.2026,
+09:17:22 UTC, WAL `0/4C449E0`; vorherige Worker-Version `b21920f5-ee96-4dab-b7ce-be6b05e7ee24`.
+Migrationen 027–032 wurden einzeln transaktional angewendet. Danach blieben
+drei Konten, 515 Beiträge, eine Adminrolle, keine Vokabelhefte und keine
+Lernstände einschließlich ihrer Eigentümer- und Sicherheitsprüfsummen
+unverändert. Drei getrennte Übergangsprofile wurden angelegt; null Identitäten
+wurden automatisch verknüpft und null Worlds-Sitzungen erzeugt.
+
+Produktive Worker-Version `1cbcf695-c943-47c4-8a92-393147d7c1af` ist live.
+DE/EN, Sprachkennzeichnungen, Sitemap, Indexierungsschutz privater Seiten,
+anonyme Sitzungsabfrage, geschützte APIs und der OIDC-PKCE-Start mit sicheren
+Host-Cookies sind produktiv geprüft. Offen ist nur der persönliche
+Browser-Rückweg nach Worlds Hub mit einem bestätigten Konto.
 
 Der SSO-Zweig enthält jetzt den bereits produktiven Music-Worlds-Cutover
 aus `main`. Alte Songbeiträge sind weiterhin für ihre Eigentümer
@@ -26,13 +38,8 @@ und den Music-Worlds-Cutover bestand mit 13 Tests. GitHub-Lauf **43210051028**
 hatte einen Speicherfehler im Prozess des Kontoübernahmetests. Die CI begrenzt
 deshalb die Anzahl der parallel laufenden Testdateien auf zwei.
 
-Lesende Prüfung am 12.11.2026 um 11:31:29 UTC, WAL-Position
-`0/4AA0768`: drei bisherige Konten, zwei aktive native Sitzungen,
-515 Beiträge, keine Vokabelhefte und keine Worlds-Tabellen. Typprüfung,
-Lint, Übersetzungsprüfung, Unit-Tests, Build und Produktionsprobelauf
-bestanden. Das Produktionspaket benötigt einen für den Worker
-`sprachwelten` freigegebenen Cloudflare-Zugang. Vor dem Datenbanklauf
-den Wiederherstellungspunkt und die aktive Worker-Version aktualisieren.
+Der ältere Vorbereitungsstand vom 12.11. ist durch den oben dokumentierten
+Produktionsnachweis ersetzt.
 
 ## Nachweise über Kontoübernahmen
 

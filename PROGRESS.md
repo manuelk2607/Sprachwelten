@@ -21,8 +21,10 @@ wurden automatisch verknüpft und null Worlds-Sitzungen erzeugt.
 Produktive Worker-Version `1cbcf695-c943-47c4-8a92-393147d7c1af` ist live.
 DE/EN, Sprachkennzeichnungen, Sitemap, Indexierungsschutz privater Seiten,
 anonyme Sitzungsabfrage, geschützte APIs und der OIDC-PKCE-Start mit sicheren
-Host-Cookies sind produktiv geprüft. Offen ist nur der persönliche
-Browser-Rückweg nach Worlds Hub mit einem bestätigten Konto.
+Host-Cookies sind produktiv geprüft. Am 15.11. bestätigte der Kontoinhaber
+den realen Rücksprung zur Seite „Lernen“ im angemeldeten Zustand. Die
+Produktionsdatenbank meldete eine aktive Worlds-Sitzung, eine Zuordnung
+und ein Worlds-Profil. Der Nachweis der Übernahme von Altkonten steht aus.
 
 Der SSO-Zweig enthält jetzt den bereits produktiven Music-Worlds-Cutover
 aus `main`. Alte Songbeiträge sind weiterhin für ihre Eigentümer

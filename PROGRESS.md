@@ -6,6 +6,9 @@ CI **43698437448** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,
 Unit-Tests, Build, das isolierte Worker-Paket, 154 reguläre und 36
 Worlds-Browserfälle. Der veraltete Browserfall für neue Songbeiträge prüft
 nun die bereits eingeführte Personenzitat-Regel in Desktop- und Mobilansicht.
+Der identische dokumentierte Stand bestand in CI **43699340039** erneut.
+Ein WebKit-Mobilfall bestand beim vorgesehenen Wiederholungsversuch. Die
+befristete Cloudflare-Anmeldung wurde nach Live-Prüfung wieder entfernt.
 
 Unmittelbarer Wiederherstellungspunkt vor Migration: 15.11.2026,
 09:17:22 UTC, WAL `0/4C449E0`; vorherige Worker-Version `b21920f5-ee96-4dab-b7ce-be6b05e7ee24`.

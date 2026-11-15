@@ -2,6 +2,13 @@
 
 ## Produktiver Worlds-Release vorbereitet
 
+CI **43697592504** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,
+Unit-Tests, Build und das isolierte Worker-Paket. Die einzige Abweichung war
+ein veralteter Browserfall, der weiterhin neue Songbeiträge in Sprachwelten
+erwartete. Er prüft nun die bereits eingeführte Personenzitat-Regel und
+bestand gezielt in Desktop- und Mobilansicht. Der vollständige CI-Lauf wird
+mit dieser Korrektur wiederholt.
+
 Der SSO-Zweig enthält jetzt den bereits produktiven Music-Worlds-Cutover
 aus `main`. Alte Songbeiträge sind weiterhin für ihre Eigentümer
 bearbeitbar. Die Zugriffskontrolle verwendet die bisherige Projektidentität.

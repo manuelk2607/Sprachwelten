@@ -61,19 +61,21 @@ try {
       .filter((key) => process.env[key]?.trim())
       .map((key) => [key, process.env[key]]),
   );
-  if (!dryRun && keys.slice(0, 3).some((key) => !secrets[key]))
+  if (!dryRun && !enableWorlds && keys.some((key) => !secrets[key]))
     throw new Error(
       "Missing required production database/auth secrets. See .env.example.",
     );
   const secretsPath = path.join(temporary, "secrets.json");
-  writeFileSync(secretsPath, JSON.stringify(secrets), { mode: 0o600 });
+  const uploadSecrets = !dryRun && !enableWorlds;
+  if (uploadSecrets) writeFileSync(secretsPath, JSON.stringify(secrets), { mode: 0o600 });
   const args = [
     "node_modules/wrangler/bin/wrangler.js",
     "deploy",
     "--config",
     configPath,
     "--keep-vars",
-    ...(dryRun ? ["--dry-run"] : ["--secrets-file", secretsPath]),
+    ...(dryRun ? ["--dry-run"] : []),
+    ...(uploadSecrets ? ["--secrets-file", secretsPath] : []),
   ];
   const result = spawnSync(process.execPath, args, {
     cwd: root,

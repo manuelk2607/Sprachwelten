@@ -12,6 +12,12 @@ Instanz und den beim Hub registrierten Sprachwelten-Client. Der Release
 setzt die bestehenden Worlds-Migrationen voraus. Aktive Bestandskonten
 nutzen weiterhin den vorgesehenen Übergang und die bestätigte Übernahme
 über den Hub. R2, AI, Rate-Limits und Cron sind im Produktionspaket enthalten.
+Der Worlds-Release verwendet die bereits gebundenen Worker-Secrets.
+
+Der isolierte Wiederholungstest für die Kontoübernahme, den Produktionsschalter
+und den Music-Worlds-Cutover bestand mit 13 Tests. GitHub-Lauf **43210051028**
+hatte einen Speicherfehler im Prozess des Kontoübernahmetests. Die CI begrenzt
+deshalb die Anzahl der parallel laufenden Testdateien auf zwei.
 
 Lesende Prüfung am 12.11.2026 um 11:31:29 UTC, WAL-Position
 `0/4AA0768`: drei bisherige Konten, zwei aktive native Sitzungen,

@@ -1,5 +1,34 @@
 # Sprachwelten – Fortsetzungsstand, 15. November 2026
 
+## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
+
+Der Kontoinhaber hat Zugang zu einem alten Sprachwelten-Konto. Seine
+zentrale Identität ist bereits an das am 15.11. neu erzeugte
+Sprachwelten-Profil gebunden. Die Übernahme lehnt das im bestehenden
+Verfahren absichtlich ab, damit sie keine Zuordnung überschreibt.
+
+Produktiver Nur-Lese-Abgleich über alle 33 Anwendungstabellen: Die UUID
+des neu erzeugten Profils kommt ausschließlich im Profil selbst, seiner
+einzigen Zuordnung und dem bestehenden Audit-Eintrag vor. Keine Beiträge,
+Rollen, Hefte, Lernstände, Spiel- oder anderen Eigentümerbezüge. Es gibt
+keine aktive Sprachwelten-Worlds-Sitzung dieses Kontos.
+
+Nach Freigabe wurde die beim letzten Zwischenstand angelegte Neon-Sicherung
+`br-wandering-mountain-b9480nvc` (LSN `0/4F0C858`, ohne Compute) als bereit
+bestätigt. Profil, Zuordnung und Inhaltsfreiheit entsprachen weiterhin dem
+gesicherten Stand. Die Produktionstransaktion prüfte diese Bedingungen und
+fehlende aktive Sitzungen erneut. Genau eine Zuordnung wurde gelöst. Profil
+und ursprünglicher Audit-Eintrag sind weiter vorhanden. Der lokale Test mit
+Migrationen 027–032 bestätigte die Schutzprüfungen und den Rollback der
+Zuordnung. Keine Änderung am Worker oder Datenbankschema.
+
+Offen: Der Kontoinhaber meldet sich im vorhandenen Browser-Ablauf mit seinem
+bisherigen Konto an und bestätigt beide Konten. Danach lokale Profil-ID,
+Rolle und Projektdaten prüfen. Bei Abbruch vor einer neuen Zuordnung den
+ursprünglichen Eintrag aus dem erhaltenen Audit und dem geprüften
+Zuordnungszeitstempel rekonstruieren. Einfügen nur, wenn Identität und Profil
+weiter ungebunden sind. Eine neu bestätigte Zuordnung niemals überschreiben.
+
 ## Produktiver Worlds-Release veröffentlicht
 
 CI **43698437448** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,

@@ -1,4 +1,4 @@
-# Sprachwelten – Fortsetzungsstand, 15. November 2026
+# Sprachwelten – Fortsetzungsstand, 22. November 2026
 
 ## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
 
@@ -22,12 +22,16 @@ und ursprünglicher Audit-Eintrag sind weiter vorhanden. Der lokale Test mit
 Migrationen 027–032 bestätigte die Schutzprüfungen und den Rollback der
 Zuordnung. Keine Änderung am Worker oder Datenbankschema.
 
-Offen: Der Kontoinhaber meldet sich im vorhandenen Browser-Ablauf mit seinem
-bisherigen Konto an und bestätigt beide Konten. Danach lokale Profil-ID,
-Rolle und Projektdaten prüfen. Bei Abbruch vor einer neuen Zuordnung den
-ursprünglichen Eintrag aus dem erhaltenen Audit und dem geprüften
-Zuordnungszeitstempel rekonstruieren. Einfügen nur, wenn Identität und Profil
-weiter ungebunden sind. Eine neu bestätigte Zuordnung niemals überschreiben.
+Der Kontoinhaber bestätigte beide Konten im vorhandenen Browser-Ablauf
+und sieht seine bisherigen Beiträge wieder. Produktiv geprüft: genau eine
+Zuordnung zur ursprünglichen, verifizierten Sprachwelten-Konto-ID, eine
+aktive Worlds-Sitzung und ein Audit-Eintrag zur bestätigten Übernahme.
+80 Beiträge und eine Adminrolle hängen weiter an dieser ursprünglichen ID.
+Die Prüfsummen der 515 Beiträge, Rollen, Lern-, Heft- und Spieldaten sind
+seit der Lösung der leeren Zuordnung identisch. Das leere Profil bleibt
+unverknüpft erhalten. Zwei Altkonten benötigen noch einen Eigentumsnachweis.
+Der lokale Audit-Eintrag ist vorhanden. Ein zentraler Migrationsnachweis
+für Sprachwelten ist in Produktion weiterhin offen.
 
 ## Produktiver Worlds-Release veröffentlicht
 

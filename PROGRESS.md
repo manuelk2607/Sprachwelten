@@ -42,6 +42,10 @@ Produktionsziel. Lokale Prüfung: 234 Tests, Typprüfung, Lint,
 DE/EN-Übersetzungsprüfung, Build und Cloudflare-Probelauf bestanden.
 Ein bestätigter Nachweis wartet produktiv im Audit. Der Hub-Endpunkt
 antwortet vor Freigabe mit 404. GitHub-Prüfung und Live-Zustellung folgen.
+GitHub-Lauf 45189695549 stoppte beim Audit wegen sieben neuen Meldungen
+für Next.js 16.4.2. Next.js und die zugehörige ESLint-Konfiguration wurden
+auf 16.4.5 aktualisiert. Vollständiges Audit, 234 Tests, Typprüfung, Lint
+und Übersetzungsprüfung bestanden lokal.
 
 ## Produktiver Worlds-Release veröffentlicht
 

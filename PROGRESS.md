@@ -30,8 +30,7 @@ aktive Worlds-Sitzung und ein Audit-Eintrag zur bestätigten Übernahme.
 Die Prüfsummen der 515 Beiträge, Rollen, Lern-, Heft- und Spieldaten sind
 seit der Lösung der leeren Zuordnung identisch. Das leere Profil bleibt
 unverknüpft erhalten. Zwei Altkonten benötigen noch einen Eigentumsnachweis.
-Der lokale Audit-Eintrag ist vorhanden. Ein zentraler Migrationsnachweis
-für Sprachwelten ist in Produktion weiterhin offen.
+Der lokale Audit-Eintrag und der zentrale Migrationsnachweis sind vorhanden.
 
 ## Produktionsversand für Migrationsnachweise – 23.11.2026
 
@@ -40,12 +39,21 @@ Versand nach bestätigter Übernahme, Wiederholung über die tägliche Wartung.
 Der private Schlüssel für Sprachwelten aktiviert den Sender erst am exakten
 Produktionsziel. Lokale Prüfung: 234 Tests, Typprüfung, Lint,
 DE/EN-Übersetzungsprüfung, Build und Cloudflare-Probelauf bestanden.
-Ein bestätigter Nachweis wartet produktiv im Audit. Der Hub-Endpunkt
-antwortet vor Freigabe mit 404. GitHub-Prüfung und Live-Zustellung folgen.
+Der Hub-Endpunkt ist live. Der kontrollierte Erstversand aus dem
+Produktionsaudit wurde einmal bestätigt, ohne Konflikt. Der Kontoinhaber
+sieht „Zuordnung bestätigt“ im Hub-Konto. Der automatische Versand ist
+mit Worker `4b62fb37-27a4-496d-8b7a-48f25d12a7d6` zu 100 % aktiv.
+Rücknahme auf `50558258-6d52-4b34-9c58-7430870bd823`. Live geprüft:
+DE/EN-Lernseiten, Schutz der Kontenübernahme, PKCE und bestehender
+Abmelde-Empfänger. Ein automatischer Zustelllauf mit einem weiteren
+offenen Nachweis wurde live noch nicht beobachtet.
 GitHub-Lauf 45189695549 stoppte beim Audit wegen sieben neuen Meldungen
 für Next.js 16.4.2. Next.js und die zugehörige ESLint-Konfiguration wurden
 auf 16.4.5 aktualisiert. Vollständiges Audit, 234 Tests, Typprüfung, Lint
-und Übersetzungsprüfung bestanden lokal.
+und Übersetzungsprüfung bestanden lokal. GitHub-Lauf
+[45190637262](https://github.com/manuelk2607/Sprachwelten/actions/runs/45190637262)
+bestätigte außerdem den Build, den lokalen Worker und 154 reguläre plus
+36 Worlds-Browserfälle.
 
 ## Produktiver Worlds-Release veröffentlicht
 

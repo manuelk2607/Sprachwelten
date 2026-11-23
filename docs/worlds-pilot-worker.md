@@ -79,6 +79,17 @@ Schlüssel ausschließlich über Secrets bereitstellen. Der öffentliche Worlds
 Hub wird als Ziel abgewiesen. Konflikte bleiben in der Audit-Tabelle und
 werden zur manuellen Prüfung markiert.
 
+Der separate Produktionssender wird nur mit dem Worker-Secret
+`WORLDS_MIGRATION_RECEIPT_PRIVATE_JWK` (einschließlich `kid`) aktiviert.
+Er prüft die exakte Produktionsdatenbank, deren Auth-Adresse und den
+Worlds-Client und sendet ausschließlich an den fest vorgegebenen Hub-Endpunkt
+für Sprachwelten. Nach einer erfolgreichen Kontobestätigung startet der Worker
+den Versand im Hintergrund. Die bestehende tägliche Wartung wiederholt offene
+Zustellungen. Für die erste Zustellung nach Freigabe kann der Betrieb einmal
+`npm run worlds:report-migrations -- --production` mit denselben geprüften
+Zielbindungen und dem dedizierten Schlüssel ausführen. Der QA-Schlüssel ist
+für die Produktion ungeeignet. Keine Zugangsdaten im Repo speichern.
+
 ## Abnahme und Rücknahme
 
 - Erst DE/EN-Lernseiten, statische Assets, `/robots.txt`, Sitemap, anonymen

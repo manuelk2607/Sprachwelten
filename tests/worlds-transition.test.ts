@@ -25,7 +25,8 @@ import {
 } from "@worlds-hub/auth/session-revocation";
 import { receiveWorldsSessionEvent } from "../lib/auth/session-events";
 import { createWorldsProjectAccount } from "../lib/auth/project-accounts";
-import { reportWorldsMigrations } from "../lib/auth/worlds-migration-receipts";
+import { reportProductionWorldsMigrations, reportWorldsMigrations } from "../lib/auth/worlds-migration-receipts";
+import { worldsProductionVariables } from "../lib/worlds-production";
 
 const origin = "https://sprach-pilot.test",
   issuer = "https://central.test/auth";
@@ -248,6 +249,40 @@ test("confirmed legacy migrations report from the audit, retry safely and report
   } finally {
     await f.db.close();
   }
+});
+
+test("the production sender requires its exact project target and pins the Hub endpoint", async (t) => {
+  const { privateKey } = await crypto.subtle.generateKey("Ed25519", true, ["sign", "verify"]);
+  const databaseHost = "ep-ancient-night-b9a3flsm.c-7.eu-central-1.aws.neon.tech";
+  const env = {
+    ...worldsProductionVariables,
+    DATABASE_URL: "postgresql://fixture:fixture@" + databaseHost + "/sprachspiel",
+    NEON_AUTH_BASE_URL: "https://ep-ancient-night-b9a3flsm.neonauth.c-7.eu-central-1.aws.neon.tech/sprachspiel/auth",
+    WORLDS_MIGRATION_RECEIPT_PRIVATE_JWK: JSON.stringify({
+      ...await crypto.subtle.exportKey("jwk", privateKey),
+      kid: "production-receipt-fixture",
+    }),
+    WORLDS_RECEIPT_URL: "https://hub-qa.invalid/api/migrations/receipts/sprachwelten",
+  };
+  const query = t.mock.fn(async (_sql: string, params: unknown[]) => {
+    assert.ok(params.includes(worldsProductionVariables.WORLDS_ISSUER));
+    return params.length === 1
+      ? [{ revision: "5", subject: "central-fixture", local_user_id: "legacy-fixture", event: "linked" }]
+      : [{ id: 5 }];
+  });
+  const send = t.mock.method(globalThis, "fetch", async (url: string | Request | URL) => {
+    assert.equal(url, "https://worlds-hub.maki26.workers.dev/api/migrations/receipts/sprachwelten");
+    return Response.json({ result: "stored" });
+  });
+  assert.equal(await reportProductionWorldsMigrations(query, {}), undefined);
+  await assert.rejects(reportProductionWorldsMigrations(query, { ...env, WORLDS_PILOT_ENABLED: "true" }), /exact Sprachwelten/);
+  await assert.rejects(reportProductionWorldsMigrations(query, { ...env, DATABASE_URL: env.DATABASE_URL.replace(databaseHost, "qa.neon.tech") }), /exact Sprachwelten/);
+  await assert.rejects(reportProductionWorldsMigrations(query, { ...env, WORLDS_MIGRATION_RECEIPT_PRIVATE_JWK: "{}" }), /signing key/);
+  assert.equal(query.mock.callCount(), 0);
+  assert.equal(send.mock.callCount(), 0);
+  assert.deepEqual(await reportProductionWorldsMigrations(query, env), { acknowledged: 1, conflict: 0 });
+  assert.equal(query.mock.callCount(), 2);
+  assert.equal(send.mock.callCount(), 1);
 });
 
 test("a signed Hub event ends existing Worlds and retained native sessions while preserving later logins and other accounts", async () => {

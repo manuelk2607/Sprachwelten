@@ -33,6 +33,16 @@ unverknüpft erhalten. Zwei Altkonten benötigen noch einen Eigentumsnachweis.
 Der lokale Audit-Eintrag ist vorhanden. Ein zentraler Migrationsnachweis
 für Sprachwelten ist in Produktion weiterhin offen.
 
+## Produktionsversand für Migrationsnachweise – 23.11.2026
+
+Der bestehende Sender unterstützt den fest vorgegebenen Hub-Endpunkt.
+Versand nach bestätigter Übernahme, Wiederholung über die tägliche Wartung.
+Der private Schlüssel für Sprachwelten aktiviert den Sender erst am exakten
+Produktionsziel. Lokale Prüfung: 234 Tests, Typprüfung, Lint,
+DE/EN-Übersetzungsprüfung, Build und Cloudflare-Probelauf bestanden.
+Ein bestätigter Nachweis wartet produktiv im Audit. Der Hub-Endpunkt
+antwortet vor Freigabe mit 404. GitHub-Prüfung und Live-Zustellung folgen.
+
 ## Produktiver Worlds-Release veröffentlicht
 
 CI **43698437448** bestand Abhängigkeiten, Lint, Übersetzungen, Typprüfung,

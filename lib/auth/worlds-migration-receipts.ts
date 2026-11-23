@@ -1,5 +1,8 @@
 import { migrationReceiptSender } from "@worlds-hub/auth/migration-receipts";
 import type { PgQuery } from "@worlds-hub/auth/postgres-links";
+import { isWorldsProductionTarget, worldsProductionOrigin, worldsProductionVariables } from "../worlds-production";
+
+const productionHub = "https://worlds-hub.maki26.workers.dev";
 
 export async function reportWorldsMigrations(
   query: PgQuery,
@@ -11,12 +14,43 @@ export async function reportWorldsMigrations(
     WORLDS_RECEIPT_KID: kid,
     WORLDS_RECEIPT_KEY: privateJwk,
   } = env;
-  if (!url || !kid || !privateJwk || new URL(url).hostname === "worlds-hub.maki26.workers.dev") {
+  if (!url || !kid || !privateJwk || new URL(url).hostname === new URL(productionHub).hostname) {
     throw new Error("An isolated Hub and dedicated receipt signing key are required.");
   }
+  return deliverMigrationReceipts(query, identityIssuer, url, kid, privateJwk);
+}
+
+export async function reportProductionWorldsMigrations(
+  query: PgQuery,
+  env: Record<string, string | undefined>,
+) {
+  const privateJwk = env.WORLDS_MIGRATION_RECEIPT_PRIVATE_JWK;
+  if (!privateJwk) return;
+  if (!isWorldsProductionTarget(env)) {
+    throw new Error("Migration receipts require the exact Sprachwelten production target.");
+  }
+  let kid: unknown;
+  try { kid = JSON.parse(privateJwk)?.kid; } catch { /* invalid configuration */ }
+  if (typeof kid !== "string") throw new Error("A dedicated receipt signing key is required.");
+  return deliverMigrationReceipts(
+    query,
+    worldsProductionVariables.WORLDS_ISSUER,
+    productionHub + "/api/migrations/receipts/sprachwelten",
+    kid,
+    privateJwk,
+  );
+}
+
+async function deliverMigrationReceipts(
+  query: PgQuery,
+  identityIssuer: string,
+  url: string,
+  kid: string,
+  privateJwk: string,
+) {
   const send = await migrationReceiptSender({
     project: "sprachwelten",
-    origin: "https://sprachwelten.maki26.workers.dev",
+    origin: worldsProductionOrigin,
     identityIssuer,
     url,
     kid,

@@ -8,6 +8,10 @@ Hub-Endpunkt und der bestehende Zeitplan bleiben in Verwendung.
 234 Tests, Typprüfung, Lint und Offline-Build bestanden. Für die
 Veröffentlichung auf dem bestehenden Worker fehlt ein gültiger
 Cloudflare-Zugang.
+[GitHub](https://github.com/manuelk2607/Sprachwelten/actions/runs/45389343509)
+prüfte `a98307c` mit Chromium und WebKit. Ein aus diesem Commit neu
+erstelltes Paket ohne Synchronisationskopien bestand den
+Cloudflare-Trockenlauf. Produktionsversion vor dem Upload `4b62fb37`.
 
 ## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
 

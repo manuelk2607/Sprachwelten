@@ -22,8 +22,7 @@ test('nested account actions actually reach the protected framework handler',asy
  }
 });
 
-for(const recover of [false,true])test((recover?'an expired owner first confirms existing credentials, then ':'an existing owner ')+ 'confirms the link in DE and EN, keeps the same data without the old cookie, and signs out both local sessions',async({page},info)=>{
- for(const locale of ['de','en'] as const){
+for(const recover of [false,true])for(const locale of ['de','en'] as const)test((recover?'an expired owner first confirms existing credentials, then ':'an existing owner ')+`confirms the link, keeps the same data without the old cookie, and signs out both local sessions (${locale.toUpperCase()})`,async({page},info)=>{
   const db=new PGlite();let relay:ReturnType<typeof createServer>|undefined;
   try{
    const id=crypto.randomUUID(),raw=token(),csrf=token(),sub=token(),entryId=crypto.randomUUID(),origin='https://sprach-pilot.test',issuer='https://central.test/auth';
@@ -134,5 +133,4 @@ for(const recover of [false,true])test((recover?'an expired owner first confirms
    expect(await query('SELECT author_id FROM content_entries WHERE id=$1',[entryId])).toEqual([{author_id:id}]);
    expect(await query('SELECT (SELECT count(*) FROM neon_auth."user")::int AS native,(SELECT count(*) FROM worlds_project_accounts)::int AS profiles,(SELECT count(*) FROM worlds_link_audit)::int AS audit',[])).toEqual([{native:1,profiles:1,audit:1}]);
   }finally{if(!page.isClosed()){await page.goto('about:blank');await page.unrouteAll({behavior:'wait'});}if(relay)await new Promise<void>(resolve=>relay!.close(()=>resolve()));await db.close();}
- }
 });

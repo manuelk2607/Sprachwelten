@@ -14,6 +14,13 @@ und der Cloudflare-Trockenlauf. Chromium am Desktop und WebKit bei 320 px
 prüften den Raumlink und den Rücksprung nach neuer Profilerstellung in DE/EN.
 Die produktive Veröffentlichung benötigt eine gültige Cloudflare-Freigabe.
 
+Im [ersten GitHub-Lauf](https://github.com/manuelk2607/Sprachwelten/actions/runs/45446220402)
+bestanden die 154 regulären Browserfälle und die neuen Rücksprungfälle.
+Die WebKit-Kontoübernahme mit zwei Sprachen im selben Fall erreichte beim
+Aufräumen das 30-Sekunden-Limit. Eine Prüfung pro Sprache behält alle
+bisherigen Abnahmeschritte. Die vier betroffenen WebKit-Fälle bestanden
+danach lokal ohne Wiederholung.
+
 ## Automatischer Migrationsversand korrigiert – 24.11.2026
 
 Das geprüfte Auth-Paket 0.1.7 nutzt Cloudflares unterstützten

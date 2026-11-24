@@ -21,6 +21,11 @@ Aufräumen das 30-Sekunden-Limit. Eine Prüfung pro Sprache behält alle
 bisherigen Abnahmeschritte. Die vier betroffenen WebKit-Fälle bestanden
 danach lokal ohne Wiederholung.
 
+Der [zweite GitHub-Lauf](https://github.com/manuelk2607/Sprachwelten/actions/runs/45448999477)
+für `a166248` bestand vollständig mit 234 Unit-Tests, 154 regulären und 48
+Worlds-Browserfällen. Der Upload des Rücksprungs und der Nachweis-Korrektur
+auf den bestehenden Sprachwelten-Worker steht zur Freigabe an.
+
 ## Automatischer Migrationsversand korrigiert – 24.11.2026
 
 Das geprüfte Auth-Paket 0.1.7 nutzt Cloudflares unterstützten

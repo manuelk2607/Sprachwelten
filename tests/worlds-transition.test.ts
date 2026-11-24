@@ -270,8 +270,9 @@ test("the production sender requires its exact project target and pins the Hub e
       ? [{ revision: "5", subject: "central-fixture", local_user_id: "legacy-fixture", event: "linked" }]
       : [{ id: 5 }];
   });
-  const send = t.mock.method(globalThis, "fetch", async (url: string | Request | URL) => {
+  const send = t.mock.method(globalThis, "fetch", async (url: string | Request | URL, init?: RequestInit) => {
     assert.equal(url, "https://worlds-hub.maki26.workers.dev/api/migrations/receipts/sprachwelten");
+    assert.equal(init?.redirect, "manual");
     return Response.json({ result: "stored" });
   });
   assert.equal(await reportProductionWorldsMigrations(query, {}), undefined);

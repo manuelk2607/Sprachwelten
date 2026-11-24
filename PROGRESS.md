@@ -1,4 +1,13 @@
-# Sprachwelten – Fortsetzungsstand, 22. November 2026
+# Sprachwelten – Fortsetzungsstand, 24. November 2026
+
+## Automatischer Migrationsversand korrigiert – 24.11.2026
+
+Das geprüfte Auth-Paket 0.1.7 nutzt Cloudflares unterstützten
+Weiterleitungsmodus und weist alle 3xx-Antworten ab. Der produktive
+Hub-Endpunkt und der bestehende Zeitplan bleiben in Verwendung.
+234 Tests, Typprüfung, Lint und Offline-Build bestanden. Für die
+Veröffentlichung auf dem bestehenden Worker fehlt ein gültiger
+Cloudflare-Zugang.
 
 ## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
 

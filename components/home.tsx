@@ -41,6 +41,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
     () => false,
   );
   const { t,locale } = useI18n();
+  const loginReturn = area==='learn' ? (locale==='en'?'/en/learn':'/lernen') : (locale==='en'?'/en':'/');
   const user = useApplicationUser();
   const [auth, setAuth] = useState(false);
   const [contribute, setContribute] = useState(false);
@@ -148,6 +149,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
   return (
     <>
       <Header
+        loginReturn={loginReturn}
         active={area==='learn'?'discover':'play'}
         onPlay={area==='play'?chooseGame:undefined}
         onContribute={openContribute}
@@ -540,6 +542,7 @@ export function Home({area='play'}:{area?:'play'|'learn'}) {
       )}
       {auth && (
         <AuthDialog
+          returnTo={loginReturn}
           close={() => {
             setAuth(false);
             setResetToken("");

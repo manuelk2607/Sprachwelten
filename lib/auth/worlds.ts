@@ -3,7 +3,7 @@ import type { PgQuery } from "@worlds-hub/auth/postgres-links";
 import {TransitionAuthStore} from './transition-store';
 import {worldsSessionEventKey} from './session-events';
 
-import {worldsReturnPaths,worldsProjectReturn,worldsManagedLinkPaths,worldsRecoveryHref} from './worlds-link';
+import {isWorldsProjectReturn,worldsLoginHref,worldsReturnPaths,worldsProjectReturn,worldsRoomReturn,worldsManagedLinkPaths,worldsRecoveryHref} from './worlds-link';
 import {GameError} from '../game';
 import {createWorldsProjectAccount,mappedProjectAccount} from './project-accounts';
 import {translate,type Locale} from '../translations';
@@ -71,12 +71,15 @@ async function createProfile(request:Request,config:AuthConfig,query:PgQuery,leg
 }
 
 export async function worldsRoute(request: Request, config: AuthConfig, query: PgQuery, legacy: boolean|LearningUser=hasManagedSessionCookie(request)) {
-  const {pathname} = new URL(request.url);
+  const url = new URL(request.url), {pathname} = url;
   const legacyActive=!!legacy;
-  if (new URL(request.url).origin !== config.origin) return new Response(null, {status: 404});
+  if (url.origin !== config.origin) return new Response(null, {status: 404});
   if (pathname === "/auth/worlds/profile") return createProfile(request,config,query,legacyActive);
-  if (pathname === "/auth/start") return startLoginLink(request, config);
-  if (pathname === "/auth/login") return startLogin(request, config);
+  if (pathname === "/auth/start" || pathname === "/auth/login") {
+    const next=url.searchParams.get('next');
+    const loginConfig=worldsRoomReturn(next)?{...config,returnPaths:[...(config.returnPaths??worldsReturnPaths),next]}:config;
+    return (pathname === "/auth/start" ? startLoginLink : startLogin)(request,loginConfig);
+  }
   if (pathname === "/auth/callback") return callback(request, config);
   if (pathname === "/auth/logout") return logout(request, config);
   if (pathname === "/auth/backchannel-logout") return backchannelLogout(request, config);
@@ -94,15 +97,17 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
   const continueLabel = translate("Weiter zu Sprachwelten",en?"en":"de");
   const loginLabel = translate('Mit Worlds anmelden',en?'en':'de');
   const logoutLabel = translate('In Sprachwelten von Worlds abmelden',en?'en':'de');
-  const learning = worldsProjectReturn(en?"en":"de",new URL(request.url).searchParams.get("next"));
+  const next = url.searchParams.get("next");
   const locale = en ? "en" : "de";
+  const learning = worldsProjectReturn(locale,next);
+  const returnLink = escapeHtml(learning);
   const t=(text:string)=>escapeHtml(translate(text,locale));
   const sameOwner=typeof legacy==='object'&&legacy.id===user?.id;
   const status = mapped&&!mapped.active ? `<p>${t('Dieses Sprachwelten-Profil ist nicht verfügbar. Bitte wende dich an die Administration.')}</p>` : user && legacyActive&&!sameOwner
-    ? `<p>${t('Melde dich vor dem Wechsel zu Worlds von deinem aktuellen Sprachwelten-Konto ab.')}</p><p><a href="${learning}">${t('Zurück zum Lernen')}</a></p>`
-    : user ? `<p>${sameOwner?t('Dieses Konto ist bereits mit Worlds verbunden.'):''}</p><p><a class="button primary" href="${learning}">${continueLabel}</a></p>` : identity
+    ? `<p>${t('Melde dich vor dem Wechsel zu Worlds von deinem aktuellen Sprachwelten-Konto ab.')}</p><p><a href="${returnLink}">${t('Zurück zum Lernen')}</a></p>`
+    : user ? `<p>${sameOwner?t('Dieses Konto ist bereits mit Worlds verbunden.'):''}</p><p><a class="button primary" href="${returnLink}">${continueLabel}</a></p>` : identity
     ? `<p>${t('Diese Worlds-Identität ist noch keinem Sprachwelten-Konto zugeordnet.')}</p>`
-    : `<a href="/auth/start?next=${pathname}&amp;ui_locales=${locale}">${loginLabel}</a>`;
+    : `<a href="${escapeHtml(worldsLoginHref(locale,isWorldsProjectReturn(next)?next:pathname))}">${loginLabel}</a>`;
   const create = identity&&!mapped&&!legacyActive&&/^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)
     ? `<p><a class="button primary" href="${escapeHtml(worldsRecoveryHref(locale,learning))}">${t('Ich habe bereits ein Sprachwelten-Konto')}</a></p><p>${t('Bestätige dein bisheriges Konto einmalig, damit deine Beiträge und Lernstände erhalten bleiben.')}</p><p>${t('Du kannst Sprachwelten mit deinem Worlds-Konto verwenden. Bestehende Beiträge anderer oder bisheriger Konten werden dabei nicht übernommen.')}</p><form method="post" action="/auth/worlds/profile?locale=${locale}&amp;next=${encodeURIComponent(learning)}"><input type="hidden" name="csrf" value="${identity.csrf}"><button>${t('Sprachwelten mit Worlds verwenden')}</button></form>` : '';
   const takeover=identity&&!mapped&&legacyActive&&/^[A-Za-z0-9_-]{32,128}$/.test(identity.csrf)

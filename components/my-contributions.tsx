@@ -27,6 +27,7 @@ export function MyContributions() {
     [refresh, setRefresh] = useState(0),
     [editing, setEditing] = useKeyedState<Entry | null>(userId ?? "", null);
   const [area,setArea]=useState<'play'|'learn'>('play');
+  const loginReturn=area==='learn'?'/me?area=learn':'/me';
   useEffect(()=>{if(new URLSearchParams(window.location.search).get('area')==='learn'){
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore the explicitly linked contribution area.
     setArea('learn');
@@ -78,7 +79,7 @@ export function MyContributions() {
   }
   return (
     <>
-      <Header loginReturn="/me" active="me" onLogin={() => setAuth(true)} />
+      <Header loginReturn={loginReturn} active="me" onLogin={() => setAuth(true)} />
       <main className="admin-panel">
         <a className="text-link" href="/">
           ← {t("Zur Startseite")}
@@ -263,7 +264,7 @@ export function MyContributions() {
           </div>
         </Dialog>
       )}
-      {auth && <AuthDialog returnTo="/me" close={() => setAuth(false)} />}{" "}
+      {auth && <AuthDialog returnTo={loginReturn} close={() => setAuth(false)} />}{" "}
       {editing && (
         <ContributeDialog
           initialEntry={editing}

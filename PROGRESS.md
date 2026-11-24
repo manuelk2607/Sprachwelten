@@ -1,5 +1,19 @@
 # Sprachwelten – Fortsetzungsstand, 24. November 2026
 
+## Rückkehr zur geöffneten Seite nach Worlds-Anmeldung
+
+Der Anmeldedialog behält die DE/EN-Lernseite als Ziel. Die Beitragsverwaltung
+erhält ihren Bereich „Lernen“, auch wenn zuerst ein Profil erstellt wird.
+Eine Anmeldung aus einem Spielraum übernimmt den geprüften lokalen Raum-Pfad.
+Der Raumcode bleibt in Sprachwelten und steht nicht in der Anfrage an den
+Anmeldedienst. Bei abgelaufener Sitzung behält der erneute Anmeldelink das Ziel.
+Externe Adressen und nicht vorgesehene Parameter werden abgewiesen.
+
+Lokal bestanden 234 Tests, Typprüfung, Lint, Übersetzungsprüfung, Offline-Build
+und der Cloudflare-Trockenlauf. Chromium am Desktop und WebKit bei 320 px
+prüften den Raumlink und den Rücksprung nach neuer Profilerstellung in DE/EN.
+Die produktive Veröffentlichung benötigt eine gültige Cloudflare-Freigabe.
+
 ## Automatischer Migrationsversand korrigiert – 24.11.2026
 
 Das geprüfte Auth-Paket 0.1.7 nutzt Cloudflares unterstützten

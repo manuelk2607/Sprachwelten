@@ -45,6 +45,7 @@ import {
 const subscribeToHydration = () => () => {};
 export function GameRoom({ code }: { code: string }) {
   const { t, locale } = useI18n();
+  const loginReturn=`/room/${code}`;
   const [room, setRoom] = useState<GameView | null>(null);
   const hydrated = useSyncExternalStore(
     subscribeToHydration,
@@ -377,7 +378,7 @@ export function GameRoom({ code }: { code: string }) {
   };
   return (
     <>
-      <Header active="play" onLogin={() => setAuth(true)} />
+      <Header active="play" loginReturn={loginReturn} onLogin={() => setAuth(true)} />
       <main className="room-layout">
         <div className="room-top">
           <button className="text-link" onClick={requestLeave}>
@@ -1156,7 +1157,7 @@ export function GameRoom({ code }: { code: string }) {
       {joining && (
         <RoomForm code={code} close={() => window.location.assign("/")} />
       )}
-      {auth && <AuthDialog close={() => setAuth(false)} />}
+      {auth && <AuthDialog returnTo={loginReturn} close={() => setAuth(false)} />}
       {leaving && (
         <Dialog
           title={t("Raum wirklich verlassen?")}

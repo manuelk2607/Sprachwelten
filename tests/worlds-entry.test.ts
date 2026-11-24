@@ -14,7 +14,8 @@ test('Worlds mode offers a direct sign-in link in both languages; legacy mode ke
 
 test('return links preserve known private screens and reject arbitrary redirect targets',()=>{
  assert.equal(new URL(worldsLoginHref('en','/me'),'https://fixture.test').searchParams.get('next'),'/me');
- for(const path of ['//evil.test','https://evil.test','/admin?user=other','/unknown','/\\evil.test']){
+ for(const path of ['/room/AB12CD','/me?area=learn'])assert.equal(new URL(worldsLoginHref('en',path),'https://fixture.test').searchParams.get('next'),path);
+ for(const path of ['//evil.test','https://evil.test','/admin?user=other','/unknown','/\\evil.test','/room/AB12CD?next=//evil.test','/room/AB12CD\n','/room/%2f%2fevil.test','/me?area=learn&next=//evil.test']){
   assert.equal(new URL(worldsLoginHref('en',path),'https://fixture.test').searchParams.get('next'),'/auth/worlds-en');
  }
 });
@@ -23,6 +24,8 @@ test('profile continuation retains reviewed project routes without returning to 
  assert.equal(worldsAccountHref('en','/me'),'/auth/worlds-en?next=%2Fme');
  for(const value of ['https://foreign.test','//foreign.test','/auth/worlds/profile','/auth/logout','/me?next=external','/auth/worlds'])assert.equal(worldsProjectReturn('en',value),'/en/learn');
  assert.equal(worldsProjectReturn('de','/profile'),'/profile');
+ assert.equal(worldsProjectReturn('en','/room/AB12CD'),'/room/AB12CD');
+ assert.equal(worldsProjectReturn('de','/me?area=learn'),'/me?area=learn');
  assert.equal(worldsRecoveryHref('en','/me'),'/worlds-migration?lang=en&next=%2Fme');
  assert.equal(worldsRecoveryHref('en','//foreign.test'),'/worlds-migration?lang=en&next=%2Fen%2Flearn');
 });

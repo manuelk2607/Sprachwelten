@@ -106,6 +106,16 @@ test('the server-selected existing managed account remains visible even while th
  expect(state.nativePosts).toBe(0);
 });
 
+test('a guest in an invited room starts Worlds sign-in with that exact room as the return target',async({page})=>{
+ const state=await fixture(page);state.active=false;
+ for(const locale of ['de','en'] as const){
+  await page.goto('/room/AB12CD?lang='+locale);
+  const login=page.locator('a.login-button');
+  await expect(login).toHaveAttribute('href','/auth/start?next=%2Froom%2FAB12CD&ui_locales='+locale);
+ }
+ expect(state.nativePosts).toBe(0);
+});
+
 test('a new central account starts without another registration and returns to its private screen in DE and EN',async({page},info)=>{
  for(const locale of ['de','en'] as const){
   const db=new PGlite();let nativePosts=0;let relay:ReturnType<typeof createServer>|undefined;
@@ -145,17 +155,19 @@ test('a new central account starts without another registration and returns to i
     const response=identity?Response.json({user:identity.user??null,source:'worlds',csrf:identity.csrf}):await worldsRoute(request,config,query,false);
     await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});
    });
-   await page.goto('/me');
-   await expect(page.locator('a.login-button')).toHaveAttribute('href',/\/auth\/worlds(-en)?\?next=%2Fme/);
+   const destination=locale==='en'?'/me?area=learn':'/me';
+   const next=new URLSearchParams({next:destination});
+   await page.goto(destination);
+   await expect(page.locator('a.login-button')).toHaveAttribute('href',/\/auth\/worlds(-en)?\?next=/);
    await page.getByRole('button',{name:locale.toUpperCase(),exact:true}).click();
    await expect(page.getByRole('button',{name:locale.toUpperCase(),exact:true})).toHaveAttribute('aria-pressed','true');
-   await expect(page.locator('a.login-button')).toHaveAttribute('href',new RegExp('/auth/worlds'+(locale==='en'?'-en':'')+'\\?next=%2Fme'));
+   await expect(page.locator('a.login-button')).toHaveAttribute('href','/auth/worlds'+(locale==='en'?'-en':'')+'?'+next);
    await page.locator('a.login-button').click();
    await expect(page.locator('html')).toHaveAttribute('lang',locale);
    await expect(page.locator('input[type="password"],input[type="email"],input[name="name"]')).toHaveCount(0);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
    await page.getByRole('button',{name:locale==='en'?'Use Sprachwelten with Worlds':'Sprachwelten mit Worlds verwenden',exact:true}).click();
-   await expect(page).toHaveURL(/\/me$/);await expect(page.locator('.profile-link')).toBeVisible();
+   await expect(page).toHaveURL(url=>url.pathname+url.search===destination);await expect(page.locator('.profile-link')).toBeVisible();
    await expect(page.locator('a.login-button')).toHaveCount(0);
    await page.locator('.profile-link').click();await expect(page.getByText('New central reader',{exact:true})).toBeVisible();
    await expect(page.getByRole('link',{name:locale==='en'?'Manage account in Worlds Hub':'Konto im Worlds Hub verwalten',exact:true})).toHaveAttribute('href','https://worlds-hub.maki26.workers.dev'+(locale==='en'?'/en/account':'/konto'));

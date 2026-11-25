@@ -22,7 +22,7 @@
     "test:notebooks-integration": "node --import tsx scripts/test-notebooks-integration.mts",
     "db:seed-learning": "node --env-file=.env.local --import tsx scripts/seed-learning.mts",
     "test:live-auth": "node --env-file-if-exists=.env.auth-test.local --import tsx scripts/test-live-auth-ai.mts",
-    "deploy:cloudflare": "node --env-file=.env.local scripts/deploy-cloudflare.mts",
+    "deploy:cloudflare": "node --env-file-if-exists=.env.local scripts/deploy-cloudflare.mts",
     "deploy:worlds-pilot": "node --import tsx scripts/deploy-worlds-pilot.mts",
     "worlds:report-migrations": "node --import tsx scripts/report-worlds-migrations.mts",
     "test:browser": "playwright test",

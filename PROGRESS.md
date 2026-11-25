@@ -1,4 +1,17 @@
-# Sprachwelten – Fortsetzungsstand, 22. November 2026
+# Sprachwelten – Fortsetzungsstand, 25. November 2026
+
+## Zentrale Anmeldung als Produktionsstandard
+
+`npm run deploy:cloudflare` paketiert die produktive Worlds-Anmeldung
+standardmäßig. Vor einem echten Upload prüft der Runner die Sprachwelten-
+Datenbank, ihren Anmeldedienst und die vorhandenen Worlds-Tabellen.
+Der Release verwendet die bestehenden Worker-Secrets und erhält die
+separat verwalteten Einstellungen. Die CI prüft zusätzlich den Standard-
+Trockenlauf. Der Anwendungscode entspricht dem veröffentlichten `51a1395`.
+234 Tests, Typprüfung, Lint, Übersetzungsprüfung und Offline-Build
+bestanden. Standardaufruf und bisheriger Schalter erzeugen dasselbe
+Worker-Paket mit Worlds, Audio, AI, Limits und Zeitplan. Der Aufruf ohne
+passende Produktionsverbindung stoppt vor Wrangler.
 
 ## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
 
@@ -85,9 +98,9 @@ Der SSO-Zweig enthält jetzt den bereits produktiven Music-Worlds-Cutover
 aus `main`. Alte Songbeiträge sind weiterhin für ihre Eigentümer
 bearbeitbar. Die Zugriffskontrolle verwendet die bisherige Projektidentität.
 
-Der Schalter `npm run deploy:cloudflare -- --worlds-production` bindet
-die exakte produktive Sprachwelten-Datenbank, ihre bisherige Neon-Auth-
-Instanz und den beim Hub registrierten Sprachwelten-Client. Der Release
+Der Befehl `npm run deploy:cloudflare` prüft die exakte produktive
+Sprachwelten-Datenbank und ihre bisherige Neon-Auth-Instanz. Er verwendet
+den beim Hub registrierten Sprachwelten-Client. Der Release
 setzt die bestehenden Worlds-Migrationen voraus. Aktive Bestandskonten
 nutzen weiterhin den vorgesehenen Übergang und die bestätigte Übernahme
 über den Hub. R2, AI, Rate-Limits und Cron sind im Produktionspaket enthalten.

@@ -18,6 +18,20 @@ jobs:
       - run: npm run build
         env:
           SPRACHWELTEN_OFFLINE_PREVIEW: '1'
+      - name: Verify the default Sprachwelten release package
+        run: |
+          npm run deploy:cloudflare -- --dry-run > "$RUNNER_TEMP/production-package.log" 2>&1 || { tail -60 "$RUNNER_TEMP/production-package.log"; exit 1; }
+          node --input-type=module <<'JS'
+          import assert from "node:assert/strict";
+          import { readFileSync } from "node:fs";
+          import { worldsProductionVariables } from "./lib/worlds-production.ts";
+
+          const config = JSON.parse(readFileSync("dist/server/wrangler.direct.json", "utf8"));
+          assert.equal(config.name, "sprachwelten");
+          for (const [key, value] of Object.entries(worldsProductionVariables)) {
+            assert.equal(config.vars[key], value, key);
+          }
+          JS
       - name: Package and smoke-test the isolated Worlds Worker
         run: |
           npm run deploy:worlds-pilot -- --dry-run > "$RUNNER_TEMP/worlds-pilot-package.log" 2>&1 || { tail -60 "$RUNNER_TEMP/worlds-pilot-package.log"; exit 1; }

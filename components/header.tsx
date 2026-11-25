@@ -117,6 +117,9 @@ export function Header({
         >
           {t("Lernen")}
         </a>
+        <a href={locale === "en" ? "https://worlds-hub.maki26.workers.dev/en/" : "https://worlds-hub.maki26.workers.dev/"}>
+          Worlds Hub
+        </a>
       </nav>
       <div className="header-actions">
         <button

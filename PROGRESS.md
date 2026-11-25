@@ -1,5 +1,15 @@
 # Sprachwelten – Fortsetzungsstand, 25. November 2026
 
+## Rückweg zum Worlds Hub
+
+Der Link in der Hauptnavigation führt von Spielen und Lernen zur gewählten
+DE/EN-Startseite des Hubs. 234 Tests, Typprüfung, Übersetzungsprüfung und
+Build bestanden. Chromium bei 1440 px und WebKit bei 320 px bestätigten
+Tastaturbedienung und beide Ziele. Bereits vorhandener Seitenüberlauf bei
+320 px ist mit ausgeblendetem Link identisch.
+
+Produktive Veröffentlichung und Live-Prüfung stehen aus.
+
 ## Zentrale Anmeldung als Produktionsstandard
 
 `npm run deploy:cloudflare` paketiert die produktive Worlds-Anmeldung

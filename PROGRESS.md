@@ -12,7 +12,14 @@ Trockenlauf. Der Anwendungscode entspricht dem veröffentlichten `51a1395`.
 234 Tests, Typprüfung, Lint, Übersetzungsprüfung und Offline-Build
 bestanden. Standardaufruf und bisheriger Schalter erzeugen dasselbe
 Worker-Paket mit Worlds, Audio, AI, Limits und Zeitplan. Der Aufruf ohne
-passende Produktionsverbindung stoppt vor Wrangler.
+passende Produktionsverbindung oder mit fremdem Cloudflare-Konto stoppt
+vor Wrangler.
+[GitHub](https://github.com/manuelk2607/Sprachwelten/actions/runs/45566232685)
+bestätigt das Standardpaket sowie 154 reguläre und 36 Worlds-Browserfälle.
+`main` enthält damit den bereits laufenden Anwendungscode und den
+geprüften Releaseweg. Der Live-Abruf von `/auth/status` bestätigte HTTP 200
+mit `no-store` und `noindex`. Für den geprüften Nachweisversand und den
+Rücksprung nach der Anmeldung steht die gesonderte Produktionsfreigabe aus.
 
 ## Übernahme für ein bereits verbundenes Worlds-Konto – 22.11.2026
 

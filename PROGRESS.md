@@ -18,8 +18,7 @@ vor Wrangler.
 bestätigt das Standardpaket sowie 154 reguläre und 36 Worlds-Browserfälle.
 `main` enthält damit den bereits laufenden Anwendungscode und den
 geprüften Releaseweg. Der Live-Abruf von `/auth/status` bestätigte HTTP 200
-mit `no-store` und `noindex`. Für die Korrektur des Nachweisversands und den
-Rücksprung nach der Anmeldung steht die gesonderte Produktionsfreigabe aus.
+mit `no-store` und `noindex`.
 
 ## Rückkehr zur geöffneten Seite nach Worlds-Anmeldung
 
@@ -33,7 +32,6 @@ Externe Adressen und nicht vorgesehene Parameter werden abgewiesen.
 Lokal bestanden 234 Tests, Typprüfung, Lint, Übersetzungsprüfung, Offline-Build
 und der Cloudflare-Trockenlauf. Chromium am Desktop und WebKit bei 320 px
 prüften den Raumlink und den Rücksprung nach neuer Profilerstellung in DE/EN.
-Die produktive Veröffentlichung benötigt eine gültige Cloudflare-Freigabe.
 
 Im [ersten GitHub-Lauf](https://github.com/manuelk2607/Sprachwelten/actions/runs/45446220402)
 bestanden die 154 regulären Browserfälle und die neuen Rücksprungfälle.
@@ -44,20 +42,26 @@ danach lokal ohne Wiederholung.
 
 Der [zweite GitHub-Lauf](https://github.com/manuelk2607/Sprachwelten/actions/runs/45448999477)
 für `a166248` bestand vollständig mit 234 Unit-Tests, 154 regulären und 48
-Worlds-Browserfällen. Der Upload des Rücksprungs und der Nachweis-Korrektur
-auf den bestehenden Sprachwelten-Worker steht zur Freigabe an.
+Worlds-Browserfällen.
 Nach dem Abgleich mit `main` bestanden 234 lokale Tests, Typprüfung, Lint,
 Übersetzungsprüfung, Build und der Standard-Trockenlauf mit den
 Produktionsbindungen. Der geprüfte Anwendungscode blieb identisch.
+[GitHub](https://github.com/manuelk2607/Sprachwelten/actions/runs/45640339528)
+bestätigte `d3abc5c`. Der Worker `a699a346-0847-47a5-a95e-da3dcc5d577b`
+läuft zu 100 Prozent im Deployment `c391c9fb-95f6-4267-b2d1-906a1cecd29d`.
+Alle 15 Bindungen sind vorhanden. Live geprüft wurden DE/EN-Anmeldelinks
+mit lokalem Raumziel, PKCE ohne Raumcode beim Anmeldedienst, verworfene
+externe Ziele und der Abmeldeempfänger. Rücknahmeversion `4b62fb37`.
+Der reale Rücksprung einer angemeldeten Person in einen Raum steht aus.
 
 ## Automatischer Migrationsversand korrigiert – 24.11.2026
 
 Das geprüfte Auth-Paket 0.1.7 nutzt Cloudflares unterstützten
 Weiterleitungsmodus und weist alle 3xx-Antworten ab. Der produktive
 Hub-Endpunkt und der bestehende Zeitplan bleiben in Verwendung.
-234 Tests, Typprüfung, Lint und Offline-Build bestanden. Für die
-Veröffentlichung auf dem bestehenden Worker fehlt ein gültiger
-Cloudflare-Zugang.
+234 Tests, Typprüfung, Lint und Offline-Build bestanden. Die Korrektur
+läuft seit Worker-Version `a699a346`. Der tägliche Zeitplan um 03:17 UTC
+ist bestätigt. Die nächste Zustellung eines neuen Nachweises steht aus.
 [GitHub](https://github.com/manuelk2607/Sprachwelten/actions/runs/45389343509)
 prüfte `a98307c` mit Chromium und WebKit. Ein aus diesem Commit neu
 erstelltes Paket ohne Synchronisationskopien bestand den

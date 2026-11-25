@@ -28,6 +28,7 @@ jobs:
 
           const config = JSON.parse(readFileSync("dist/server/wrangler.direct.json", "utf8"));
           assert.equal(config.name, "sprachwelten");
+          assert.equal(config.account_id, "ec3c070d8e4f88d2fc533d7d797f2daa");
           for (const [key, value] of Object.entries(worldsProductionVariables)) {
             assert.equal(config.vars[key], value, key);
           }

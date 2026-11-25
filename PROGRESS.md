@@ -3,8 +3,9 @@
 ## Zentrale Anmeldung als Produktionsstandard
 
 `npm run deploy:cloudflare` paketiert die produktive Worlds-Anmeldung
-standardmäßig. Vor einem echten Upload prüft der Runner die Sprachwelten-
-Datenbank, ihren Anmeldedienst und die vorhandenen Worlds-Tabellen.
+standardmäßig. Der Runner bindet den Upload an das bestehende
+Cloudflare-Konto und prüft Sprachwelten-Datenbank, Anmeldedienst
+und Worlds-Tabellen.
 Der Release verwendet die bestehenden Worker-Secrets und erhält die
 separat verwalteten Einstellungen. Die CI prüft zusätzlich den Standard-
 Trockenlauf. Der Anwendungscode entspricht dem veröffentlichten `51a1395`.

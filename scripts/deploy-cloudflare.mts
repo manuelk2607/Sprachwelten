@@ -7,7 +7,11 @@ import { readLimitBindings } from "../lib/read-guard.ts";
 import { isWorldsProductionTarget, worldsProductionVariables } from "../lib/worlds-production.ts";
 
 const dryRun = process.argv.includes("--dry-run");
+const accountId = "ec3c070d8e4f88d2fc533d7d797f2daa";
 if (!dryRun) {
+  if (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_ACCOUNT_ID !== accountId) {
+    throw new Error("Use the Cloudflare account that owns the production Sprachwelten Worker.");
+  }
   if (!isWorldsProductionTarget({ ...process.env, ...worldsProductionVariables })) {
     throw new Error("Worlds requires the exact Sprachwelten production database and its native Auth endpoint.");
   }
@@ -27,6 +31,7 @@ const config = JSON.parse(
 );
 // Generated build config is reused, with direct public routing in the owner's account.
 config.name = "sprachwelten";
+config.account_id = accountId;
 config.workers_dev = true;
 config.preview_urls = false;
 config.triggers = { crons: ["17 3 * * *"] };

@@ -302,6 +302,23 @@ test("Play and Learn stay separate with independent language pairs, legacy colle
     ),
   ).toBe(true);
 });
+test("small screens fit the public landing and learning controls in both languages", async ({ page }) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 320, height: 850 });
+  for (const [home, learning, hub] of [
+    ["/", "/lernen", "https://worlds-hub.maki26.workers.dev/"],
+    ["/en", "/en/learn", "https://worlds-hub.maki26.workers.dev/en/"],
+  ]) {
+    for (const path of [home, learning]) {
+      await navigateReady(page, path);
+      await expect(page.getByRole("link", { name: "Worlds Hub", exact: true }))
+        .toHaveAttribute("href", hub);
+      await expect(page.locator(path === learning ? ".learning-filters" : ".community-band > .button").first())
+        .toBeVisible();
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+    }
+  }
+});
 test("personal notebooks support creation, adding selected words, moving, editing and confirmed removal", async ({
   page,
 }) => {

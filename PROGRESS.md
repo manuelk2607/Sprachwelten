@@ -1,12 +1,14 @@
-# Sprachwelten – Fortsetzungsstand, 25. November 2026
+# Sprachwelten – Fortsetzungsstand, 26. November 2026
 
 ## Rückweg zum Worlds Hub
 
 Der Link in der Hauptnavigation führt von Spielen und Lernen zur gewählten
 DE/EN-Startseite des Hubs. 234 Tests, Typprüfung, Übersetzungsprüfung und
-Build bestanden. Chromium bei 1440 px und WebKit bei 320 px bestätigten
-Tastaturbedienung und beide Ziele. Bereits vorhandener Seitenüberlauf bei
-320 px ist mit ausgeblendetem Link identisch.
+Build bestanden. Bei schmalen Ansichten stehen die Lernfilter untereinander.
+Auf der Startseite passt der Beitragsbutton in die verfügbare Breite.
+Chromium und WebKit bestätigten beide Start- und Lernseiten in DE/EN bei
+320 und 1440 px ohne horizontalen Überlauf. Vier gezielte Playwright-Fälle
+prüften das Layout, die Rücklinks, den Sprachwechsel und die Lernnavigation.
 
 Produktive Veröffentlichung und Live-Prüfung stehen aus.
 

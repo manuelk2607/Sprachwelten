@@ -10,7 +10,10 @@ Chromium und WebKit bestätigten beide Start- und Lernseiten in DE/EN bei
 320 und 1440 px ohne horizontalen Überlauf. Vier gezielte Playwright-Fälle
 prüften das Layout, die Rücklinks, den Sprachwechsel und die Lernnavigation.
 
-Produktive Veröffentlichung und Live-Prüfung stehen aus.
+Commit `18a3a97` bestand [CI](https://github.com/manuelk2607/Sprachwelten/actions/runs/45826963140)
+mit 156 allgemeinen und 48 Worlds-Browserfällen sowie die
+[isolierte Integration](https://github.com/manuelk2607/Sprachwelten/actions/runs/45826963223).
+Die produktive Veröffentlichung wartet auf die Cloudflare-Gerätefreigabe.
 
 ## Zentrale Anmeldung als Produktionsstandard
 

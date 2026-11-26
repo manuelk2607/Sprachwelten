@@ -1,5 +1,16 @@
 # Sprachwelten – Fortsetzungsstand, 26. November 2026
 
+## Unvollständiger Rücksprung von der Worlds-Anmeldung
+
+Ein direkter Aufruf des produktiven Callbacks ohne OAuth-Antwort lieferte
+HTTP 503. Der Start der Anmeldung lieferte in DE und EN HTTP 303 mit PKCE
+und korrekt registrierter Rücksprungadresse. Der Korrekturzweig
+`fix/worlds-incomplete-callback` beantwortet unvollständige und mehrdeutige
+Rücksprünge mit HTTP 400 und einem lokalisierten Link zum erneuten Anmelden.
+Die Antwort legt keine Sitzung an und enthält keine übergebenen Rücksprungdaten.
+Der gezielte Regressionstest, Typprüfung, Lint, Übersetzungsprüfung und Build
+bestanden. Der geprüfte Navigationsstand `27137a4` bleibt separat bereit.
+
 ## Rückweg zum Worlds Hub
 
 Der Link in der Hauptnavigation führt von Spielen und Lernen zur gewählten

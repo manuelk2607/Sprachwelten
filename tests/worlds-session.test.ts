@@ -113,3 +113,30 @@ test('the central sign-in link starts a top-level PKCE navigation and stores onl
   const retry=await worldsRoute(new Request(origin+'/auth/worlds-en?next=%2Froom%2FAB12CD'),config,async()=>[],false);
   assert.match(await retry.text(),/href="\/auth\/start\?next=%2Froom%2FAB12CD&amp;ui_locales=en"/);
 });
+
+test('incomplete callbacks offer a localized restart without reflecting callback data', async t => {
+  const query = async () => { throw new Error('Unexpected database access'); };
+  const config = createWorldsConfig(env, query)!;
+  t.mock.method(globalThis, 'fetch', async () => { throw new Error('Unexpected provider request'); });
+  const callback = (queryString: string) => worldsRoute(new Request(origin + '/auth/callback?' + queryString), config, query);
+  for (const [locale, message, retryPath] of [
+    ['de', 'Die Anmeldung ist unvollständig. Starte sie bitte erneut.', '/auth/worlds?next=%2Flernen'],
+    ['en', 'The sign-in is incomplete. Please start again.', '/auth/worlds-en?next=%2Fen%2Flearn'],
+  ] as const) {
+    for (const queryString of ['', 'code=private-callback-value', 'state=first&state=second&code=private-callback-value',
+      'state=state&code=private-callback-value&error=access_denied', 'state=state&code=']) {
+      const response = await callback(queryString + '&ui_locales=' + locale + '&next=https://foreign.test');
+      assert.equal(response.status, 400);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      assert.match(response.headers.get('x-robots-tag')!, /noindex/);
+      assert.equal(response.headers.get('set-cookie'), null);
+      const html = await response.text();
+      assert.ok(html.includes(`<html lang="${locale}">`));
+      assert.ok(html.includes(message));
+      assert.ok(html.includes(`href="${retryPath}"`));
+      assert.doesNotMatch(html, /private-callback-value|foreign\.test/);
+    }
+  }
+  await assert.rejects(callback('state=state&code=code'), /Missing transaction/);
+  await assert.rejects(callback('state=state&error=access_denied'), /Missing transaction/);
+});

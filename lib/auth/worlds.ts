@@ -80,7 +80,15 @@ export async function worldsRoute(request: Request, config: AuthConfig, query: P
     const loginConfig=worldsRoomReturn(next)?{...config,returnPaths:[...(config.returnPaths??worldsReturnPaths),next]}:config;
     return (pathname === "/auth/start" ? startLoginLink : startLogin)(request,loginConfig);
   }
-  if (pathname === "/auth/callback") return callback(request, config);
+  if (pathname === "/auth/callback") {
+    const states = url.searchParams.getAll('state');
+    const outcomes = [...url.searchParams.getAll('code'), ...url.searchParams.getAll('error')];
+    if (request.method === 'GET' && (states.length !== 1 || !states[0] || outcomes.length !== 1 || !outcomes[0])) {
+      const locale = url.searchParams.get('ui_locales') === 'en' || url.searchParams.get('locale') === 'en' ? 'en' : 'de';
+      return authError(locale,'Die Anmeldung ist unvollständig. Starte sie bitte erneut.',400);
+    }
+    return callback(request, config);
+  }
   if (pathname === "/auth/logout") return logout(request, config);
   if (pathname === "/auth/backchannel-logout") return backchannelLogout(request, config);
   if (!["/auth/status", "/auth/worlds", "/auth/worlds-en", "/auth/worlds/recovery"].includes(pathname)) return new Response(null, {status: 404});

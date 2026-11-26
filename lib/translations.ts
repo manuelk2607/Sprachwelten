@@ -108,6 +108,7 @@ export const english: Record<string, string> = {
   'Automatische Übersetzungsvorschläge sind mit Konto verfügbar. Ohne Konto kannst du die zweite Sprachfassung selbst ergänzen oder später als Originaltext anzeigen lassen.':'Automatic translation suggestions are available with an account. Without an account, you can add the second language yourself or display the labelled original text.',
   'Bitte melde dich an, um diese Funktion zu nutzen.':'Please sign in to use this feature.',
   'Die Anmeldung konnte nicht geprüft werden. Bitte versuche es erneut.':'Your sign-in could not be checked. Please try again.',
+  'Die Anmeldung ist unvollständig. Starte sie bitte erneut.':'The sign-in is incomplete. Please start again.',
   'Vor der nächsten Partie könnt ihr Spiel, Kategorie und Rundenzahl in der Lobby ändern.':'Before the next match, you can change the game, category and number of rounds in the lobby.',
   'Keine ungespielten Aufgaben in dieser Kategorie. Wählt ein anderes Spiel oder eine andere Kategorie.':'There are no unplayed tasks in this category. Choose another game or category.',
   'Dieses Spiel ist nicht verfügbar.':'This game is not available.',

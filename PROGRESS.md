@@ -1,4 +1,4 @@
-# Sprachwelten – Fortsetzungsstand, 26. November 2026
+# Sprachwelten – Fortsetzungsstand, 27. November 2026
 
 ## Unvollständiger Rücksprung von der Worlds-Anmeldung
 
@@ -8,8 +8,11 @@ und korrekt registrierter Rücksprungadresse. Der Korrekturzweig
 `fix/worlds-incomplete-callback` beantwortet unvollständige und mehrdeutige
 Rücksprünge mit HTTP 400 und einem lokalisierten Link zum erneuten Anmelden.
 Die Antwort legt keine Sitzung an und enthält keine übergebenen Rücksprungdaten.
-Der gezielte Regressionstest, Typprüfung, Lint, Übersetzungsprüfung und Build
-bestanden. Der geprüfte Navigationsstand `27137a4` bleibt separat bereit.
+235 Tests, 156 allgemeine Browserfälle und 48 Worlds-Browserfälle sowie
+Typprüfung, Lint, Übersetzungsprüfung und Build bestanden. `3278175` läuft als
+Worker `98dcddf7-a0dc-4001-92de-7dd9207f658e`. DE/EN lieferten live die
+lokalisierte Rücksprungseite mit HTTP 400 und einen regulären PKCE-Start.
+[GitHub Actions](https://github.com/manuelk2607/Sprachwelten/actions/runs/45856720653)
 
 ## Rückweg zum Worlds Hub
 
@@ -24,7 +27,9 @@ prüften das Layout, die Rücklinks, den Sprachwechsel und die Lernnavigation.
 Commit `18a3a97` bestand [CI](https://github.com/manuelk2607/Sprachwelten/actions/runs/45826963140)
 mit 156 allgemeinen und 48 Worlds-Browserfällen sowie die
 [isolierte Integration](https://github.com/manuelk2607/Sprachwelten/actions/runs/45826963223).
-Die produktive Veröffentlichung wartet auf die Cloudflare-Gerätefreigabe.
+Der Navigationsstand ist in der obigen Veröffentlichung enthalten. Die
+Start- und Lernseiten liefern den deutschen bzw. englischen Hub-Link live.
+Rücknahmeversion ist `a699a346-0847-47a5-a95e-da3dcc5d577b`.
 
 ## Zentrale Anmeldung als Produktionsstandard
 
